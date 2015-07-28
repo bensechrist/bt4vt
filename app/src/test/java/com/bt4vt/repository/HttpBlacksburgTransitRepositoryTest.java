@@ -16,55 +16,74 @@
 
 package com.bt4vt.repository;
 
+import com.bt4vt.repository.domain.Bus;
+import com.bt4vt.repository.domain.Departure;
 import com.bt4vt.repository.domain.Route;
 import com.bt4vt.repository.domain.RouteFactory;
 import com.bt4vt.repository.domain.Stop;
 
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doReturn;
 
 /**
  * Tests the {@link HttpBlacksburgTransitRepository}.
  *
  * @author Ben Sechrist
  */
-@RunWith(MockitoJUnitRunner.class)
 public class HttpBlacksburgTransitRepositoryTest {
 
-  @Mock
-  private RouteFactory routeFactory;
+  private HttpBlacksburgTransitRepository repository = new HttpBlacksburgTransitRepository();
 
-  @InjectMocks
-  private HttpBlacksburgTransitRepository repository;
+  @Before
+  public void setUp() throws Exception {
+    repository.routeFactory = new RouteFactory();
+  }
 
   @Test
-  public void testGetRoutes() throws Exception {
-    final String name = "name";
-    doReturn(new Route(name))
-        .when(routeFactory).createRoute(anyString());
+  public void testGetRoutesStopsDepartures() throws Exception {
+    List<Route> routes = repository.getRoutes();
+    assertNotNull(routes);
+    assertThat(routes.size(), greaterThan(0));
 
-    List<Route> result = repository.getRoutes();
-    assertNotNull(result);
-    assertThat(result.size(), greaterThan(0));
-    assertEquals(result.get(0).getName(), name);
+    List<Stop> stops = new ArrayList<>();
+    for (Route route : routes) {
+      stops.addAll(repository.getStops(route));
+      assertNotNull(stops);
+      assertThat(stops.size(), greaterThan(0));
+    }
+
+    for (Stop stop : stops) {
+      List<Departure> departures = repository.getNextDepartures(stop);
+      assertNotNull(departures);
+    }
+
+    List<Departure> departuresForRoute = repository.getNextDepartures(stops.get(0), routes.get(0));
+    assertNotNull(departuresForRoute);
   }
 
   @Test
   public void testGetStops() throws Exception {
-    List<Stop> result = repository.getStops(new Route("Main Street - South"));
-    assertNotNull(result);
-    assertThat(result.size(), greaterThan(0));
+    List<Stop> stops = repository.getStops();
+    assertNotNull(stops);
+    assertThat(stops.size(), greaterThan(0));
+  }
+
+  @Test
+  public void testGetBuses() throws Exception {
+    List<Route> routes = repository.getRoutes();
+    assertNotNull(routes);
+    assertThat(routes.size(), greaterThan(0));
+
+    for (Route route : routes) {
+      List<Bus> buses = repository.getBusLocations(route);
+      assertNotNull(buses);
+    }
   }
 }

@@ -16,26 +16,28 @@
 
 package com.bt4vt.repository.domain;
 
-import org.simpleframework.xml.ElementList;
+import org.simpleframework.xml.Element;
 import org.simpleframework.xml.Root;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * Document wrapper for {@link Stop} objects.
+ * Transit stop departure
  *
  * @author Ben Sechrist
  */
-@Root
-public class DocumentElement {
+@Root(name = "NextDepartures")
+public class Departure {
 
-  @ElementList(name = "ScheduledStops", inline = true, required = false)
-  public List<Stop> stops = new ArrayList<>();
+  @Element(name = "RouteName")
+  private String routeName;
 
-  @ElementList(name = "NextDepartures", inline = true, required = false)
-  public List<Departure> departures = new ArrayList<>();
+  @Element(name = "AdjustedDepartureTime_TripNotes")
+  private String notes;
 
-  @ElementList(name = "LatestInfoTable", inline = true, required = false)
-  public List<Bus> buses = new ArrayList<>();
+  public String getRouteName() {
+    return routeName;
+  }
+
+  public String getNotes() {
+    return notes;
+  }
 }

@@ -16,12 +16,14 @@
 
 package com.bt4vt.repository.domain;
 
+import java.io.Serializable;
+
 /**
  * Transit route.
  *
  * @author Ben Sechrist
  */
-public class Route {
+public class Route implements Serializable {
 
   private String name;
 

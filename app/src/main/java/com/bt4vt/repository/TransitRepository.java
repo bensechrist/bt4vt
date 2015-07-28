@@ -16,8 +16,12 @@
 
 package com.bt4vt.repository;
 
+import com.bt4vt.repository.domain.Bus;
+import com.bt4vt.repository.domain.Departure;
 import com.bt4vt.repository.domain.Route;
 import com.bt4vt.repository.domain.Stop;
+import com.bt4vt.repository.exception.TransitRepositoryException;
+import com.bt4vt.repository.listener.BusListener;
 
 import java.util.List;
 
@@ -32,12 +36,53 @@ public interface TransitRepository {
    * Returns a list of all transit routes.
    * @return a list of routes
    */
-  List<Route> getRoutes();
+  List<Route> getRoutes() throws TransitRepositoryException;
+
+  /**
+   * Returns a list of all stops.
+   * @return a list of stops
+   */
+  List<Stop> getStops() throws TransitRepositoryException;
 
   /**
    * Returns a list of all stops for a route.
    * @param route the route to get stops for
    * @return a list of stops
    */
-  List<Stop> getStops(Route route);
+  List<Stop> getStops(Route route) throws TransitRepositoryException;
+
+  /**
+   * Returns a list of the next departures for all routes at a stop.
+   * @param stop the stop to get departures for
+   * @return a list of departues
+   */
+  List<Departure> getNextDepartures(Stop stop);
+
+  /**
+   * Returns a list of the next departures for the given route at a stop.
+   * @param stop the stop to get departures for
+   * @param route the route to get departures for
+   * @return a list of departues
+   */
+  List<Departure> getNextDepartures(Stop stop, Route route);
+
+  /**
+   * Returns a list of the current bus locations for the <code>route</code>.
+   * @param route the route
+   * @return the bus locations
+   */
+  List<Bus> getBusLocations(Route route);
+
+  /**
+   * Registers the <code>busListener</code> to be called every time new
+   * information is available for buses on the <code>route</code>.
+   * @param route the route to watch
+   * @param busListener the callback listener
+   */
+  void registerBusListener(Route route, BusListener busListener);
+
+  /**
+   * Clears all bus listeners.
+   */
+  void clearBusListeners();
 }

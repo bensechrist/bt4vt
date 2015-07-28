@@ -14,28 +14,22 @@
  * limitations under the License.
  */
 
-package com.bt4vt.repository.domain;
+package com.bt4vt.repository.listener;
 
-import org.simpleframework.xml.ElementList;
-import org.simpleframework.xml.Root;
+import com.bt4vt.repository.domain.Bus;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Document wrapper for {@link Stop} objects.
+ * Callback for receiving bus updates.
  *
  * @author Ben Sechrist
  */
-@Root
-public class DocumentElement {
+public interface BusListener {
 
-  @ElementList(name = "ScheduledStops", inline = true, required = false)
-  public List<Stop> stops = new ArrayList<>();
-
-  @ElementList(name = "NextDepartures", inline = true, required = false)
-  public List<Departure> departures = new ArrayList<>();
-
-  @ElementList(name = "LatestInfoTable", inline = true, required = false)
-  public List<Bus> buses = new ArrayList<>();
+  /**
+   * Called when information is received about buses
+   * @param buses the updated bus information
+   */
+  void onUpdateBuses(List<Bus> buses);
 }

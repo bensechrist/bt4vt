@@ -15,9 +15,7 @@
   -->
 
 <resources>
-
-  <!-- Base application theme. -->
-  <style name="AppTheme" parent="Theme.AppCompat.Light">
-  </style>
-
+  <string name="google_maps_key" translatable="false" templateMergeStrategy="preserve">
+    AIzaSyAPoI47yF6A_MBJFKW3lA1MGxN1tOFvpZY
+  </string>
 </resources>

@@ -14,28 +14,15 @@
  * limitations under the License.
  */
 
-package com.bt4vt.repository.domain;
-
-import org.simpleframework.xml.ElementList;
-import org.simpleframework.xml.Root;
-
-import java.util.ArrayList;
-import java.util.List;
+package com.bt4vt.repository.exception;
 
 /**
- * Document wrapper for {@link Stop} objects.
+ * Exception thrown from the {@link com.bt4vt.repository.TransitRepository}.
  *
  * @author Ben Sechrist
  */
-@Root
-public class DocumentElement {
-
-  @ElementList(name = "ScheduledStops", inline = true, required = false)
-  public List<Stop> stops = new ArrayList<>();
-
-  @ElementList(name = "NextDepartures", inline = true, required = false)
-  public List<Departure> departures = new ArrayList<>();
-
-  @ElementList(name = "LatestInfoTable", inline = true, required = false)
-  public List<Bus> buses = new ArrayList<>();
+public class TransitRepositoryException extends Exception {
+  public TransitRepositoryException(Throwable throwable) {
+    super(throwable);
+  }
 }

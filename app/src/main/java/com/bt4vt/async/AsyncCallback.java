@@ -14,28 +14,24 @@
  * limitations under the License.
  */
 
-package com.bt4vt.repository.domain;
-
-import org.simpleframework.xml.ElementList;
-import org.simpleframework.xml.Root;
-
-import java.util.ArrayList;
-import java.util.List;
+package com.bt4vt.async;
 
 /**
- * Document wrapper for {@link Stop} objects.
+ * Calls back the async requester.
  *
  * @author Ben Sechrist
  */
-@Root
-public class DocumentElement {
+public interface AsyncCallback<T> {
 
-  @ElementList(name = "ScheduledStops", inline = true, required = false)
-  public List<Stop> stops = new ArrayList<>();
+  /**
+   * The async task was completed successfully.
+   * @param t the result of the async task
+   */
+  void onSuccess(T t);
 
-  @ElementList(name = "NextDepartures", inline = true, required = false)
-  public List<Departure> departures = new ArrayList<>();
-
-  @ElementList(name = "LatestInfoTable", inline = true, required = false)
-  public List<Bus> buses = new ArrayList<>();
+  /**
+   * The async task threw an exception.
+   * @param e the exception
+   */
+  void onException(Exception e);
 }
