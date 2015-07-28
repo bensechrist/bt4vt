@@ -17,37 +17,118 @@
 package com.bt4vt;
 
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.support.v4.widget.DrawerLayout;
+import android.view.View;
+import android.widget.ImageButton;
+import android.widget.RelativeLayout;
 
-public class MainActivity extends AppCompatActivity {
+import com.bt4vt.fragment.NavigationDrawerFragment;
+import com.bt4vt.fragment.RetainedMapFragment;
+import com.bt4vt.repository.domain.Route;
+import com.bt4vt.repository.domain.Stop;
+
+import java.util.List;
+
+import roboguice.activity.RoboFragmentActivity;
+import roboguice.inject.ContentView;
+import roboguice.inject.InjectView;
+
+/**
+ * Handles the layout {@link com.bt4vt.R.layout#activity_main}.
+ *
+ * @author Ben Sechrist
+ */
+@ContentView(R.layout.activity_main)
+public class MainActivity extends RoboFragmentActivity implements
+    RetainedMapFragment.TalkToActivity, NavigationDrawerFragment.TalkToActivity, View.OnClickListener {
+
+  @InjectView(R.id.drawer_layout)
+  private DrawerLayout mDrawerLayout;
+
+  @InjectView(R.id.button_nav_drawer)
+  private ImageButton navButton;
+
+  @InjectView(R.id.loading_view)
+  private RelativeLayout loadingView;
+
+  private Route currentRoute;
+
+  private RetainedMapFragment mapFragment;
+
+  private NavigationDrawerFragment navFragment;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_main);
-  }
 
-  @Override
-  public boolean onCreateOptionsMenu(Menu menu) {
-    // Inflate the menu; this adds items to the action bar if it is present.
-    getMenuInflater().inflate(R.menu.menu_main, menu);
-    return true;
-  }
+    navButton.setOnClickListener(this);
 
-  @Override
-  public boolean onOptionsItemSelected(MenuItem item) {
-    // Handle action bar item clicks here. The action bar will
-    // automatically handle clicks on the Home/Up button, so long
-    // as you specify a parent activity in AndroidManifest.xml.
-    int id = item.getItemId();
-
-    //noinspection SimplifiableIfStatement
-    if (id == R.id.action_settings) {
-      return true;
+    if (navFragment == null) {
+      navFragment = (NavigationDrawerFragment) getSupportFragmentManager()
+          .findFragmentById(R.id.left_drawer);
     }
 
-    return super.onOptionsItemSelected(item);
+
+    if (mapFragment == null) {
+      mapFragment = (RetainedMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+    }
+    mapFragment.fetchRoutes();
+  }
+
+  @Override
+  protected void onResume() {
+    super.onResume();
+    mapFragment.setUpMapIfNeeded();
+  }
+
+  @Override
+  public void onRoutesReady(List<Route> routes) {
+    String[] routeNames = new String[routes.size()];
+    for (int i = 0; i < routes.size(); i++) {
+      routeNames[i] = routes.get(i).getName();
+    }
+    navFragment.setRouteNames(routeNames);
+  }
+
+  @Override
+  public void onStopsReady(List<Stop> stops) {
+    mapFragment.showStops(stops);
+  }
+
+  @Override
+  public void onRouteSelected(String routeName) {
+    currentRoute = new Route(routeName);
+    loadingView.setVisibility(View.VISIBLE);
+    mapFragment.fetchStops(currentRoute);
+    mapFragment.showBuses(currentRoute);
+  }
+
+  @Override
+  public void onClick(View v) {
+    if (navFragment != null) {
+      View view = navFragment.getView();
+      if (view != null) {
+        if (mDrawerLayout.isDrawerOpen(view)) {
+          closeDrawer();
+        } else {
+          mDrawerLayout.openDrawer(view);
+        }
+      }
+    }
+  }
+
+  @Override
+  public void closeDrawer() {
+    if (navFragment != null) {
+      View view = navFragment.getView();
+      if (view != null) {
+        mDrawerLayout.closeDrawer(navFragment.getView());
+      }
+    }
+  }
+
+  @Override
+  public void hideLoadingIcon() {
+    loadingView.setVisibility(View.INVISIBLE);
   }
 }

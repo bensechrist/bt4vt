@@ -14,28 +14,27 @@
  * limitations under the License.
  */
 
-package com.bt4vt.repository.domain;
+package com.bt4vt;
 
-import org.simpleframework.xml.ElementList;
-import org.simpleframework.xml.Root;
+import android.app.Application;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.bt4vt.repository.module.TransitModule;
+
+import roboguice.RoboGuice;
 
 /**
- * Document wrapper for {@link Stop} objects.
+ * Custom application
  *
  * @author Ben Sechrist
  */
-@Root
-public class DocumentElement {
+public class App extends Application {
 
-  @ElementList(name = "ScheduledStops", inline = true, required = false)
-  public List<Stop> stops = new ArrayList<>();
+  @Override
+  public void onCreate() {
+    super.onCreate();
 
-  @ElementList(name = "NextDepartures", inline = true, required = false)
-  public List<Departure> departures = new ArrayList<>();
-
-  @ElementList(name = "LatestInfoTable", inline = true, required = false)
-  public List<Bus> buses = new ArrayList<>();
+    RoboGuice.getOrCreateBaseApplicationInjector(this,
+        RoboGuice.DEFAULT_STAGE,
+        RoboGuice.newDefaultRoboModule(this), new TransitModule());
+  }
 }

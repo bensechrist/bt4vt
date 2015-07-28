@@ -14,28 +14,21 @@
  * limitations under the License.
  */
 
-package com.bt4vt.repository.domain;
+package com.bt4vt.repository.module;
 
-import org.simpleframework.xml.ElementList;
-import org.simpleframework.xml.Root;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.bt4vt.repository.HttpBlacksburgTransitRepository;
+import com.bt4vt.repository.TransitRepository;
+import com.google.inject.Binder;
+import com.google.inject.Module;
 
 /**
- * Document wrapper for {@link Stop} objects.
+ * Module for the transit repository.
  *
  * @author Ben Sechrist
  */
-@Root
-public class DocumentElement {
-
-  @ElementList(name = "ScheduledStops", inline = true, required = false)
-  public List<Stop> stops = new ArrayList<>();
-
-  @ElementList(name = "NextDepartures", inline = true, required = false)
-  public List<Departure> departures = new ArrayList<>();
-
-  @ElementList(name = "LatestInfoTable", inline = true, required = false)
-  public List<Bus> buses = new ArrayList<>();
+public class TransitModule implements Module {
+  @Override
+  public void configure(Binder binder) {
+    binder.bind(TransitRepository.class).to(HttpBlacksburgTransitRepository.class);
+  }
 }

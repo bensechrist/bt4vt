@@ -26,6 +26,7 @@ import com.google.inject.Singleton;
 @Singleton
 public class RouteFactory {
   public Route createRoute(String routeName) {
-    return new Route(routeName);
+    String extractedRouteName = routeName.split(" - ", 2)[1];
+    return new Route(extractedRouteName);
   }
 }
