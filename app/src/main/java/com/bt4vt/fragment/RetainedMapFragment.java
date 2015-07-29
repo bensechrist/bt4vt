@@ -74,6 +74,8 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
 
   private TalkToActivity activity;
 
+  private Route currentRoute;
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     RoboGuice.getInjector(getActivity()).injectMembers(this);
@@ -83,15 +85,17 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
   }
 
   @Override
-  public void onPause() {
-    super.onPause();
-    // TODO: pause bus listener
+  public void onResume() {
+    super.onResume();
+    if (currentRoute != null) {
+      showBuses(currentRoute);
+    }
   }
 
   @Override
-  public void onResume() {
-    super.onResume();
-    // TODO: resume bus listener
+  public void onPause() {
+    super.onPause();
+    transitRepository.clearBusListeners();
   }
 
   @Override
@@ -215,6 +219,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
    * @param route the route
    */
   public void showBuses(Route route) {
+    this.currentRoute = route;
     clearBuses();
 
     transitRepository.registerBusListener(route, this);

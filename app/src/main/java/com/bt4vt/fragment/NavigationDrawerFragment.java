@@ -46,6 +46,8 @@ public class NavigationDrawerFragment extends RoboFragment implements AdapterVie
 
   private String[] routeNames;
 
+  private Integer selectedItem;
+
   private TalkToActivity activity;
 
   @Override
@@ -58,6 +60,12 @@ public class NavigationDrawerFragment extends RoboFragment implements AdapterVie
   public void onAttach(Activity activity) {
     super.onAttach(activity);
     this.activity = (TalkToActivity) activity;
+  }
+
+  @Override
+  public void onDetach() {
+    super.onDetach();
+    this.activity = null;
   }
 
   @Override
@@ -74,8 +82,13 @@ public class NavigationDrawerFragment extends RoboFragment implements AdapterVie
 
   @Override
   public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+    if ((selectedItem != null) && (position == selectedItem)) {
+      activity.closeDrawer();
+      return;
+    }
     if (routeNames != null) {
       mDrawerList.setItemChecked(position, true);
+      selectedItem = position;
       activity.closeDrawer();
 
       activity.onRouteSelected(routeNames[position]);
