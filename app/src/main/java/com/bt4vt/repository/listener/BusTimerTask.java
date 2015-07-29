@@ -43,6 +43,14 @@ public class BusTimerTask extends TimerTask {
     this.transitRepository = transitRepository;
   }
 
+  public void addListener(BusListener busListener) {
+    busListeners.add(busListener);
+  }
+
+  public void removeListener(BusListener busListener) {
+    busListeners.remove(busListener);
+  }
+
   @Override
   public void run() {
     final List<Bus> buses = transitRepository.getBusLocations(route);

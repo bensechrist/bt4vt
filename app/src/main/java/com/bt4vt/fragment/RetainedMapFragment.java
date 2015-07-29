@@ -95,7 +95,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
   @Override
   public void onPause() {
     super.onPause();
-    transitRepository.clearBusListeners();
+    transitRepository.clearBusListener(this);
   }
 
   @Override
@@ -222,6 +222,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
     this.currentRoute = route;
     clearBuses();
 
+    transitRepository.clearBusListener(this);
     transitRepository.registerBusListener(route, this);
   }
 

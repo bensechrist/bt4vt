@@ -82,6 +82,12 @@ public interface TransitRepository {
   void registerBusListener(Route route, BusListener busListener);
 
   /**
+   * Clears the <code>busListener</code>.
+   * @param busListener the listener
+   */
+  void clearBusListener(BusListener busListener);
+
+  /**
    * Clears all bus listeners.
    */
   void clearBusListeners();
