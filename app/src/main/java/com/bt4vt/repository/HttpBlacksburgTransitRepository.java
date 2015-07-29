@@ -46,7 +46,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * Http-based Blacksburg Transit implementation of {@link TransitRepository}.
@@ -69,7 +68,7 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
 
   private List<BusListener> busListeners = new ArrayList<>();
 
-  private TimerTask busTimerTask;
+  private BusTimerTask busTimerTask;
 
   private Timer timer = new Timer();
 
@@ -160,13 +159,23 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
 
   @Override
   public void registerBusListener(Route route, BusListener busListener) {
-    busListeners.clear();
     busListeners.add(busListener);
-    if (busTimerTask != null) {
-      busTimerTask.cancel();
+    if (busTimerTask == null) {
+      busTimerTask = new BusTimerTask(route, busListeners, this);
+      timer.scheduleAtFixedRate(busTimerTask, 0, 1000);
+    } else {
+      busTimerTask.addListener(busListener);
     }
-    busTimerTask = new BusTimerTask(route, busListeners, this);
-    timer.scheduleAtFixedRate(busTimerTask, 0, 1000);
+  }
+
+  @Override
+  public void clearBusListener(BusListener busListener) {
+    busListeners.remove(busListener);
+    if (busListeners.isEmpty()) {
+      clearBusListeners();
+    } else if (busTimerTask != null) {
+      busTimerTask.removeListener(busListener);
+    }
   }
 
   @Override
@@ -175,6 +184,7 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
       busTimerTask.cancel();
     }
     busListeners.clear();
+    busTimerTask = null;
   }
 
   private DocumentElement getDocumentElement(String documentString) throws Exception {

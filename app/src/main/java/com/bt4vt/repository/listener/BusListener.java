@@ -18,6 +18,7 @@ package com.bt4vt.repository.listener;
 
 import com.bt4vt.repository.domain.Bus;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -25,7 +26,7 @@ import java.util.List;
  *
  * @author Ben Sechrist
  */
-public interface BusListener {
+public interface BusListener extends Serializable {
 
   /**
    * Called when information is received about buses
