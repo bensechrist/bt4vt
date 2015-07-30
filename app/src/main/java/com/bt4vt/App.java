@@ -20,6 +20,7 @@ import android.app.Application;
 
 import com.bt4vt.repository.module.TransitModule;
 
+import org.acra.ACRA;
 import org.acra.ReportingInteractionMode;
 import org.acra.annotation.ReportsCrashes;
 
@@ -34,6 +35,8 @@ import roboguice.RoboGuice;
     mailTo = "bensechrist@gmail.com",
     mode = ReportingInteractionMode.DIALOG,
     resToastText = R.string.crash_toast_text,
+    resDialogIcon = R.drawable.bus,
+    resDialogTitle = R.string.app_name,
     resDialogText = R.string.crash_dialog_text,
     resDialogCommentPrompt = R.string.crash_dialog_comment_prompt
 )
@@ -47,5 +50,8 @@ public class App extends Application {
     RoboGuice.getOrCreateBaseApplicationInjector(this,
         RoboGuice.DEFAULT_STAGE,
         RoboGuice.newDefaultRoboModule(this), new TransitModule());
+
+    // Setup ACRA
+    ACRA.init(this);
   }
 }
