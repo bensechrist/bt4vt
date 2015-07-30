@@ -17,6 +17,8 @@
 package com.bt4vt.async;
 
 import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Looper;
 
 import com.bt4vt.repository.TransitRepository;
 import com.bt4vt.repository.domain.Route;
@@ -49,8 +51,8 @@ public class StopAsyncTask extends AsyncTask<Route, Integer, List<Stop>> {
       } else {
         return transitRepository.getStops(route);
       }
-    } catch (TransitRepositoryException e) {
-      callback.onException(e);
+    } catch (final TransitRepositoryException e) {
+      new Handler(Looper.getMainLooper()).post(new CallbackExceptionRunnable(callback, e));
       return null;
     }
   }
