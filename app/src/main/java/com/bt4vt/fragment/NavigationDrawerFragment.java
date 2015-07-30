@@ -24,7 +24,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.TextView;
 
 import com.bt4vt.R;
 
@@ -36,13 +35,16 @@ import roboguice.inject.InjectView;
  *
  * @author Ben Sechrist
  */
-public class NavigationDrawerFragment extends RoboFragment implements AdapterView.OnItemClickListener {
+public class NavigationDrawerFragment extends RoboFragment implements AdapterView.OnItemClickListener, View.OnClickListener {
 
   @InjectView(R.id.list_view)
   private ListView mDrawerList;
 
-  @InjectView(R.id.empty_routes_text)
-  private TextView emptyRoutesText;
+  @InjectView(R.id.empty_routes_view)
+  private View emptyRoutesView;
+
+  @InjectView(R.id.nav_loading_view)
+  private View navLoadingView;
 
   private String[] routeNames;
 
@@ -77,7 +79,8 @@ public class NavigationDrawerFragment extends RoboFragment implements AdapterVie
   public void onViewCreated(View view, Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
     mDrawerList.setOnItemClickListener(this);
-    mDrawerList.setEmptyView(emptyRoutesText);
+    emptyRoutesView.findViewById(R.id.refresh_routes_button).setOnClickListener(this);
+    navLoadingView.setVisibility(View.VISIBLE);
   }
 
   @Override
@@ -99,6 +102,15 @@ public class NavigationDrawerFragment extends RoboFragment implements AdapterVie
     this.routeNames = routeNames;
     mDrawerList.setAdapter(new ArrayAdapter<>(getActivity(),
         android.R.layout.simple_list_item_activated_1, this.routeNames));
+    navLoadingView.setVisibility(View.INVISIBLE);
+    mDrawerList.setEmptyView(emptyRoutesView);
+  }
+
+  @Override
+  public void onClick(View v) {
+    emptyRoutesView.setVisibility(View.INVISIBLE);
+    navLoadingView.setVisibility(View.VISIBLE);
+    activity.refreshRoutes();
   }
 
   /**
@@ -118,5 +130,10 @@ public class NavigationDrawerFragment extends RoboFragment implements AdapterVie
      * Closes the drawer.
      */
     void closeDrawer();
+
+    /**
+     * Tells the app to re-fetch the routes.
+     */
+    void refreshRoutes();
   }
 }

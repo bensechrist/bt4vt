@@ -20,7 +20,6 @@ import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
 import android.view.View;
 import android.widget.ImageButton;
-import android.widget.RelativeLayout;
 
 import com.bt4vt.fragment.NavigationDrawerFragment;
 import com.bt4vt.fragment.RetainedMapFragment;
@@ -48,8 +47,8 @@ public class MainActivity extends RoboFragmentActivity implements
   @InjectView(R.id.button_nav_drawer)
   private ImageButton navButton;
 
-  @InjectView(R.id.loading_view)
-  private RelativeLayout loadingView;
+  @InjectView(R.id.main_loading_view)
+  private View mainLoadingView;
 
   private Route currentRoute;
 
@@ -98,7 +97,7 @@ public class MainActivity extends RoboFragmentActivity implements
   @Override
   public void onRouteSelected(String routeName) {
     currentRoute = new Route(routeName);
-    loadingView.setVisibility(View.VISIBLE);
+    mainLoadingView.setVisibility(View.VISIBLE);
     mapFragment.fetchStops(currentRoute);
     mapFragment.showBuses(currentRoute);
   }
@@ -128,7 +127,12 @@ public class MainActivity extends RoboFragmentActivity implements
   }
 
   @Override
+  public void refreshRoutes() {
+    mapFragment.fetchRoutes();
+  }
+
+  @Override
   public void hideLoadingIcon() {
-    loadingView.setVisibility(View.INVISIBLE);
+    mainLoadingView.setVisibility(View.INVISIBLE);
   }
 }
