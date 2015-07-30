@@ -99,9 +99,10 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
   public List<Stop> getStops(Route route) throws TransitRepositoryException {
     List<Stop> stops = new ArrayList<>();
 
+    final String routeName = (route != null) ? route.getName() : "";
+    String stopsString = fetchStops(routeName);
+
     try {
-      final String routeName = (route != null) ? route.getName() : "";
-      String stopsString = fetchStops(routeName);
       DocumentElement doc = getDocumentElement(stopsString);
       stops.addAll(doc.stops);
 
@@ -112,22 +113,23 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
   }
 
   @Override
-  public List<Departure> getNextDepartures(Stop stop) {
+  public List<Departure> getNextDepartures(Stop stop) throws TransitRepositoryException {
     return getNextDepartures(stop, null);
   }
 
   @Override
-  public List<Departure> getNextDepartures(Stop stop, Route route) {
+  public List<Departure> getNextDepartures(Stop stop, Route route) throws TransitRepositoryException {
     List<Departure> departures = new ArrayList<>();
 
+    final String stopId;
+    if (route == null) {
+      stopId = String.valueOf(stop.getCode());
+    } else {
+      stopId = String.format("%s,%s", stop.getCode(), route.getName());
+    }
+    String departuresString = fetchDepartures(stopId);
+
     try {
-      final String stopId;
-      if (route == null) {
-        stopId = String.valueOf(stop.getCode());
-      } else {
-        stopId = String.format("%s,%s", stop.getCode(), route.getName());
-      }
-      String departuresString = fetchDepartures(stopId);
       DocumentElement doc = getDocumentElement(departuresString);
       if (doc.departures.size() > 1) {
         departures.addAll(doc.departures);
@@ -140,11 +142,12 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
   }
 
   @Override
-  public List<Bus> getBusLocations(Route route) {
+  public List<Bus> getBusLocations(Route route) throws TransitRepositoryException {
     List<Bus> buses = new ArrayList<>();
 
+    String busesString = fetchBuses(route.getName());
+
     try {
-      String busesString = fetchBuses(route.getName());
       if (busesString.isEmpty()) {
         return buses;
       }
@@ -312,21 +315,21 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
   }
 
   private static String unescapeJava(String escaped) {
-    if(!escaped.contains("\\u"))
+    if (!escaped.contains("\\u"))
       return escaped;
 
-    String processed="";
+    String processed = "";
 
-    int position=escaped.indexOf("\\u");
-    while(position!=-1) {
-      if(position!=0)
-        processed+=escaped.substring(0,position);
-      String token=escaped.substring(position+2,position+6);
-      escaped=escaped.substring(position+6);
-      processed+=(char)Integer.parseInt(token,16);
-      position=escaped.indexOf("\\u");
+    int position = escaped.indexOf("\\u");
+    while (position != -1) {
+      if (position != 0)
+        processed += escaped.substring(0, position);
+      String token = escaped.substring(position + 2, position + 6);
+      escaped = escaped.substring(position + 6);
+      processed += (char) Integer.parseInt(token, 16);
+      position = escaped.indexOf("\\u");
     }
-    processed+=escaped;
+    processed += escaped;
 
     return processed;
   }

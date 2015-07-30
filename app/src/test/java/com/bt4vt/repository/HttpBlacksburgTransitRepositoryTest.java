@@ -54,18 +54,21 @@ public class HttpBlacksburgTransitRepositoryTest {
 
     List<Stop> stops = new ArrayList<>();
     for (Route route : routes) {
-      stops.addAll(repository.getStops(route));
+      List<Stop> routeStops = repository.getStops(route);
+      stops.addAll(routeStops);
       assertNotNull(stops);
       assertThat(stops.size(), greaterThan(0));
+
+      for (Stop stop : routeStops) {
+        List<Departure> departuresForRoute = repository.getNextDepartures(stop, route);
+        assertNotNull(departuresForRoute);
+      }
     }
 
     for (Stop stop : stops) {
       List<Departure> departures = repository.getNextDepartures(stop);
       assertNotNull(departures);
     }
-
-    List<Departure> departuresForRoute = repository.getNextDepartures(stops.get(0), routes.get(0));
-    assertNotNull(departuresForRoute);
   }
 
   @Test
