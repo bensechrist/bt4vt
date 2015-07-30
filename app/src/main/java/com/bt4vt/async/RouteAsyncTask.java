@@ -17,6 +17,8 @@
 package com.bt4vt.async;
 
 import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Looper;
 
 import com.bt4vt.repository.TransitRepository;
 import com.bt4vt.repository.domain.Route;
@@ -25,9 +27,11 @@ import com.bt4vt.repository.exception.TransitRepositoryException;
 import java.util.List;
 
 /**
+ * Fetches routes on a separate thread.
+ *
  * @author Ben Sechrist
  */
-public class RouteAsyncTask extends AsyncTask<Integer, Integer, List<Route>> {
+public class RouteAsyncTask extends AsyncTask<Void, Integer, List<Route>> {
 
   private final TransitRepository transitRepository;
   private final AsyncCallback<List<Route>> callback;
@@ -38,11 +42,11 @@ public class RouteAsyncTask extends AsyncTask<Integer, Integer, List<Route>> {
   }
 
   @Override
-  protected List<Route> doInBackground(Integer... params) {
+  protected List<Route> doInBackground(Void... params) {
     try {
       return transitRepository.getRoutes();
-    } catch (TransitRepositoryException e) {
-      callback.onException(e);
+    } catch (final TransitRepositoryException e) {
+      new Handler(Looper.getMainLooper()).post(new CallbackExceptionRunnable(callback, e));
       return null;
     }
   }
