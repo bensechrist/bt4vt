@@ -51,20 +51,10 @@
   </RelativeLayout>
 
   <!-- Loading View -->
-  <RelativeLayout
-    android:id="@+id/loading_view"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#12000000"
-    android:visibility="invisible">
-
-    <android.support.v4.widget.ContentLoadingProgressBar
-      style="?android:attr/progressBarStyleLarge"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:layout_centerInParent="true"/>
-
-  </RelativeLayout>
+  <include
+    android:id="@+id/main_loading_view"
+    layout="@layout/loading_icon"
+    android:visibility="invisible"/>
 
   <!-- The navigation drawer -->
   <fragment

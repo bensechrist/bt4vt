@@ -27,7 +27,6 @@ import android.widget.Toast;
 
 import com.bt4vt.R;
 import com.bt4vt.async.AsyncCallback;
-import com.bt4vt.async.RouteAsyncTask;
 import com.bt4vt.async.StopAsyncTask;
 import com.bt4vt.repository.TransitRepository;
 import com.bt4vt.repository.domain.Bus;
@@ -140,22 +139,6 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
     }
   }
 
-  public void fetchRoutes() {
-    RouteAsyncTask task = new RouteAsyncTask(transitRepository, new AsyncCallback<List<Route>>() {
-      @Override
-      public void onSuccess(List<Route> routes) {
-        activity.onRoutesReady(routes);
-      }
-
-      @Override
-      public void onException(Exception e) {
-        e.printStackTrace();
-        Toast.makeText(getActivity(), "Error getting routes", Toast.LENGTH_SHORT).show();
-      }
-    });
-    task.execute();
-  }
-
   /**
    * This gets all stops on the given <code>route</code>.
    * If route is null it will get all stops.
@@ -171,6 +154,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
 
       @Override
       public void onException(Exception e) {
+        activity.hideLoadingIcon();
         e.printStackTrace();
         Toast.makeText(getActivity(), "Error getting stops for route", Toast.LENGTH_SHORT).show();
       }
@@ -186,31 +170,18 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
   public void showStops(List<Stop> stops) {
     clearStops();
 
-    int delay = 50;
-    final LatLngBounds.Builder builder = new LatLngBounds.Builder();
-    Handler handler = new Handler(Looper.getMainLooper());
-    for (int i = 0; i < stops.size(); i++) {
-      final Stop stop = stops.get(i);
-      handler.postDelayed(new Runnable() {
-        @Override
-        public void run() {
-          Marker marker = mMap.addMarker(getStopMarker(stop));
-          currentStopMarkers.add(marker);
-          builder.include(marker.getPosition());
-        }
-      }, delay * i);
+    LatLngBounds.Builder builder = new LatLngBounds.Builder();
+    for (Stop stop : stops) {
+      Marker marker = mMap.addMarker(getStopMarker(stop));
+      currentStopMarkers.add(marker);
+      builder.include(marker.getPosition());
     }
-    handler.postDelayed(new Runnable() {
-      @Override
-      public void run() {
-        LatLngBounds bounds = builder.build();
-        int padding = 100; // offset from edges of the map in pixels
-        CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
-        mMap.animateCamera(cu);
+    LatLngBounds bounds = builder.build();
+    int padding = 100; // offset from edges of the map in pixels
+    CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+    mMap.animateCamera(cu);
 
-        activity.hideLoadingIcon();
-      }
-    }, delay * stops.size());
+    activity.hideLoadingIcon();
   }
 
   /**
@@ -258,6 +229,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
 
   /**
    * This draws the pattern from the given bus on the map.
+   *
    * @param bus the bus
    */
   private void showRoutePattern(Bus bus) {
@@ -268,11 +240,11 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
     PolylineOptions polylineOptions = new PolylineOptions();
     List<LatLng> latLngPoints = new ArrayList<>();
     String[] patternPoints = bus.getPatternPoints();
-    for (int i=0; i<patternPoints.length; i = i + 2) {
+    for (int i = 0; i < patternPoints.length; i = i + 2) {
       String point1 = patternPoints[i];
       String point2 = (patternPoints.length < i) ?
           patternPoints[0] :
-          patternPoints[i+1];
+          patternPoints[i + 1];
       latLngPoints.add(new LatLng(Double.valueOf(point1), Double.valueOf(point2)));
     }
     polylineOptions.addAll(latLngPoints);
@@ -351,13 +323,6 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
    * @author Ben Sechrist
    */
   public interface TalkToActivity {
-
-    /**
-     * Gives the routes that were fetched.
-     *
-     * @param routes the routes
-     */
-    void onRoutesReady(List<Route> routes);
 
     /**
      * Gives the stops that were fetched.

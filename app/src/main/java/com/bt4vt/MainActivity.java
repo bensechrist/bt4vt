@@ -50,8 +50,6 @@ public class MainActivity extends RoboFragmentActivity implements
   @InjectView(R.id.main_loading_view)
   private View mainLoadingView;
 
-  private Route currentRoute;
-
   private RetainedMapFragment mapFragment;
 
   private NavigationDrawerFragment navFragment;
@@ -71,7 +69,7 @@ public class MainActivity extends RoboFragmentActivity implements
     if (mapFragment == null) {
       mapFragment = (RetainedMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
     }
-    mapFragment.fetchRoutes();
+    navFragment.fetchRoutes();
   }
 
   @Override
@@ -81,22 +79,13 @@ public class MainActivity extends RoboFragmentActivity implements
   }
 
   @Override
-  public void onRoutesReady(List<Route> routes) {
-    String[] routeNames = new String[routes.size()];
-    for (int i = 0; i < routes.size(); i++) {
-      routeNames[i] = routes.get(i).getName();
-    }
-    navFragment.setRouteNames(routeNames);
-  }
-
-  @Override
   public void onStopsReady(List<Stop> stops) {
     mapFragment.showStops(stops);
   }
 
   @Override
   public void onRouteSelected(String routeName) {
-    currentRoute = new Route(routeName);
+    Route currentRoute = new Route(routeName);
     mainLoadingView.setVisibility(View.VISIBLE);
     mapFragment.fetchStops(currentRoute);
     mapFragment.showBuses(currentRoute);
@@ -124,11 +113,6 @@ public class MainActivity extends RoboFragmentActivity implements
         mDrawerLayout.closeDrawer(navFragment.getView());
       }
     }
-  }
-
-  @Override
-  public void refreshRoutes() {
-    mapFragment.fetchRoutes();
   }
 
   @Override
