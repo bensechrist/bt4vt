@@ -40,4 +40,30 @@ public class Departure {
   public String getNotes() {
     return notes;
   }
+
+  @Override
+  public int hashCode() {
+    String[] array = new String[]{routeName, notes};
+    int hashCode = 1;
+    for (Object element : array) {
+      int elementHashCode;
+
+      if (element == null) {
+        elementHashCode = 0;
+      } else {
+        elementHashCode = (element).hashCode();
+      }
+      hashCode = 31 * hashCode + elementHashCode;
+    }
+    return hashCode;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) return true;
+    if (!(o instanceof Departure)) return false;
+    Departure that = (Departure) o;
+    return this.routeName.equals(that.routeName) &&
+        this.notes.equals(that.notes);
+  }
 }

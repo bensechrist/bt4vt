@@ -53,6 +53,6 @@ public class Route implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("(%s)", getName());
+    return String.format("%s", getName());
   }
 }

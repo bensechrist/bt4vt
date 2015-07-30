@@ -19,10 +19,10 @@ package com.bt4vt.repository.listener;
 import com.bt4vt.repository.TransitRepository;
 import com.bt4vt.repository.domain.Bus;
 import com.bt4vt.repository.domain.Route;
+import com.bt4vt.repository.exception.TransitRepositoryException;
 
 import java.util.List;
 import java.util.TimerTask;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Bus-based implementation of {@link TimerTask}.
@@ -34,8 +34,6 @@ public class BusTimerTask extends TimerTask {
   private final Route route;
   private final List<BusListener> busListeners;
   private final TransitRepository transitRepository;
-
-  private final AtomicBoolean isCanceled = new AtomicBoolean(false);
 
   public BusTimerTask(Route route, List<BusListener> busListeners, TransitRepository transitRepository) {
     this.route = route;
@@ -53,9 +51,13 @@ public class BusTimerTask extends TimerTask {
 
   @Override
   public void run() {
-    final List<Bus> buses = transitRepository.getBusLocations(route);
-    for (BusListener busListener : busListeners) {
-      busListener.onUpdateBuses(buses);
+    try {
+      final List<Bus> buses = transitRepository.getBusLocations(route);
+      for (BusListener busListener : busListeners) {
+        busListener.onUpdateBuses(buses);
+      }
+    } catch (TransitRepositoryException e) {
+      e.printStackTrace();
     }
   }
 }

@@ -56,7 +56,7 @@ public interface TransitRepository {
    * @param stop the stop to get departures for
    * @return a list of departues
    */
-  List<Departure> getNextDepartures(Stop stop);
+  List<Departure> getNextDepartures(Stop stop) throws TransitRepositoryException;
 
   /**
    * Returns a list of the next departures for the given route at a stop.
@@ -64,14 +64,14 @@ public interface TransitRepository {
    * @param route the route to get departures for
    * @return a list of departues
    */
-  List<Departure> getNextDepartures(Stop stop, Route route);
+  List<Departure> getNextDepartures(Stop stop, Route route) throws TransitRepositoryException;
 
   /**
    * Returns a list of the current bus locations for the <code>route</code>.
    * @param route the route
    * @return the bus locations
    */
-  List<Bus> getBusLocations(Route route);
+  List<Bus> getBusLocations(Route route) throws TransitRepositoryException;
 
   /**
    * Registers the <code>busListener</code> to be called every time new

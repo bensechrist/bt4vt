@@ -60,7 +60,7 @@ public class Bus {
   @Element(name = "PatternColor")
   private String patternColor;
 
-  @Element(name = "TripStartTime")
+  @Element(name = "TripStartTime", required = false)
   private String tripStartTime;
 
   @Element(name = "LastStopName")
@@ -75,13 +75,13 @@ public class Bus {
   @Element(name = "IsTimePoint")
   private String isTimePointString;
 
-  @Element(name = "LatestEvent")
+  @Element(name = "LatestEvent", required = false)
   private String latestEventTime;
 
-  @Element(name = "LatestRSAEvent")
+  @Element(name = "LatestRSAEvent", required = false)
   private String latestRSAEvent;
 
-  @Element(name = "Direction")
+  @Element(name = "Direction", required = false)
   private Integer direction;
 
   @Element(name = "Speed")

@@ -39,6 +39,14 @@ public class Stop {
   @Element(name = "Longitude")
   private Double longitude;
 
+  private Stop(String name, Integer code) {
+    this.name = name;
+    this.code = code;
+  }
+
+  public Stop() {
+  }
+
   public String getName() {
     return name;
   }
@@ -73,6 +81,15 @@ public class Stop {
 
   @Override
   public String toString() {
-    return String.format("(%s - %s)", getName(), getCode());
+    return String.format("%s - %d", getName(), getCode());
+  }
+
+  public static Stop valueOf(String string) {
+    String[] split = string.split(" - ");
+    if (split.length != 2) {
+      throw new IllegalArgumentException("String improperly formatted: " + string);
+    }
+
+    return new Stop(split[0], Integer.valueOf(split[1]));
   }
 }
