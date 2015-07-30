@@ -24,8 +24,16 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.bt4vt.R;
+import com.bt4vt.async.AsyncCallback;
+import com.bt4vt.async.RouteAsyncTask;
+import com.bt4vt.repository.TransitRepository;
+import com.bt4vt.repository.domain.Route;
+import com.google.inject.Inject;
+
+import java.util.List;
 
 import roboguice.fragment.RoboFragment;
 import roboguice.inject.InjectView;
@@ -36,6 +44,9 @@ import roboguice.inject.InjectView;
  * @author Ben Sechrist
  */
 public class NavigationDrawerFragment extends RoboFragment implements AdapterView.OnItemClickListener, View.OnClickListener {
+
+  @Inject
+  private TransitRepository transitRepository;
 
   @InjectView(R.id.list_view)
   private ListView mDrawerList;
@@ -80,7 +91,6 @@ public class NavigationDrawerFragment extends RoboFragment implements AdapterVie
     super.onViewCreated(view, savedInstanceState);
     mDrawerList.setOnItemClickListener(this);
     emptyRoutesView.findViewById(R.id.refresh_routes_button).setOnClickListener(this);
-    navLoadingView.setVisibility(View.VISIBLE);
   }
 
   @Override
@@ -98,19 +108,40 @@ public class NavigationDrawerFragment extends RoboFragment implements AdapterVie
     }
   }
 
-  public void setRouteNames(String[] routeNames) {
+  @Override
+  public void onClick(View v) {
+    fetchRoutes();
+  }
+
+  public void fetchRoutes() {
+    emptyRoutesView.setVisibility(View.INVISIBLE);
+    navLoadingView.setVisibility(View.VISIBLE);
+    RouteAsyncTask task = new RouteAsyncTask(transitRepository, new AsyncCallback<List<Route>>() {
+      @Override
+      public void onSuccess(List<Route> routes) {
+        String[] routeNames = new String[routes.size()];
+        for (int i = 0; i < routes.size(); i++) {
+          routeNames[i] = routes.get(i).getName();
+        }
+        setRouteNames(routeNames);
+      }
+
+      @Override
+      public void onException(Exception e) {
+        setRouteNames(new String[]{});
+        e.printStackTrace();
+        Toast.makeText(getActivity(), "Error getting routes", Toast.LENGTH_SHORT).show();
+      }
+    });
+    task.execute();
+  }
+
+  private void setRouteNames(String[] routeNames) {
     this.routeNames = routeNames;
     mDrawerList.setAdapter(new ArrayAdapter<>(getActivity(),
         android.R.layout.simple_list_item_activated_1, this.routeNames));
     navLoadingView.setVisibility(View.INVISIBLE);
     mDrawerList.setEmptyView(emptyRoutesView);
-  }
-
-  @Override
-  public void onClick(View v) {
-    emptyRoutesView.setVisibility(View.INVISIBLE);
-    navLoadingView.setVisibility(View.VISIBLE);
-    activity.refreshRoutes();
   }
 
   /**
@@ -130,10 +161,5 @@ public class NavigationDrawerFragment extends RoboFragment implements AdapterVie
      * Closes the drawer.
      */
     void closeDrawer();
-
-    /**
-     * Tells the app to re-fetch the routes.
-     */
-    void refreshRoutes();
   }
 }
