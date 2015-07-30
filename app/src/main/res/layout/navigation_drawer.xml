@@ -15,25 +15,57 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent">
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#fff">
 
   <ListView
     android:id="@+id/list_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#fff"
     android:choiceMode="singleChoice"
-    android:divider="@android:color/transparent"
-    android:dividerHeight="0dp"/>
+    android:divider="@android:color/darker_gray"
+    android:dividerHeight="@dimen/nav_list_divider_height"/>
 
-  <TextView
-    android:id="@+id/empty_routes_text"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:gravity="center"
-    android:text="@string/empty_routes_text"/>
+  <FrameLayout
+    android:id="@+id/empty_routes_view"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:visibility="invisible">
 
-</LinearLayout>
+    <TextView
+      style="@android:style/TextAppearance.Large"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="center_horizontal|top"
+      android:layout_marginTop="@dimen/activity_vertical_margin"
+      android:text="@string/empty_routes_text"/>
+
+    <TextView
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="center"
+      android:layout_marginBottom="40dp"
+      android:text="@string/empty_routes_retry"
+      android:textSize="18sp"/>
+
+    <ImageButton
+      android:id="@+id/refresh_routes_button"
+      style="?android:borderlessButtonStyle"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="center"
+      android:background="@android:color/darker_gray"
+      android:src="@android:drawable/ic_popup_sync"/>
+
+  </FrameLayout>
+
+  <!-- Loading View -->
+  <include
+    android:id="@+id/nav_loading_view"
+    layout="@layout/loading_icon"
+    android:visibility="invisible"/>
+
+</RelativeLayout>

@@ -19,8 +19,11 @@
 
   <string name="navigation_drawer_open">Open navigation drawer</string>
   <string name="navigation_drawer_close">Close navigation drawer</string>
-  <string name="empty_routes_text">No Routes</string>
+  <string name="empty_routes_text">No Routes Found</string>
   <string name="crash_toast_text">BT4VT has stopped</string>
   <string name="crash_dialog_comment_prompt">Describe what you were doing when the application crashed</string>
   <string name="crash_dialog_text">An unexpected error occured. Please help us out by sending us error data.</string>
+  <string name="stop_marker_snippet">Click to view scheduled departures</string>
+  <string name="dialog_scheduled_departures_title">Scheduled Departures</string>
+  <string name="empty_routes_retry">Retry</string>
 </resources>
