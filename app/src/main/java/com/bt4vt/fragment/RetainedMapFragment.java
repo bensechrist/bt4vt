@@ -17,7 +17,6 @@
 package com.bt4vt.fragment;
 
 import android.app.Activity;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -294,12 +293,15 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
    * @return the marker options
    */
   private MarkerOptions getStopMarker(Stop stop) {
-    Bitmap iconBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.bus_stop_icon);
+    BitmapFactory.Options opts = new BitmapFactory.Options();
+    opts.inSampleSize = 6;
     return new MarkerOptions()
         .position(new LatLng(stop.getLatitude(), stop.getLongitude()))
-        .title(stop.getName())
-        .icon(BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(iconBitmap,
-            iconBitmap.getScaledWidth(75), iconBitmap.getScaledHeight(75), true)));
+        // DO NOT CHANGE TITLE: Title being used on click to retrieve scheduled departures
+        .title(stop.toString())
+        .snippet(stopMarkerSnippet)
+        .icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getResources(),
+            R.drawable.bus_stop_icon, opts)));
   }
 
   /**
@@ -309,12 +311,13 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
    * @return the marker options
    */
   private MarkerOptions getBusMarker(Bus bus) {
-    Bitmap iconBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.bus);
+    BitmapFactory.Options opts = new BitmapFactory.Options();
+    opts.inSampleSize = 12;
     return new MarkerOptions()
         .position(new LatLng(bus.getLatitude(), bus.getLongitude()))
         .title(String.format("%d passengers", bus.getPassengerLoad()))
-        .icon(BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(iconBitmap,
-            iconBitmap.getScaledWidth(30), iconBitmap.getScaledHeight(30), true)));
+        .icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getResources(),
+            R.drawable.bus, opts)));
   }
 
   /**
