@@ -17,7 +17,7 @@
 package com.bt4vt.repository;
 
 import com.bt4vt.repository.domain.Bus;
-import com.bt4vt.repository.domain.Departure;
+import com.bt4vt.repository.domain.NextDeparture;
 import com.bt4vt.repository.domain.Route;
 import com.bt4vt.repository.domain.RouteFactory;
 import com.bt4vt.repository.domain.Stop;
@@ -37,9 +37,9 @@ import static org.hamcrest.Matchers.greaterThan;
  *
  * @author Ben Sechrist
  */
-public class HttpBlacksburgTransitRepositoryTest {
+public class FirebaseBlacksburgTransitRepositoryTest {
 
-  private HttpBlacksburgTransitRepository repository = new HttpBlacksburgTransitRepository();
+  private HttpBlacksburgTransitRepository repository = new FirebaseBlacksburgTransitRepository();
 
   @Before
   public void setUp() throws Exception {
@@ -60,22 +60,25 @@ public class HttpBlacksburgTransitRepositoryTest {
       assertThat(stops.size(), greaterThan(0));
 
       for (Stop stop : routeStops) {
-        List<Departure> departuresForRoute = repository.getNextDepartures(stop, route);
-        assertNotNull(departuresForRoute);
+        List<NextDeparture> nextDeparturesForRoute = repository.getNextDepartures(stop, route);
+        assertNotNull(nextDeparturesForRoute);
       }
-    }
-
-    for (Stop stop : stops) {
-      List<Departure> departures = repository.getNextDepartures(stop);
-      assertNotNull(departures);
     }
   }
 
   @Test
-  public void testGetStops() throws Exception {
+  public void testGetStopsDepartures() throws Exception {
     List<Stop> stops = repository.getStops();
     assertNotNull(stops);
     assertThat(stops.size(), greaterThan(0));
+
+    for (Stop stop : stops) {
+      List<NextDeparture> nextDepartures = repository.getNextDepartures(stop);
+      assertNotNull(nextDepartures);
+      for (NextDeparture nd : nextDepartures) {
+        assertNotNull(nd.getDepartures());
+      }
+    }
   }
 
   @Test
@@ -88,5 +91,10 @@ public class HttpBlacksburgTransitRepositoryTest {
       List<Bus> buses = repository.getBusLocations(route);
       assertNotNull(buses);
     }
+  }
+
+  @Test
+  public void testFavorites() throws Exception {
+
   }
 }

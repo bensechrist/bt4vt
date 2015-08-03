@@ -95,6 +95,10 @@ public class NavigationDrawerFragment extends RoboFragment implements AdapterVie
 
   @Override
   public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+    if (activity.isLoadingContent()) {
+      Toast.makeText(getActivity(), "Waiting on other content to load first", Toast.LENGTH_SHORT).show();
+      return;
+    }
     if ((selectedItem != null) && (position == selectedItem)) {
       activity.closeDrawer();
       return;
@@ -161,5 +165,11 @@ public class NavigationDrawerFragment extends RoboFragment implements AdapterVie
      * Closes the drawer.
      */
     void closeDrawer();
+
+    /**
+     * Returns whether the activity is currently loading something else.
+     * @return true if loading in progress, false otherwise
+     */
+    boolean isLoadingContent();
   }
 }
