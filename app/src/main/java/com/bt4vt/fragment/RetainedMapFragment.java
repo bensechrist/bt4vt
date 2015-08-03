@@ -138,6 +138,10 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
     }
   }
 
+  public void setCurrentRoute(Route currentRoute) {
+    this.currentRoute = currentRoute;
+  }
+
   /**
    * This gets all stops on the given <code>route</code>.
    * If route is null it will get all stops.
@@ -167,8 +171,6 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
    * @param stops the stops
    */
   public void showStops(List<Stop> stops) {
-    clearStops();
-
     LatLngBounds.Builder builder = new LatLngBounds.Builder();
     for (Stop stop : stops) {
       Marker marker = mMap.addMarker(getStopMarker(stop));
@@ -189,10 +191,6 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
    * @param route the route
    */
   public void showBuses(Route route) {
-    this.currentRoute = route;
-    clearBuses();
-
-    transitRepository.clearBusListener(this);
     transitRepository.registerBusListener(route, this);
   }
 
@@ -206,8 +204,6 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
       @Override
       public void run() {
         if (currentBusMarkers.size() != buses.size()) {
-          clearBuses();
-
           for (Bus bus : buses) {
             Marker marker = mMap.addMarker(getBusMarker(bus));
             currentBusMarkers.add(marker);
@@ -226,16 +222,21 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
     });
   }
 
+  public void clearMap() {
+    if (mMap != null) {
+      clearStops();
+      clearBuses();
+      clearRoute();
+      mMap.clear();
+    }
+  }
+
   /**
    * This draws the pattern from the given bus on the map.
    *
    * @param bus the bus
    */
   private void showRoutePattern(Bus bus) {
-    if (currentRoutePattern != null) {
-      currentRoutePattern.remove();
-    }
-
     PolylineOptions polylineOptions = new PolylineOptions();
     List<LatLng> latLngPoints = new ArrayList<>();
     String[] patternPoints = bus.getPatternPoints();
@@ -275,7 +276,16 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
    * Removes all bus markers from the map.
    */
   private void clearBuses() {
+    transitRepository.clearBusListener(this);
     removeMarkers(currentBusMarkers);
+  }
+
+  private void clearRoute() {
+    if (currentRoutePattern != null) {
+      currentRoutePattern.remove();
+    }
+    currentRoutePattern = null;
+    currentRoute = null;
   }
 
   private void removeMarkers(List<Marker> markers) {

@@ -87,6 +87,8 @@ public class MainActivity extends RoboFragmentActivity implements
   public void onRouteSelected(String routeName) {
     Route currentRoute = new Route(routeName);
     mainLoadingView.setVisibility(View.VISIBLE);
+    mapFragment.clearMap();
+    mapFragment.setCurrentRoute(currentRoute);
     mapFragment.fetchStops(currentRoute);
     mapFragment.showBuses(currentRoute);
   }
