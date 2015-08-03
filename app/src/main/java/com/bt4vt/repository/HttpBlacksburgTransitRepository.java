@@ -173,6 +173,9 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
 
   @Override
   public void clearBusListener(BusListener busListener) {
+    if (busTimerTask != null) {
+      busTimerTask.awaitTermination();
+    }
     busListeners.remove(busListener);
     if (busListeners.isEmpty()) {
       clearBusListeners();
@@ -184,6 +187,7 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
   @Override
   public void clearBusListeners() {
     if (busTimerTask != null) {
+      busTimerTask.awaitTermination();
       busTimerTask.cancel();
     }
     busListeners.clear();

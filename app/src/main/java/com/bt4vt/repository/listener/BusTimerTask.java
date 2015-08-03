@@ -23,6 +23,10 @@ import com.bt4vt.repository.exception.TransitRepositoryException;
 
 import java.util.List;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Bus-based implementation of {@link TimerTask}.
@@ -30,6 +34,10 @@ import java.util.TimerTask;
  * @author Ben Sechrist
  */
 public class BusTimerTask extends TimerTask {
+
+  private final Lock lock = new ReentrantLock();
+  private final Condition condition = lock.newCondition();
+  private AtomicBoolean running = new AtomicBoolean(false);
 
   private final Route route;
   private final List<BusListener> busListeners;
@@ -51,6 +59,7 @@ public class BusTimerTask extends TimerTask {
 
   @Override
   public void run() {
+    running.set(true);
     try {
       final List<Bus> buses = transitRepository.getBusLocations(route);
       for (BusListener busListener : busListeners) {
@@ -58,6 +67,27 @@ public class BusTimerTask extends TimerTask {
       }
     } catch (TransitRepositoryException e) {
       e.printStackTrace();
+    } finally {
+      running.set(false);
+      lock.lock();
+      try {
+        condition.signalAll();
+      } finally {
+        lock.unlock();
+      }
+    }
+  }
+
+  public void awaitTermination() {
+    if (running.get()) {
+      lock.lock();
+      try {
+        condition.await();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      } finally {
+        lock.unlock();
+      }
     }
   }
 }
