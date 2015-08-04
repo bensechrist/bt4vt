@@ -195,7 +195,9 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
   @Override
   public void onInfoWindowClick(Marker marker) {
     if (currentStopMarkers.contains(marker)) {
-      ScheduledDeparturesDialogFragment.newInstance(Stop.valueOf(marker.getTitle()), currentRoute)
+      Stop stop = Stop.valueOf(marker.getTitle());
+      stop.setLatLng(marker.getPosition());
+      ScheduledDeparturesDialogFragment.newInstance(stop, currentRoute)
           .show(getFragmentManager(), DEPARTURES_DIALOG_TAG);
     }
   }

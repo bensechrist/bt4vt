@@ -77,7 +77,7 @@ public class FirebaseBlacksburgTransitRepository extends HttpBlacksburgTransitRe
       favoritedStops.add(stop);
       firebase.child(FAVORITE_STOPS_PATH)
           .child(String.valueOf(stop.getCode()))
-          .setValue(stop.getName());
+          .setValue(stop);
     }
   }
 
@@ -115,20 +115,20 @@ public class FirebaseBlacksburgTransitRepository extends HttpBlacksburgTransitRe
   @Override
   public void onAuthenticationError(FirebaseError firebaseError) {
     Log.e(getClass().getSimpleName(), "Firebase Auth Error: " + firebaseError);
+    if (firebaseError.getCode() == FirebaseError.EXPIRED_TOKEN ||
+        firebaseError.getCode() == FirebaseError.INVALID_TOKEN) {
+      preferences.edit().remove(GOOGLE_OAUTH_TOKEN_KEY).apply();
+    }
   }
 
   @Override
   public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-    Stop stopToAdd = new Stop(dataSnapshot.getValue().toString(),
-        Integer.valueOf(dataSnapshot.getKey()));
-    favoritedStops.add(stopToAdd);
+    favoritedStops.add(dataSnapshot.getValue(Stop.class));
   }
 
   @Override
   public void onChildRemoved(DataSnapshot dataSnapshot) {
-    Stop stopToRemove = new Stop(dataSnapshot.getValue().toString(),
-        Integer.valueOf(dataSnapshot.getKey()));
-    favoritedStops.remove(stopToRemove);
+    favoritedStops.remove(dataSnapshot.getValue(Stop.class));
   }
 
   @Override
