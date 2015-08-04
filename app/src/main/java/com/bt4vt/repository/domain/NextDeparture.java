@@ -19,8 +19,11 @@ package com.bt4vt.repository.domain;
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.Root;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * Transit stop departure
+ * Transit next departures for a route.
  *
  * @author Ben Sechrist
  */
@@ -37,7 +40,17 @@ public class NextDeparture {
     return routeName;
   }
 
-
+  public List<Departure> getDepartures() {
+    List<Departure> departures = new ArrayList<>();
+    String[] departureTimeStrings = notes.split(",");
+    for (int i = 0; i < departureTimeStrings.length; i = i + 2) {
+      String s = departureTimeStrings[i];
+      if (s.contains(":")) {
+        departures.add(Departure.valueOf(s));
+      }
+    }
+    return departures;
+  }
 
   @Override
   public int hashCode() {

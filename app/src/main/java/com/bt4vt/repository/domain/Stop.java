@@ -39,7 +39,7 @@ public class Stop {
   @Element(name = "Longitude")
   private Double longitude;
 
-  private Stop(String name, Integer code) {
+  public Stop(String name, Integer code) {
     this.name = name;
     this.code = code;
   }

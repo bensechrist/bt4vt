@@ -23,8 +23,11 @@ import android.widget.ImageButton;
 
 import com.bt4vt.fragment.NavigationDrawerFragment;
 import com.bt4vt.fragment.RetainedMapFragment;
+import com.bt4vt.repository.FirebaseService;
 import com.bt4vt.repository.domain.Route;
 import com.bt4vt.repository.domain.Stop;
+import com.firebase.client.Firebase;
+import com.google.inject.Inject;
 
 import java.util.List;
 
@@ -40,6 +43,9 @@ import roboguice.inject.InjectView;
 @ContentView(R.layout.activity_main)
 public class MainActivity extends RoboFragmentActivity implements
     RetainedMapFragment.TalkToActivity, NavigationDrawerFragment.TalkToActivity, View.OnClickListener {
+
+  @Inject
+  private FirebaseService firebaseService;
 
   @InjectView(R.id.drawer_layout)
   private DrawerLayout mDrawerLayout;
@@ -57,6 +63,8 @@ public class MainActivity extends RoboFragmentActivity implements
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    Firebase.setAndroidContext(this);
+    firebaseService.init();
 
     navButton.setOnClickListener(this);
 
@@ -69,13 +77,13 @@ public class MainActivity extends RoboFragmentActivity implements
     if (mapFragment == null) {
       mapFragment = (RetainedMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
     }
-    navFragment.fetchRoutes();
   }
 
   @Override
   protected void onResume() {
     super.onResume();
     mapFragment.setUpMapIfNeeded();
+    navFragment.fetchRoutes();
   }
 
   @Override

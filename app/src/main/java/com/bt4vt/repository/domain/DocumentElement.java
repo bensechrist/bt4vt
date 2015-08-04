@@ -34,7 +34,7 @@ public class DocumentElement {
   public List<Stop> stops = new ArrayList<>();
 
   @ElementList(name = "NextDepartures", inline = true, required = false)
-  public List<Departure> departures = new ArrayList<>();
+  public List<NextDeparture> nextDepartures = new ArrayList<>();
 
   @ElementList(name = "LatestInfoTable", inline = true, required = false)
   public List<Bus> buses = new ArrayList<>();

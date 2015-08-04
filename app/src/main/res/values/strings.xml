@@ -22,8 +22,12 @@
   <string name="empty_routes_text">No Routes Found</string>
   <string name="crash_toast_text">BT4VT has stopped</string>
   <string name="crash_dialog_comment_prompt">Describe what you were doing when the application crashed</string>
-  <string name="crash_dialog_text">An unexpected error occured. Please help us out by sending us error data.</string>
+  <string name="crash_dialog_text">An unexpected error occurred Please help us out by sending us error data.</string>
   <string name="stop_marker_snippet">Click to view scheduled departures</string>
   <string name="dialog_scheduled_departures_title">Scheduled Departures</string>
   <string name="empty_routes_retry">Retry</string>
+  <string name="empty_departures_text">No Departures Found</string>
+  <string name="fav_button_content_desc">Favorite Button</string>
+  <string name="nav_drawer_button_content_desc">Toggle Navigation Drawer</string>
+  <string name="refresh_departures_button_content_desc">Refresh Departures</string>
 </resources>
