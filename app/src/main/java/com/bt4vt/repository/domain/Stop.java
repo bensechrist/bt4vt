@@ -16,6 +16,8 @@
 
 package com.bt4vt.repository.domain;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.Root;
 
@@ -61,6 +63,11 @@ public class Stop {
 
   public Double getLongitude() {
     return longitude;
+  }
+
+  public void setLatLng(LatLng latLng) {
+    this.latitude = latLng.latitude;
+    this.longitude = latLng.longitude;
   }
 
   @Override
