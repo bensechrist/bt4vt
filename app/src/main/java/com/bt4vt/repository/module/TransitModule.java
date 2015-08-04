@@ -16,7 +16,8 @@
 
 package com.bt4vt.repository.module;
 
-import com.bt4vt.repository.HttpBlacksburgTransitRepository;
+import com.bt4vt.repository.FirebaseBlacksburgTransitRepository;
+import com.bt4vt.repository.FirebaseService;
 import com.bt4vt.repository.TransitRepository;
 import com.google.inject.Binder;
 import com.google.inject.Module;
@@ -29,6 +30,7 @@ import com.google.inject.Module;
 public class TransitModule implements Module {
   @Override
   public void configure(Binder binder) {
-    binder.bind(TransitRepository.class).to(HttpBlacksburgTransitRepository.class);
+    binder.bind(TransitRepository.class).to(FirebaseBlacksburgTransitRepository.class);
+    binder.bind(FirebaseService.class).to(FirebaseBlacksburgTransitRepository.class);
   }
 }

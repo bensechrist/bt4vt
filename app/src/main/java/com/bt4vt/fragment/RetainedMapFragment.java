@@ -51,22 +51,29 @@ import java.util.Iterator;
 import java.util.List;
 
 import roboguice.RoboGuice;
+import roboguice.inject.InjectResource;
 
 /**
  * Handles all google map related actions.
  *
  * @author Ben Sechrist
  */
-public class RetainedMapFragment extends SupportMapFragment implements OnMapReadyCallback, BusListener {
+public class RetainedMapFragment extends SupportMapFragment implements OnMapReadyCallback,
+    BusListener, GoogleMap.OnInfoWindowClickListener {
+
+  private static final String DEPARTURES_DIALOG_TAG = "scheduled_departures_dialog_tag";
 
   @Inject
   private TransitRepository transitRepository;
 
+  @InjectResource(R.string.stop_marker_snippet)
+  private String stopMarkerSnippet;
+
   private GoogleMap mMap; // Might be null if Google Play services APK is not available.
 
-  private List<Marker> currentStopMarkers = new ArrayList<>();
+  private final List<Marker> currentStopMarkers = new ArrayList<>();
 
-  private List<Marker> currentBusMarkers = new ArrayList<>();
+  private final List<Marker> currentBusMarkers = new ArrayList<>();
 
   private Polyline currentRoutePattern;
 
@@ -185,6 +192,14 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
     activity.hideLoadingIcon();
   }
 
+  @Override
+  public void onInfoWindowClick(Marker marker) {
+    if (currentStopMarkers.contains(marker)) {
+      ScheduledDeparturesDialogFragment.newInstance(Stop.valueOf(marker.getTitle()), currentRoute)
+          .show(getFragmentManager(), DEPARTURES_DIALOG_TAG);
+    }
+  }
+
   /**
    * This shows all buses on the given <code>route</code>.
    *
@@ -263,6 +278,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
     mMap.getUiSettings().setCompassEnabled(false);
     mMap.getUiSettings().setRotateGesturesEnabled(false);
     mMap.getUiSettings().setTiltGesturesEnabled(false);
+    mMap.setOnInfoWindowClickListener(this);
   }
 
   /**

@@ -46,6 +46,8 @@
       android:layout_alignParentTop="true"
       android:layout_margin="@dimen/menu_margin"
       android:background="@android:color/transparent"
+      android:contentDescription="@string/nav_drawer_button_content_desc"
+      android:scaleType="fitXY"
       android:src="@drawable/ic_action_menu"/>
 
   </RelativeLayout>

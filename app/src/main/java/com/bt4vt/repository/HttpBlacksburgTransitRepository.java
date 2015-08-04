@@ -17,8 +17,8 @@
 package com.bt4vt.repository;
 
 import com.bt4vt.repository.domain.Bus;
-import com.bt4vt.repository.domain.Departure;
 import com.bt4vt.repository.domain.DocumentElement;
+import com.bt4vt.repository.domain.NextDeparture;
 import com.bt4vt.repository.domain.Route;
 import com.bt4vt.repository.domain.RouteFactory;
 import com.bt4vt.repository.domain.Stop;
@@ -26,7 +26,6 @@ import com.bt4vt.repository.exception.TransitRepositoryException;
 import com.bt4vt.repository.listener.BusListener;
 import com.bt4vt.repository.listener.BusTimerTask;
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -52,8 +51,7 @@ import java.util.Timer;
  *
  * @author Ben Sechrist
  */
-@Singleton
-public class HttpBlacksburgTransitRepository implements TransitRepository {
+public abstract class HttpBlacksburgTransitRepository implements TransitRepository {
 
   private static final String BT_MOBILE_PATH = "http://bt4u.org/Mobile.aspx";
   private static final String ROUTE_LIST_BOX_ID = "routeListBox";
@@ -62,15 +60,15 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
   private static final String BT_UPDATE_PATH = "http://bt4u.org/LiveMap.aspx/UpdateLatestInfo";
 
   @Inject
-  protected RouteFactory routeFactory;
+  RouteFactory routeFactory;
 
-  private Serializer serializer = new Persister();
+  private final Serializer serializer = new Persister();
 
-  private List<BusListener> busListeners = new ArrayList<>();
+  private final List<BusListener> busListeners = new ArrayList<>();
 
   private BusTimerTask busTimerTask;
 
-  private Timer timer = new Timer();
+  private final Timer timer = new Timer();
 
   @Override
   public List<Route> getRoutes() throws TransitRepositoryException {
@@ -113,13 +111,13 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
   }
 
   @Override
-  public List<Departure> getNextDepartures(Stop stop) throws TransitRepositoryException {
+  public List<NextDeparture> getNextDepartures(Stop stop) throws TransitRepositoryException {
     return getNextDepartures(stop, null);
   }
 
   @Override
-  public List<Departure> getNextDepartures(Stop stop, Route route) throws TransitRepositoryException {
-    List<Departure> departures = new ArrayList<>();
+  public List<NextDeparture> getNextDepartures(Stop stop, Route route) throws TransitRepositoryException {
+    List<NextDeparture> departures = new ArrayList<>();
 
     final String stopId;
     if (route == null) {
@@ -131,8 +129,8 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
 
     try {
       DocumentElement doc = getDocumentElement(departuresString);
-      if (doc.departures.size() > 1) {
-        departures.addAll(doc.departures);
+      if (!doc.nextDepartures.isEmpty()) {
+        departures.addAll(doc.nextDepartures);
       }
 
       return departures;

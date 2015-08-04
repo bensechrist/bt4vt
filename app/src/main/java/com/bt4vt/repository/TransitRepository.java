@@ -17,7 +17,7 @@
 package com.bt4vt.repository;
 
 import com.bt4vt.repository.domain.Bus;
-import com.bt4vt.repository.domain.Departure;
+import com.bt4vt.repository.domain.NextDeparture;
 import com.bt4vt.repository.domain.Route;
 import com.bt4vt.repository.domain.Stop;
 import com.bt4vt.repository.exception.TransitRepositoryException;
@@ -54,17 +54,17 @@ public interface TransitRepository {
   /**
    * Returns a list of the next departures for all routes at a stop.
    * @param stop the stop to get departures for
-   * @return a list of departues
+   * @return a list of departures
    */
-  List<Departure> getNextDepartures(Stop stop) throws TransitRepositoryException;
+  List<NextDeparture> getNextDepartures(Stop stop) throws TransitRepositoryException;
 
   /**
    * Returns a list of the next departures for the given route at a stop.
    * @param stop the stop to get departures for
    * @param route the route to get departures for
-   * @return a list of departues
+   * @return a list of departures
    */
-  List<Departure> getNextDepartures(Stop stop, Route route) throws TransitRepositoryException;
+  List<NextDeparture> getNextDepartures(Stop stop, Route route) throws TransitRepositoryException;
 
   /**
    * Returns a list of the current bus locations for the <code>route</code>.
@@ -91,4 +91,23 @@ public interface TransitRepository {
    * Clears all bus listeners.
    */
   void clearBusListeners();
+
+  /**
+   * Favorites the <code>stop</code>.
+   * @param stop the stop
+   */
+  void favoriteStop(Stop stop);
+
+  /**
+   * Unfavorites the <code>stop</code>.
+   * @param stop the stop
+   */
+  void unfavoriteStop(Stop stop);
+
+  /**
+   * Returns whether the <code>stop</code> is favorited.
+   * @param stop the stop
+   * @return true if favorited, false otherwise
+   */
+  boolean isFavorited(Stop stop);
 }
