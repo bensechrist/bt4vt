@@ -40,6 +40,27 @@ public class Departure {
     return SimpleDateFormat.getTimeInstance(DateFormat.SHORT).format(departureTime);
   }
 
+  @Override
+  public int hashCode() {
+    if (departureTime == null) {
+      return 0;
+    }
+    return departureTime.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) return true;
+    if (!(o instanceof Departure)) return false;
+    Departure that = (Departure) o;
+    return this.departureTime.equals(that.departureTime);
+  }
+
+  @Override
+  public String toString() {
+    return String.format("%s: %s", getShortRouteName(), getDepartureTime());
+  }
+
   public static Departure valueOf(String s) {
     String[] split = s.split(":", 2);
     if (split.length != 2) {
@@ -55,21 +76,5 @@ public class Departure {
           + " from string: " + s);
     }
     return departure;
-  }
-
-  @Override
-  public int hashCode() {
-    if (departureTime == null) {
-      return 0;
-    }
-    return departureTime.hashCode();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o == this) return true;
-    if (!(o instanceof Departure)) return false;
-    Departure that = (Departure) o;
-    return this.departureTime.equals(that.departureTime);
   }
 }

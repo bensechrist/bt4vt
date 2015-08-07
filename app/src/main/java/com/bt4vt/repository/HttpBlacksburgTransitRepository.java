@@ -51,7 +51,7 @@ import java.util.Timer;
  *
  * @author Ben Sechrist
  */
-public abstract class HttpBlacksburgTransitRepository implements TransitRepository {
+public class HttpBlacksburgTransitRepository implements TransitRepository {
 
   private static final String BT_MOBILE_PATH = "http://bt4u.org/Mobile.aspx";
   private static final String ROUTE_LIST_BOX_ID = "routeListBox";
@@ -61,6 +61,9 @@ public abstract class HttpBlacksburgTransitRepository implements TransitReposito
 
   @Inject
   RouteFactory routeFactory;
+
+//  @Inject
+//  FirebaseService firebaseService;
 
   private final Serializer serializer = new Persister();
 
@@ -191,6 +194,21 @@ public abstract class HttpBlacksburgTransitRepository implements TransitReposito
     busListeners.clear();
     busTimerTask = null;
   }
+
+//  @Override
+//  public boolean isFavorited(Stop stop) {
+//    return firebaseService.isFavorited(stop);
+//  }
+//
+//  @Override
+//  public void addFavorite(Stop stop) {
+//    firebaseService.addFavorite(stop);
+//  }
+//
+//  @Override
+//  public void removeFavorite(Stop stop) {
+//    firebaseService.removeFavorite(stop);
+//  }
 
   private DocumentElement getDocumentElement(String documentString) throws Exception {
     return serializer.read(DocumentElement.class, documentString);

@@ -14,21 +14,24 @@
  * limitations under the License.
  */
 
-package com.bt4vt.repository.module;
+package com.bt4vt.boot;
 
-import com.bt4vt.repository.HttpBlacksburgTransitRepository;
-import com.bt4vt.repository.TransitRepository;
-import com.google.inject.Binder;
-import com.google.inject.Module;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+
+import com.bt4vt.repository.FirebaseService;
 
 /**
- * Module for the transit repository.
+ * Called when device starts up.
  *
  * @author Ben Sechrist
  */
-public class TransitModule implements Module {
+public class BootReceiver extends BroadcastReceiver {
+
   @Override
-  public void configure(Binder binder) {
-    binder.bind(TransitRepository.class).to(HttpBlacksburgTransitRepository.class);
+  public void onReceive(Context context, Intent intent) {
+    Intent serviceIntent = new Intent(context, FirebaseService.class);
+    context.startService(serviceIntent);
   }
 }
