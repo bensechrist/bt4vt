@@ -19,6 +19,7 @@ package com.bt4vt.util;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 
@@ -43,6 +44,7 @@ public class NoficationUtil {
 
     NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context)
         .setSmallIcon(R.drawable.bus)
+        .setLargeIcon(BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_launcher))
         .setAutoCancel(true)
         .setShowWhen(true)
         .setDefaults(NotificationCompat.DEFAULT_ALL)
