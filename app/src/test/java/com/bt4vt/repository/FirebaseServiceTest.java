@@ -29,20 +29,18 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.List;
-
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 
 /**
- * Tests the {@link FirebaseBlacksburgTransitRepository}.
+ * Tests the {@link FirebaseService}.
  *
  * @author Ben Sechrist
  */
 @RunWith(MockitoJUnitRunner.class)
-public class FirebaseBlacksburgTransitRepositoryTest {
+public class FirebaseServiceTest {
 
   @Mock
   private SharedPreferences preferences;
@@ -54,27 +52,24 @@ public class FirebaseBlacksburgTransitRepositoryTest {
   private AuthData authData;
 
   @InjectMocks
-  private FirebaseBlacksburgTransitRepository repository;
+  private FirebaseService service;
 
   @Before
   public void setup() throws Exception {
     doReturn(authData).when(firebase).getAuth();
     doReturn(firebase).when(firebase).child(anyString());
 
-    repository.firebase = firebase;
-    repository.init();
+    service.firebase = firebase;
+    service.init();
   }
 
   @Test
   public void testFavoriteStops() throws Exception {
-    List<Stop> stops = repository.getStops();
-
-    for (Stop stop : stops) {
-      assertFalse(repository.isFavorited(stop));
-      repository.favoriteStop(stop);
-      assertTrue(repository.isFavorited(stop));
-      repository.unfavoriteStop(stop);
-      assertFalse(repository.isFavorited(stop));
-    }
+    Stop stop = new Stop();
+    assertFalse(service.isFavorited(stop));
+    service.addFavorite(stop);
+    assertTrue(service.isFavorited(stop));
+    service.removeFavorite(stop);
+    assertFalse(service.isFavorited(stop));
   }
 }

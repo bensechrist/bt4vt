@@ -39,7 +39,7 @@ import static org.hamcrest.Matchers.greaterThan;
  */
 public class HttpBlacksburgTransitRepositoryTest {
 
-  private final HttpBlacksburgTransitRepository repository = new FirebaseBlacksburgTransitRepository();
+  private final HttpBlacksburgTransitRepository repository = new HttpBlacksburgTransitRepository();
 
   @Before
   public void setUp() throws Exception {

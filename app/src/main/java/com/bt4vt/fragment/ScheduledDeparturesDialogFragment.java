@@ -18,10 +18,13 @@ package com.bt4vt.fragment;
 
 import android.accounts.AccountManager;
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -74,9 +77,6 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   @Inject
   private TransitRepository transitRepository;
 
-  @Inject
-  private FirebaseService firebaseService;
-
   @InjectView(R.id.stop_text)
   private TextView stopTextView;
 
@@ -95,6 +95,9 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   @InjectView(R.id.button_favorite_stop)
   private ImageButton favoriteButton;
 
+  private FirebaseService firebaseService;
+  private boolean serviceBound = false;
+
   private Stop stop;
   private Route route;
 
@@ -112,12 +115,24 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   }
 
   @Override
+  public void onStart() {
+    super.onStart();
+    Intent intent = new Intent(getActivity(), FirebaseService.class);
+    getActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE);
+  }
+
+  @Override
+  public void onStop() {
+    super.onStop();
+    if (serviceBound) {
+      getActivity().unbindService(connection);
+      serviceBound = false;
+    }
+  }
+
+  @Override
   public void onViewCreated(View view, Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
-
-    setFavButtonText();
-
-    favoriteButton.setOnClickListener(this);
 
     loadingView.setVisibility(View.VISIBLE);
 
@@ -178,26 +193,30 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   }
 
   private void onFavClick() {
-    if (!firebaseService.isAuthenticated()) {
-      String[] accountTypes = new String[]{"com.google"};
-      Intent intent = AccountPicker.newChooseAccountIntent(null, null,
-          accountTypes, false, null, null, null, null);
-      startActivityForResult(intent, REQUEST_CODE_PICK_ACCOUNT);
-    } else {
-      if (transitRepository.isFavorited(stop)) {
-        transitRepository.unfavoriteStop(stop);
+    if (serviceBound) {
+      if (!firebaseService.isAuthenticated()) {
+        String[] accountTypes = new String[]{"com.google"};
+        Intent intent = AccountPicker.newChooseAccountIntent(null, null,
+            accountTypes, false, null, null, null, null);
+        startActivityForResult(intent, REQUEST_CODE_PICK_ACCOUNT);
       } else {
-        transitRepository.favoriteStop(stop);
+        if (firebaseService.isFavorited(stop)) {
+          firebaseService.removeFavorite(stop);
+        } else {
+          firebaseService.addFavorite(stop);
+        }
+        setFavButtonText();
       }
     }
-    setFavButtonText();
   }
 
   private void setFavButtonText() {
-    if (transitRepository.isFavorited(stop)) {
-      favoriteButton.setImageDrawable(getActivity().getResources().getDrawable(R.drawable.heart));
-    } else {
-      favoriteButton.setImageDrawable(getActivity().getResources().getDrawable(R.drawable.empty_heart));
+    if (serviceBound) {
+      if (firebaseService.isFavorited(stop)) {
+        favoriteButton.setImageDrawable(getActivity().getResources().getDrawable(R.drawable.heart));
+      } else {
+        favoriteButton.setImageDrawable(getActivity().getResources().getDrawable(R.drawable.empty_heart));
+      }
     }
   }
 
@@ -230,8 +249,24 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
     protected void onPostExecute(String token) {
       if (token != null) {
         firebaseService.loginGoogle(token);
-        onFavClick();
       }
     }
   }
+
+  private ServiceConnection connection = new ServiceConnection() {
+    @Override
+    public void onServiceConnected(ComponentName name, IBinder service) {
+      FirebaseService.FirebaseServiceBinder binder = (FirebaseService.FirebaseServiceBinder) service;
+      firebaseService = binder.getService();
+      serviceBound = true;
+      setFavButtonText();
+      favoriteButton.setOnClickListener(ScheduledDeparturesDialogFragment.this);
+      favoriteButton.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onServiceDisconnected(ComponentName name) {
+      serviceBound = false;
+    }
+  };
 }

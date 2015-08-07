@@ -47,6 +47,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.inject.Inject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -170,6 +171,27 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
       }
     });
     task.execute(route);
+  }
+
+  public void fetchStop(final String stopString) {
+    StopAsyncTask task = new StopAsyncTask(transitRepository, new AsyncCallback<List<Stop>>() {
+      @Override
+      public void onSuccess(List<Stop> stops) {
+        for (Stop stop : stops) {
+          if (stop.toString().equals(stopString)) {
+            activity.onStopsReady(Collections.singletonList(stop));
+          }
+        }
+      }
+
+      @Override
+      public void onException(Exception e) {
+        activity.hideLoadingIcon();
+        e.printStackTrace();
+        Toast.makeText(getActivity(), "Error getting stop", Toast.LENGTH_SHORT).show();
+      }
+    });
+    task.execute(null, null);
   }
 
   /**
