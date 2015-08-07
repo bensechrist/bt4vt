@@ -90,6 +90,22 @@ public class Bus {
   @Element(name = "TotalCount")
   private Integer passengerLoad;
 
+  public Integer getId() {
+    return id;
+  }
+
+  public String getRouteShortName() {
+    return routeShortName;
+  }
+
+  public String getRouteName() {
+    return routeName;
+  }
+
+  public boolean isTripper() {
+    return isTripperString.equalsIgnoreCase("Y");
+  }
+
   public Double getLatitude() {
     return latitude;
   }

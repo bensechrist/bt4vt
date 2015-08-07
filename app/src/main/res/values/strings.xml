@@ -30,7 +30,10 @@
   <string name="fav_button_content_desc">Favorite Button</string>
   <string name="nav_drawer_button_content_desc">Toggle Navigation Drawer</string>
   <string name="refresh_departures_button_content_desc">Refresh Departures</string>
+  <string name="bus_marker_title_format">%1$s - %2$d</string>
+  <string name="bus_marker_snippet_format">%1$d passengers</string>
 
   <!-- Geofencing -->
   <string name="geofence_transition_invalid_type">Invalid Geofence Transition Type: %1$d</string>
+  <string name="notification_departures_format">%1$s - %2$s</string>
 </resources>
