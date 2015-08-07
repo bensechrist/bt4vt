@@ -34,6 +34,7 @@ import com.google.android.gms.location.GeofencingEvent;
 import com.google.inject.Inject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import roboguice.service.RoboIntentService;
@@ -76,7 +77,7 @@ public class GeofenceTransitionsIntentService extends RoboIntentService {
             List<NextDeparture> nextDepartures = transitRepository.getNextDepartures(stop);
             sendNotfication(stop, nextDepartures);
           } catch (TransitRepositoryException e) {
-            e.printStackTrace();
+            Log.e(getClass().getSimpleName(), e.toString());
           }
         }
         break;
@@ -98,10 +99,14 @@ public class GeofenceTransitionsIntentService extends RoboIntentService {
 
   private void sendNotfication(Stop stop, List<NextDeparture> nextDepartures) {
     List<String> departureStrings = new ArrayList<>();
+    List<Departure> departures = new ArrayList<>();
     for (NextDeparture nextDeparture : nextDepartures) {
-      for (Departure departure : nextDeparture.getDepartures()) {
-        departureStrings.add(departure.toString());
-      }
+      departures.addAll(nextDeparture.getDepartures());
+    }
+    Collections.sort(departures);
+    for (Departure departure : departures) {
+      departureStrings.add(getString(R.string.notification_departures_format,
+          departure.getDepartureTime(), departure.getShortRouteName()));
     }
     Intent intent = new Intent(this, MainActivity.class);
     intent.putExtra(MainActivity.EXTRA_STOP, stop.toString());

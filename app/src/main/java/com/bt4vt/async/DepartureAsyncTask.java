@@ -28,6 +28,7 @@ import com.bt4vt.repository.domain.Stop;
 import com.bt4vt.repository.exception.TransitRepositoryException;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -57,6 +58,7 @@ public class DepartureAsyncTask extends AsyncTask<Void, Integer, List<Departure>
       for (NextDeparture nd : transitRepository.getNextDepartures(stop, route)) {
         departures.addAll(nd.getDepartures());
       }
+      Collections.sort(departures);
       return departures;
     } catch (final TransitRepositoryException e) {
       new Handler(Looper.getMainLooper()).post(new CallbackExceptionRunnable(callback, e));
