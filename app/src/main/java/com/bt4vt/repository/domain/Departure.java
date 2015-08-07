@@ -26,7 +26,7 @@ import java.util.Date;
  *
  * @author Ben Sechrist
  */
-public class Departure {
+public class Departure implements Comparable<Departure> {
 
   private String shortRouteName;
 
@@ -76,5 +76,10 @@ public class Departure {
           + " from string: " + s);
     }
     return departure;
+  }
+
+  @Override
+  public int compareTo(Departure another) {
+    return this.departureTime.compareTo(another.departureTime);
   }
 }
