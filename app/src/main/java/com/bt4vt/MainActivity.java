@@ -79,6 +79,7 @@ public class MainActivity extends RoboFragmentActivity implements
     Intent intent = getIntent();
     String stopString = intent.getStringExtra(EXTRA_STOP);
     if (stopString != null) {
+      mainLoadingView.setVisibility(View.VISIBLE);
       mapFragment.fetchStop(stopString);
     }
   }
@@ -99,8 +100,8 @@ public class MainActivity extends RoboFragmentActivity implements
   public void onRouteSelected(String routeName) {
     Route currentRoute = new Route(routeName);
     mainLoadingView.setVisibility(View.VISIBLE);
-    mapFragment.clearMap();
     mapFragment.setCurrentRoute(currentRoute);
+    mapFragment.clearMap();
     mapFragment.fetchStops(currentRoute);
     mapFragment.showBuses(currentRoute);
   }

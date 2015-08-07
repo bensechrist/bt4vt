@@ -239,6 +239,10 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
       return;
     }
 
+    if (currentRoute != null && !buses.get(0).getRouteName().equals(currentRoute.getName())) {
+      return;
+    }
+
     new Handler(Looper.getMainLooper()).post(new Runnable() {
       @Override
       public void run() {
@@ -254,7 +258,8 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
             Marker marker = currentBusMarkers.get(i);
             Bus bus = buses.get(i);
             marker.setPosition(new LatLng(bus.getLatitude(), bus.getLongitude()));
-            marker.setTitle(String.format("%d passengers", bus.getPassengerLoad()));
+            marker.setTitle(getString(R.string.bus_marker_title_format, bus.getRouteName(), bus.getId()));
+            marker.setSnippet(getString(R.string.bus_marker_snippet_format, bus.getPassengerLoad()));
           }
         }
       }
@@ -362,10 +367,11 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
    */
   private MarkerOptions getBusMarker(Bus bus) {
     BitmapFactory.Options opts = new BitmapFactory.Options();
-    opts.inSampleSize = 12;
+    opts.inSampleSize = 10;
     return new MarkerOptions()
         .position(new LatLng(bus.getLatitude(), bus.getLongitude()))
-        .title(String.format("%d passengers", bus.getPassengerLoad()))
+        .title(getString(R.string.bus_marker_title_format, bus.getRouteName(), bus.getId()))
+        .snippet(getString(R.string.bus_marker_snippet_format, bus.getPassengerLoad()))
         .icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getResources(),
             R.drawable.bus, opts)));
   }
