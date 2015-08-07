@@ -153,7 +153,11 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
         return buses;
       }
       DocumentElement doc = getDocumentElement(busesString);
-      buses.addAll(doc.buses);
+      for (Bus bus : doc.buses) {
+        if (!bus.isTripper()) {
+          buses.add(bus);
+        }
+      }
 
       return buses;
     } catch (Exception e) { // Exception from reading xml by serializer
@@ -194,21 +198,6 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
     busListeners.clear();
     busTimerTask = null;
   }
-
-//  @Override
-//  public boolean isFavorited(Stop stop) {
-//    return firebaseService.isFavorited(stop);
-//  }
-//
-//  @Override
-//  public void addFavorite(Stop stop) {
-//    firebaseService.addFavorite(stop);
-//  }
-//
-//  @Override
-//  public void removeFavorite(Stop stop) {
-//    firebaseService.removeFavorite(stop);
-//  }
 
   private DocumentElement getDocumentElement(String documentString) throws Exception {
     return serializer.read(DocumentElement.class, documentString);
