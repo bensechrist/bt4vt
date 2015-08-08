@@ -44,9 +44,9 @@ import java.util.List;
 @Singleton
 public class BusStopGeofenceService implements ResultCallback<Status> {
 
-  private static final float GEOFENCE_RADIUS_IN_METERS = 10;
+  private static final float GEOFENCE_RADIUS_IN_METERS = 25;
   private static final long GEOFENCE_EXPIRATION_IN_MILLISECONDS = Geofence.NEVER_EXPIRE;
-  private static final int GEOFENCE_LOITERING_DELAY = 60000; // 1 minute
+  private static final int GEOFENCE_LOITERING_DELAY = 10000; // 10 seconds
 
   private Context context;
 
@@ -158,7 +158,8 @@ public class BusStopGeofenceService implements ResultCallback<Status> {
     Intent intent = new Intent(context, GeofenceTransitionsIntentService.class);
     // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when
     // calling addGeofences() and removeGeofences().
-    return PendingIntent.getService(context, 0, intent, PendingIntent.
+    geofencePendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.
         FLAG_UPDATE_CURRENT);
+    return geofencePendingIntent;
   }
 }
