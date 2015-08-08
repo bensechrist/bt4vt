@@ -62,9 +62,6 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
   @Inject
   RouteFactory routeFactory;
 
-//  @Inject
-//  FirebaseService firebaseService;
-
   private final Serializer serializer = new Persister();
 
   private final List<BusListener> busListeners = new ArrayList<>();
