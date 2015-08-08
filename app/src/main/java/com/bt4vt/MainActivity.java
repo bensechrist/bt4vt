@@ -82,13 +82,21 @@ public class MainActivity extends RoboFragmentActivity implements
       mainLoadingView.setVisibility(View.VISIBLE);
       mapFragment.fetchStop(stopString);
     }
+    navFragment.fetchRoutes();
+  }
+
+  @Override
+  protected void onDestroy() {
+    super.onDestroy();
+
+    Intent serviceIntent = new Intent(this, FirebaseService.class);
+    stopService(serviceIntent);
   }
 
   @Override
   protected void onResume() {
     super.onResume();
     mapFragment.setUpMapIfNeeded();
-    navFragment.fetchRoutes();
   }
 
   @Override
