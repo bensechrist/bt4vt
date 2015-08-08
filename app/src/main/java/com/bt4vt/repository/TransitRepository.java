@@ -91,23 +91,4 @@ public interface TransitRepository {
    * Clears all bus listeners.
    */
   void clearBusListeners();
-
-  /**
-   * Adds a favorite for the <code>stop</code>.
-   * @param stop the stop
-   */
-//  void addFavorite(Stop stop);
-
-  /**
-   * Removes a favorite for the <code>stop</code>.
-   * @param stop the stop
-   */
-//  void removeFavorite(Stop stop);
-
-  /**
-   * Returns whether the <code>stop</code> is favorited.
-   * @param stop the stop
-   * @return true if favorited, false otherwise
-   */
-//  boolean isFavorited(Stop stop);
 }
