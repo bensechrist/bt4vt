@@ -219,7 +219,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
     if (currentStopMarkers.contains(marker)) {
       Stop stop = Stop.valueOf(marker.getTitle());
       stop.setLatLng(marker.getPosition());
-      ScheduledDeparturesDialogFragment.newInstance(stop, currentRoute)
+      ScheduledDeparturesDialogFragment.newInstance(stop, this.currentRoute)
           .show(getFragmentManager(), DEPARTURES_DIALOG_TAG);
     }
   }
@@ -330,7 +330,6 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
       currentRoutePattern.remove();
     }
     currentRoutePattern = null;
-    currentRoute = null;
   }
 
   private void removeMarkers(List<Marker> markers) {
