@@ -16,6 +16,9 @@
 
 package com.bt4vt.repository;
 
+import android.content.Context;
+
+import com.bt4vt.R;
 import com.bt4vt.repository.domain.Bus;
 import com.bt4vt.repository.domain.DocumentElement;
 import com.bt4vt.repository.domain.NextDeparture;
@@ -26,6 +29,7 @@ import com.bt4vt.repository.exception.TransitRepositoryException;
 import com.bt4vt.repository.listener.BusListener;
 import com.bt4vt.repository.listener.BusTimerTask;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -51,6 +55,7 @@ import java.util.Timer;
  *
  * @author Ben Sechrist
  */
+@Singleton
 public class HttpBlacksburgTransitRepository implements TransitRepository {
 
   private static final String BT_MOBILE_PATH = "http://bt4u.org/Mobile.aspx";
@@ -61,6 +66,9 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
 
   @Inject
   RouteFactory routeFactory;
+
+  @Inject
+  Context context;
 
   private final Serializer serializer = new Persister();
 
@@ -106,7 +114,7 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
 
       return stops;
     } catch (Exception e) { // Exception from reading xml by serializer
-      throw new RuntimeException(e);
+      throw new RuntimeException(context.getString(R.string.xml_parse_error_format, stopsString, e));
     }
   }
 
@@ -135,7 +143,7 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
 
       return departures;
     } catch (Exception e) { // Exception from reading xml by serializer
-      throw new RuntimeException(e);
+      throw new RuntimeException(context.getString(R.string.xml_parse_error_format, departuresString, e));
     }
   }
 
@@ -158,7 +166,7 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
 
       return buses;
     } catch (Exception e) { // Exception from reading xml by serializer
-      throw new RuntimeException(e);
+      throw new RuntimeException(context.getString(R.string.xml_parse_error_format, busesString, e));
     }
   }
 

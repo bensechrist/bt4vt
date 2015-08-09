@@ -94,10 +94,6 @@ public class Bus {
     return id;
   }
 
-  public String getRouteShortName() {
-    return routeShortName;
-  }
-
   public String getRouteName() {
     return routeName;
   }

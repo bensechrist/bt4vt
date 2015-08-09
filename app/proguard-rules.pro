@@ -16,21 +16,21 @@
 #   public *;
 #}
 
-
 -target 1.6
 -dontobfuscate
 -dontoptimize
 -dontusemixedcaseclassnames
 -dontskipnonpubliclibraryclasses
 -dontpreverify
+-dontwarn roboguice.**, com.fasterxml.**, org.roboguice.**, org.simpleframework.**
 -verbose
--dump ../bin/class_files.txt
--printseeds ../bin/seeds.txt
--printusage ../bin/unused.txt
--printmapping ../bin/mapping.txt
+-dump build/bin/class_files.txt
+-printseeds build/bin/seeds.txt
+-printusage build/bin/unused.txt
+-printmapping build/bin/mapping.txt
 
 # The -optimizations option disables some arithmetic simplifications that Dalvik 1.0 and 1.5 can't handle.
--optimizations !code/simplification/arithmetic
+-optimizations !code/simplification/arithmetic,!code/allocation/variable,!field/*,!class/merging/*
 
 -keep public class * extends android.app.Activity
 -keep public class * extends android.app.Application
@@ -38,6 +38,17 @@
 -keep public class * extends android.content.BroadcastReceiver
 -keep public class * extends android.content.ContentProvider
 -keep class com.google.inject.Binder
+-keep public class AnnotationDatabaseImpl
+-keep public class com.bt4vt.**
+-keep class com.firebase.** { *; }
+-keep class org.apache.** { *; }
+-keepnames class com.fasterxml.jackson.** { *; }
+-keepnames class javax.servlet.** { *; }
+-keepnames class org.ietf.jgss.** { *; }
+-dontwarn org.w3c.dom.**
+-dontwarn org.joda.time.**
+-dontwarn org.shaded.apache.**
+-dontwarn org.ietf.jgss.**
 -keepclassmembers class * {
     @com.google.inject.Inject <init>(...);
 }
@@ -52,3 +63,39 @@
     public void set*(...);
 }
 -keep public class roboguice.**
+
+-optimizationpasses 5
+-dontusemixedcaseclassnames
+-dontskipnonpubliclibraryclasses
+-dontpreverify
+-verbose
+-optimizations !code/simplification/arithmetic,!field/*,!class/merging/*
+-ignorewarnings
+-renamesourcefileattribute SourceFile
+-keepattributes SourceFile,LineNumberTable,*Annotation*,Signature
+
+-keepattributes *Annotation*,Signature
+
+-keep public class com.google.inject.Inject
+
+# keeps all fields and Constructors with @Inject
+
+-keepclassmembers,allowobfuscation class * {
+    @com.google.inject.Inject <fields>;
+    @com.google.inject.Inject <init>(...);
+    @com.google.inject.InjectResource <init>(...);
+    @com.google.inject.InjectView <fields>;
+}
+
+
+# Simple XML
+-keep public class org.simpleframework.** { *; }
+-keep class org.simpleframework.xml.** { *; }
+-keep class org.simpleframework.xml.core.** { *; }
+-keep class org.simpleframework.xml.util.** { *; }
+
+-keepattributes ElementList, Root, Element
+
+-keepclassmembers class * {
+    @org.simpleframework.xml.* *;
+}

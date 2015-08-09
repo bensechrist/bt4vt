@@ -32,6 +32,7 @@
   <string name="refresh_departures_button_content_desc">Refresh Departures</string>
   <string name="bus_marker_title_format">%1$s - %2$d</string>
   <string name="bus_marker_snippet_format">%1$d passengers</string>
+  <string name="xml_parse_error_format">Error parsing xml %1$s: %2$s</string>
 
   <!-- Geofencing -->
   <string name="geofence_transition_invalid_type">Invalid Geofence Transition Type: %1$d</string>
