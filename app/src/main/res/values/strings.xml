@@ -17,6 +17,10 @@
 <resources>
   <string name="app_name">BT4VT</string>
 
+  <!-- Geofencing -->
+  <string name="geofence_transition_invalid_type">Invalid Geofence Transition Type: %1$d</string>
+  <string name="notification_departures_format">%1$s - %2$s</string>
+
   <string name="navigation_drawer_open">Open navigation drawer</string>
   <string name="navigation_drawer_close">Close navigation drawer</string>
   <string name="empty_routes_text">No Routes Found</string>
@@ -33,8 +37,22 @@
   <string name="bus_marker_title_format">%1$s - %2$d</string>
   <string name="bus_marker_snippet_format">%1$d passengers</string>
   <string name="xml_parse_error_format">Error parsing xml %1$s: %2$s</string>
-
-  <!-- Geofencing -->
-  <string name="geofence_transition_invalid_type">Invalid Geofence Transition Type: %1$d</string>
-  <string name="notification_departures_format">%1$s - %2$s</string>
+  <string name="fav_button_showcase_text">Click this button to favorite this stop\\nYou must be logged in to favorite stops</string>
+  <string name="nav_routes_subheader">Routes</string>
+  <string name="nav_other_subheader">Settings</string>
+  <string name="nav_item_view_all_stops">View All Stops</string>
+  <string name="routes_error">Error getting routes</string>
+  <string name="retry">Retry</string>
+  <string name="content_loading">Waiting on other content to load first</string>
+  <string name="stop_error">Error getting stop</string>
+  <string name="stops_error">Error getting stops</string>
+  <string name="no_stops">No stops available</string>
+  <string name="not_logged_in">You must log in to favorite stops</string>
+  <string name="login">Login</string>
+  <string name="departures_error">Error getting departures</string>
+  <string name="nav_signin">Sign In</string>
+  <string name="nav_feedback">Feedback</string>
+  <string name="fetch_bitmap_error">Error getting profile image</string>
+  <string name="nav_signout">Sign Out</string>
+  <string name="nav_button_showcase_text">Open the navigation drawer to view routes and sign in. Signing in allows you to sync your favorites across devices.</string>
 </resources>

@@ -15,12 +15,24 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-
-<android.support.design.widget.NavigationView
-  android:id="@+id/nav_view"
-  xmlns:android="http://schemas.android.com/apk/res/android"
-  xmlns:app="http://schemas.android.com/apk/res-auto"
-  android:layout_width="wrap_content"
-  android:layout_height="match_parent"
-  android:layout_gravity="start"
-  app:menu="@menu/drawer"/>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+  <group
+    android:id="@+id/nav_routes_group"
+    android:checkableBehavior="single">
+    <item
+      android:id="@+id/nav_view_all_stops"
+      android:orderInCategory="2"
+      android:title="@string/nav_item_view_all_stops"/>
+  </group>
+  <group
+    android:id="@+id/nav_other_group">
+    <item
+      android:id="@+id/nav_signin"
+      android:orderInCategory="50"
+      android:title="@string/nav_signin"/>
+    <item
+      android:id="@+id/nav_feedback"
+      android:orderInCategory="100"
+      android:title="@string/nav_feedback"/>
+  </group>
+</menu>

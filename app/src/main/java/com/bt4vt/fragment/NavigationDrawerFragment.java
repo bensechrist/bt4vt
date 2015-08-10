@@ -16,25 +16,44 @@
 
 package com.bt4vt.fragment;
 
+import android.accounts.AccountManager;
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.support.design.widget.NavigationView;
+import android.support.design.widget.Snackbar;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
-import android.widget.Toast;
+import android.widget.TextView;
 
 import com.bt4vt.R;
 import com.bt4vt.async.AsyncCallback;
+import com.bt4vt.async.FetchBitmapFromUrlTask;
+import com.bt4vt.async.FetchGoogleTokenTask;
 import com.bt4vt.async.RouteAsyncTask;
+import com.bt4vt.repository.FirebaseService;
 import com.bt4vt.repository.TransitRepository;
 import com.bt4vt.repository.domain.Route;
+import com.bt4vt.util.ViewUtils;
+import com.firebase.client.AuthData;
+import com.firebase.client.Firebase;
+import com.firebase.client.FirebaseError;
+import com.google.android.gms.auth.UserRecoverableAuthException;
+import com.google.android.gms.common.AccountPicker;
 import com.google.inject.Inject;
 
 import java.util.List;
 
+import de.hdodenhof.circleimageview.CircleImageView;
 import roboguice.fragment.RoboFragment;
 import roboguice.inject.InjectView;
 
@@ -43,25 +62,28 @@ import roboguice.inject.InjectView;
  *
  * @author Ben Sechrist
  */
-public class NavigationDrawerFragment extends RoboFragment implements AdapterView.OnItemClickListener, View.OnClickListener {
+public class NavigationDrawerFragment extends RoboFragment implements View.OnClickListener,
+    NavigationView.OnNavigationItemSelectedListener, AsyncCallback<String>, Firebase.AuthResultHandler {
+
+  private static final int REQUEST_CODE_PICK_ACCOUNT = 1000;
+  private static final int REQUEST_AUTHORIZATION = 2000;
+  private static final int NAV_SIGNOUT_ID = ViewUtils.generateViewId();
 
   @Inject
   private TransitRepository transitRepository;
 
-  @InjectView(R.id.list_view)
-  private ListView mDrawerList;
+  @Inject
+  private SharedPreferences preferences;
 
-  @InjectView(R.id.empty_routes_view)
-  private View emptyRoutesView;
-
-  @InjectView(R.id.nav_loading_view)
-  private View navLoadingView;
-
-  private String[] routeNames;
-
-  private Integer selectedItem;
+  @InjectView(R.id.nav_view)
+  private NavigationView navView;
 
   private TalkToActivity activity;
+
+  private FirebaseService firebaseService;
+  private boolean serviceBound = false;
+
+  private View navHeader;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -82,6 +104,22 @@ public class NavigationDrawerFragment extends RoboFragment implements AdapterVie
   }
 
   @Override
+  public void onStart() {
+    super.onStart();
+    Intent intent = new Intent(getActivity(), FirebaseService.class);
+    getActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE);
+  }
+
+  @Override
+  public void onStop() {
+    super.onStop();
+    if (serviceBound) {
+      getActivity().unbindService(connection);
+      serviceBound = false;
+    }
+  }
+
+  @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     return inflater.inflate(R.layout.navigation_drawer, container, false);
   }
@@ -89,27 +127,7 @@ public class NavigationDrawerFragment extends RoboFragment implements AdapterVie
   @Override
   public void onViewCreated(View view, Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
-    mDrawerList.setOnItemClickListener(this);
-    emptyRoutesView.findViewById(R.id.refresh_routes_button).setOnClickListener(this);
-  }
-
-  @Override
-  public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-    if (activity.isLoadingContent()) {
-      Toast.makeText(getActivity(), "Waiting on other content to load first", Toast.LENGTH_SHORT).show();
-      return;
-    }
-    if ((selectedItem != null) && (position == selectedItem)) {
-      activity.closeDrawer();
-      return;
-    }
-    if (routeNames != null) {
-      mDrawerList.setItemChecked(position, true);
-      selectedItem = position;
-      activity.closeDrawer();
-
-      activity.onRouteSelected(routeNames[position]);
-    }
+    navView.setNavigationItemSelectedListener(this);
   }
 
   @Override
@@ -118,8 +136,6 @@ public class NavigationDrawerFragment extends RoboFragment implements AdapterVie
   }
 
   public void fetchRoutes() {
-    emptyRoutesView.setVisibility(View.INVISIBLE);
-    navLoadingView.setVisibility(View.VISIBLE);
     RouteAsyncTask task = new RouteAsyncTask(transitRepository, new AsyncCallback<List<Route>>() {
       @Override
       public void onSuccess(List<Route> routes) {
@@ -134,18 +150,146 @@ public class NavigationDrawerFragment extends RoboFragment implements AdapterVie
       public void onException(Exception e) {
         setRouteNames(new String[]{});
         e.printStackTrace();
-        Toast.makeText(getActivity(), "Error getting routes", Toast.LENGTH_SHORT).show();
+        Snackbar.make(getView(), R.string.routes_error, Snackbar.LENGTH_LONG)
+            .setAction(R.string.retry, NavigationDrawerFragment.this)
+            .show();
       }
     });
     task.execute();
   }
 
   private void setRouteNames(String[] routeNames) {
-    this.routeNames = routeNames;
-    mDrawerList.setAdapter(new ArrayAdapter<>(getActivity(),
-        android.R.layout.simple_list_item_activated_1, this.routeNames));
-    navLoadingView.setVisibility(View.INVISIBLE);
-    mDrawerList.setEmptyView(emptyRoutesView);
+    Menu menu = navView.getMenu();
+    for (String routeName : routeNames) {
+      menu.add(R.id.nav_routes_group, Menu.NONE, 1, routeName);
+    }
+  }
+
+  @Override
+  public boolean onNavigationItemSelected(MenuItem menuItem) {
+    String menuTitle = menuItem.getTitle().toString();
+    if (activity.isLoadingContent()) {
+      Snackbar.make(navView, R.string.content_loading, Snackbar.LENGTH_LONG)
+          .show();
+      return true;
+    }
+    if (menuItem.isChecked()) {
+      activity.closeDrawer();
+      return true;
+    }
+    int menuItemId = menuItem.getItemId();
+    if (menuItem.getGroupId() == R.id.nav_routes_group) {
+      menuItem.setChecked(true);
+      if (menuItemId == R.id.nav_view_all_stops) {
+        activity.showAllStops();
+      } else {
+        activity.onRouteSelected(menuTitle);
+      }
+      activity.closeDrawer();
+    } else {
+      // Non-route item
+      if (menuItemId == R.id.nav_signin) {
+        showAccountPicker();
+      } else if (menuItemId == NAV_SIGNOUT_ID) {
+        firebaseService.logout();
+        initHeader();
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    if (requestCode == REQUEST_CODE_PICK_ACCOUNT || requestCode == REQUEST_AUTHORIZATION) {
+      if (resultCode == Activity.RESULT_OK) {
+        String userEmail = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
+        preferences.edit().putString(FirebaseService.USER_EMAIL_KEY, userEmail).apply();
+        new FetchGoogleTokenTask(getActivity(), userEmail, this).execute();
+      } else if (resultCode == Activity.RESULT_CANCELED) {
+        // The account picker dialog closed without selecting an account.
+        View.OnClickListener listener = new View.OnClickListener() {
+          @Override
+          public void onClick(View v) {
+            showAccountPicker();
+          }
+        };
+        Snackbar.make(getView(), R.string.not_logged_in, Snackbar.LENGTH_LONG)
+            .setAction(R.string.login, listener)
+            .show();
+      }
+    }
+  }
+
+  @Override
+  public void onSuccess(String token) {
+    firebaseService.loginGoogle(token, this);
+  }
+
+  @Override
+  public void onException(Exception e) {
+    e.printStackTrace();
+    if (e instanceof UserRecoverableAuthException) {
+      startActivityForResult(((UserRecoverableAuthException) e).getIntent(), REQUEST_AUTHORIZATION);
+    }
+  }
+
+  @Override
+  public void onAuthenticated(AuthData authData) {
+    initHeader();
+  }
+
+  @Override
+  public void onAuthenticationError(FirebaseError firebaseError) {
+    // Ignore?
+  }
+
+  private void showAccountPicker() {
+    String[] accountTypes = new String[]{"com.google"};
+    Intent intent = AccountPicker.newChooseAccountIntent(null, null,
+        accountTypes, false, null, null, null, null);
+    startActivityForResult(intent, REQUEST_CODE_PICK_ACCOUNT);
+  }
+
+  private void initHeader() {
+    if (serviceBound) {
+      if (firebaseService.isAuthenticated()) {
+        if (navHeader == null) {
+          View view = View.inflate(getActivity(), R.layout.drawer_header, null);
+          final CircleImageView profileImage = (CircleImageView) view.findViewById(R.id.profile_image);
+          TextView profileName = (TextView) view.findViewById(R.id.profile_name);
+          TextView profileEmail = (TextView) view.findViewById(R.id.profile_email);
+          new FetchBitmapFromUrlTask(new AsyncCallback<Bitmap>() {
+            @Override
+            public void onSuccess(Bitmap bitmap) {
+              profileImage.setImageBitmap(bitmap);
+            }
+
+            @Override
+            public void onException(Exception e) {
+              Snackbar.make(getView(), R.string.fetch_bitmap_error, Snackbar.LENGTH_SHORT)
+                  .show();
+            }
+          }).execute(firebaseService.getUserProfileImageUrl());
+          profileName.setText(firebaseService.getUserDisplayName());
+          profileEmail.setText(firebaseService.getUserEmail());
+          navHeader = view;
+          navView.addHeaderView(navHeader);
+
+          Menu menu = navView.getMenu();
+          menu.removeItem(R.id.nav_signin);
+          menu.add(R.id.nav_other_group, NAV_SIGNOUT_ID, 50, R.string.nav_signout);
+        }
+      } else {
+        if (navHeader != null) {
+          navView.removeHeaderView(navHeader);
+          navHeader = null;
+
+          Menu menu = navView.getMenu();
+          menu.removeItem(NAV_SIGNOUT_ID);
+          menu.add(R.id.nav_other_group, R.id.nav_signin, 50, R.string.nav_signin);
+        }
+      }
+    }
   }
 
   /**
@@ -157,6 +301,7 @@ public class NavigationDrawerFragment extends RoboFragment implements AdapterVie
 
     /**
      * Gives the route name of the route selected.
+     *
      * @param routeName name of the route
      */
     void onRouteSelected(String routeName);
@@ -168,8 +313,29 @@ public class NavigationDrawerFragment extends RoboFragment implements AdapterVie
 
     /**
      * Returns whether the activity is currently loading something else.
+     *
      * @return true if loading in progress, false otherwise
      */
     boolean isLoadingContent();
+
+    /**
+     * Show all bus stops.
+     */
+    void showAllStops();
   }
+
+  private ServiceConnection connection = new ServiceConnection() {
+    @Override
+    public void onServiceConnected(ComponentName name, IBinder service) {
+      FirebaseService.FirebaseServiceBinder binder = (FirebaseService.FirebaseServiceBinder) service;
+      firebaseService = binder.getService();
+      serviceBound = true;
+      initHeader();
+    }
+
+    @Override
+    public void onServiceDisconnected(ComponentName name) {
+      serviceBound = false;
+    }
+  };
 }
