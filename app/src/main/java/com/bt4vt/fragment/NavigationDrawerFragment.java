@@ -24,6 +24,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.design.widget.NavigationView;
@@ -150,9 +151,12 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
       public void onException(Exception e) {
         setRouteNames(new String[]{});
         e.printStackTrace();
-        Snackbar.make(getView(), R.string.routes_error, Snackbar.LENGTH_LONG)
-            .setAction(R.string.retry, NavigationDrawerFragment.this)
-            .show();
+        View view = getView();
+        if (view != null) {
+          Snackbar.make(view, R.string.routes_error, Snackbar.LENGTH_LONG)
+              .setAction(R.string.retry, NavigationDrawerFragment.this)
+              .show();
+        }
       }
     });
     task.execute();
@@ -193,6 +197,9 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
       } else if (menuItemId == NAV_SIGNOUT_ID) {
         firebaseService.logout();
         initHeader();
+      } else if (menuItemId == R.id.nav_feedback) {
+        activity.closeDrawer();
+        showFeedbackDialog();
       }
     }
     return true;
@@ -213,9 +220,12 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
             showAccountPicker();
           }
         };
-        Snackbar.make(getView(), R.string.not_logged_in, Snackbar.LENGTH_LONG)
-            .setAction(R.string.login, listener)
-            .show();
+        View view = getView();
+        if (view != null) {
+          Snackbar.make(view, R.string.not_logged_in, Snackbar.LENGTH_LONG)
+              .setAction(R.string.login, listener)
+              .show();
+        }
       }
     }
   }
@@ -254,10 +264,10 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
     if (serviceBound) {
       if (firebaseService.isAuthenticated()) {
         if (navHeader == null) {
-          View view = View.inflate(getActivity(), R.layout.drawer_header, null);
-          final CircleImageView profileImage = (CircleImageView) view.findViewById(R.id.profile_image);
-          TextView profileName = (TextView) view.findViewById(R.id.profile_name);
-          TextView profileEmail = (TextView) view.findViewById(R.id.profile_email);
+          View headerView = View.inflate(getActivity(), R.layout.drawer_header, null);
+          final CircleImageView profileImage = (CircleImageView) headerView.findViewById(R.id.profile_image);
+          TextView profileName = (TextView) headerView.findViewById(R.id.profile_name);
+          TextView profileEmail = (TextView) headerView.findViewById(R.id.profile_email);
           new FetchBitmapFromUrlTask(new AsyncCallback<Bitmap>() {
             @Override
             public void onSuccess(Bitmap bitmap) {
@@ -266,13 +276,16 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
 
             @Override
             public void onException(Exception e) {
-              Snackbar.make(getView(), R.string.fetch_bitmap_error, Snackbar.LENGTH_SHORT)
-                  .show();
+              View view = getView();
+              if (view != null) {
+                Snackbar.make(view, R.string.fetch_bitmap_error, Snackbar.LENGTH_SHORT)
+                    .show();
+              }
             }
           }).execute(firebaseService.getUserProfileImageUrl());
           profileName.setText(firebaseService.getUserDisplayName());
           profileEmail.setText(firebaseService.getUserEmail());
-          navHeader = view;
+          navHeader = headerView;
           navView.addHeaderView(navHeader);
 
           Menu menu = navView.getMenu();
@@ -289,6 +302,16 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
           menu.add(R.id.nav_other_group, R.id.nav_signin, 50, R.string.nav_signin);
         }
       }
+    }
+  }
+
+  private void showFeedbackDialog() {
+    Intent sendIntent = new Intent(Intent.ACTION_SENDTO);
+    sendIntent.setData(Uri.parse("mailto:")); // only email apps should handle this
+    sendIntent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.app_feedback));
+    sendIntent.putExtra(Intent.EXTRA_EMAIL, new String[]{getString(R.string.app_feedback_email)});
+    if (sendIntent.resolveActivity(getActivity().getPackageManager()) != null) {
+      startActivity(sendIntent);
     }
   }
 

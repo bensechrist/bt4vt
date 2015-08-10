@@ -55,4 +55,6 @@
   <string name="fetch_bitmap_error">Error getting profile image</string>
   <string name="nav_signout">Sign Out</string>
   <string name="nav_button_showcase_text">Open the navigation drawer to view routes and sign in. Signing in allows you to sync your favorites across devices.</string>
+  <string name="app_feedback">BT4VT Feedback</string>
+  <string name="app_feedback_email">bensechrist@gmail.com</string>
 </resources>
