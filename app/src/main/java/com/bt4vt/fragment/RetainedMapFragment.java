@@ -22,7 +22,8 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.widget.Toast;
+import android.support.design.widget.Snackbar;
+import android.view.View;
 
 import com.bt4vt.R;
 import com.bt4vt.async.AsyncCallback;
@@ -156,7 +157,13 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
    *
    * @param route the route
    */
-  public void fetchStops(Route route) {
+  public void fetchStops(final Route route) {
+    final View.OnClickListener retryListener = new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        fetchStops(route);
+      }
+    };
     StopAsyncTask task = new StopAsyncTask(transitRepository, new AsyncCallback<List<Stop>>() {
       @Override
       public void onSuccess(List<Stop> stops) {
@@ -167,13 +174,21 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
       public void onException(Exception e) {
         activity.hideLoadingIcon();
         e.printStackTrace();
-        Toast.makeText(getActivity(), "Error getting stops for route", Toast.LENGTH_SHORT).show();
+        Snackbar.make(getView(), R.string.stops_error, Snackbar.LENGTH_LONG)
+            .setAction(R.string.retry, retryListener)
+            .show();
       }
     });
     task.execute(route);
   }
 
   public void fetchStop(final String stopString) {
+    final View.OnClickListener retryListener = new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        fetchStop(stopString);
+      }
+    };
     StopAsyncTask task = new StopAsyncTask(transitRepository, new AsyncCallback<List<Stop>>() {
       @Override
       public void onSuccess(List<Stop> stops) {
@@ -182,13 +197,16 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
             activity.onStopsReady(Collections.singletonList(stop));
           }
         }
+        activity.onStopsReady(Collections.EMPTY_LIST);
       }
 
       @Override
       public void onException(Exception e) {
         activity.hideLoadingIcon();
         e.printStackTrace();
-        Toast.makeText(getActivity(), "Error getting stop", Toast.LENGTH_SHORT).show();
+        Snackbar.make(getView(), R.string.stop_error, Snackbar.LENGTH_LONG)
+            .setAction(R.string.retry, retryListener)
+            .show();
       }
     });
     task.execute(null, null);
@@ -200,6 +218,13 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
    * @param stops the stops
    */
   public void showStops(List<Stop> stops) {
+    if (stops.isEmpty()) {
+      Snackbar.make(getView(), R.string.no_stops, Snackbar.LENGTH_LONG)
+          .show();
+      activity.hideLoadingIcon();
+      return;
+    }
+
     LatLngBounds.Builder builder = new LatLngBounds.Builder();
     for (Stop stop : stops) {
       Marker marker = mMap.addMarker(getStopMarker(stop));
