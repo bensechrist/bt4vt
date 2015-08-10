@@ -15,12 +15,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-
-<android.support.design.widget.NavigationView
-  android:id="@+id/nav_view"
-  xmlns:android="http://schemas.android.com/apk/res/android"
-  xmlns:app="http://schemas.android.com/apk/res-auto"
-  android:layout_width="wrap_content"
-  android:layout_height="match_parent"
-  android:layout_gravity="start"
-  app:menu="@menu/drawer"/>
+<resources>
+  <color name="PrimaryColor">#607D8B</color>
+  <color name="PrimaryDarkColor">#455A64</color>
+</resources>

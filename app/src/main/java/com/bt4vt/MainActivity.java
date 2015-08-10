@@ -17,6 +17,7 @@
 package com.bt4vt;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
 import android.view.View;
@@ -27,6 +28,9 @@ import com.bt4vt.fragment.RetainedMapFragment;
 import com.bt4vt.repository.FirebaseService;
 import com.bt4vt.repository.domain.Route;
 import com.bt4vt.repository.domain.Stop;
+import com.github.amlcurran.showcaseview.ShowcaseView;
+import com.github.amlcurran.showcaseview.targets.ViewTarget;
+import com.google.inject.Inject;
 
 import java.util.List;
 
@@ -44,6 +48,10 @@ public class MainActivity extends RoboFragmentActivity implements
     RetainedMapFragment.TalkToActivity, NavigationDrawerFragment.TalkToActivity, View.OnClickListener {
 
   public static final String EXTRA_STOP = "com.bt4vt.extra.stop";
+  private static final String FIRST_TIME_OPEN_KEY = "first_time_open_app";
+
+  @Inject
+  private SharedPreferences preferences;
 
   @InjectView(R.id.drawer_layout)
   private DrawerLayout mDrawerLayout;
@@ -97,6 +105,17 @@ public class MainActivity extends RoboFragmentActivity implements
   protected void onResume() {
     super.onResume();
     mapFragment.setUpMapIfNeeded();
+
+    if (preferences.getBoolean(FIRST_TIME_OPEN_KEY, true)) {
+      new ShowcaseView.Builder(this)
+          .setTarget(new ViewTarget(navButton))
+          .setContentTitle(R.string.nav_drawer_button_content_desc)
+          .setContentText(R.string.nav_button_showcase_text)
+          .setStyle(R.style.ShowcaseTheme)
+          .hideOnTouchOutside()
+          .build();
+      preferences.edit().putBoolean(FIRST_TIME_OPEN_KEY, false).apply();
+    }
   }
 
   @Override
@@ -112,6 +131,14 @@ public class MainActivity extends RoboFragmentActivity implements
     mapFragment.clearMap();
     mapFragment.fetchStops(currentRoute);
     mapFragment.showBuses(currentRoute);
+  }
+
+  @Override
+  public void showAllStops() {
+    mainLoadingView.setVisibility(View.VISIBLE);
+    mapFragment.setCurrentRoute(null);
+    mapFragment.clearMap();
+    mapFragment.fetchStops(null);
   }
 
   @Override

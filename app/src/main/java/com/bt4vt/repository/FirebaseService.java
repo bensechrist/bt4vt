@@ -32,6 +32,7 @@ import com.firebase.client.FirebaseError;
 import com.google.inject.Inject;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -45,9 +46,9 @@ import roboguice.service.RoboService;
 public class FirebaseService extends RoboService implements Firebase.AuthResultHandler,
     ChildEventListener {
 
-  private final FirebaseServiceBinder binder = new FirebaseServiceBinder();
+  public static final String USER_EMAIL_KEY = "firebase-user-email";
 
-  public static boolean isRunning = false;
+  private final FirebaseServiceBinder binder = new FirebaseServiceBinder();
 
   private static final String FIREBASE_BASE_URL = "https://blinding-torch-6262.firebaseio.com/";
   private static final String FAVORITE_STOPS_PATH = "favorite-stops";
@@ -65,6 +66,8 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
 
   private AtomicBoolean authenticating = new AtomicBoolean(false);
 
+  private Firebase.AuthResultHandler handler;
+
   @Override
   public void onCreate() {
     super.onCreate();
@@ -72,8 +75,6 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
   }
 
   void init() {
-    isRunning = true;
-
     if (firebase == null) {
       // Remove all Geofences
       busStopGeofenceService.unregisterAllGeofences();
@@ -84,7 +85,7 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
       } else {
         String token = preferences.getString(GOOGLE_OAUTH_TOKEN_KEY, null);
         if (token != null) {
-          loginGoogle(token);
+          loginGoogle(token, null);
         }
       }
     }
@@ -93,14 +94,11 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
   @Override
   public void onDestroy() {
     super.onDestroy();
-    isRunning = false;
-
     firebase.removeEventListener(this);
   }
 
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
-    Log.i(getClass().getSimpleName(), "Started service");
     return START_STICKY;
   }
 
@@ -145,16 +143,53 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
   }
 
   /**
+   * Returns a string url of the logged in user's profile image or null if no user logged in.
+   * @return url of user profile image or null
+   */
+  public String getUserProfileImageUrl() {
+    if (isAuthenticated()) {
+      return (String) getGoogleData().get("profileImageURL");
+    }
+    return null;
+  }
+
+  /**
+   * Returns the display name of the logged in user or null if no user logged in
+   * @return display name or null
+   */
+  public String getUserDisplayName() {
+    if (isAuthenticated()) {
+      return (String) getGoogleData().get("displayName");
+    }
+    return null;
+  }
+
+  public String getUserEmail() {
+    if (isAuthenticated()) {
+      return preferences.getString(USER_EMAIL_KEY, null);
+    }
+    return null;
+  }
+
+  /**
    * Logs the user with the given Google <code>token</code>.
    *
    * @param token the auth token
    */
-  public void loginGoogle(String token) {
+  public void loginGoogle(String token, Firebase.AuthResultHandler handler) {
     if (!isAuthenticated() && !authenticating.get()) {
       authenticating.set(true);
       preferences.edit().putString(GOOGLE_OAUTH_TOKEN_KEY, token).apply();
+      this.handler = handler;
       firebase.authWithOAuthToken("google", token, this);
     }
+  }
+
+  /**
+   * Logs the user out.
+   */
+  public void logout() {
+    firebase.unauth();
   }
 
   @Override
@@ -162,6 +197,9 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
     authenticating.set(false);
     Log.i(getClass().getSimpleName(), "Authenticated");
     authSetup(authData);
+    if (handler != null) {
+      handler.onAuthenticated(authData);
+    }
   }
 
   @Override
@@ -173,6 +211,9 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
         errorCode == FirebaseError.INVALID_TOKEN ||
         errorCode == FirebaseError.INVALID_CREDENTIALS) {
       preferences.edit().remove(GOOGLE_OAUTH_TOKEN_KEY).apply();
+    }
+    if (handler != null) {
+      handler.onAuthenticationError(firebaseError);
     }
   }
 
@@ -216,8 +257,13 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
   }
 
   public class FirebaseServiceBinder extends Binder {
+
     public FirebaseService getService() {
       return FirebaseService.this;
     }
+
+  }
+  private Map<String, Object> getGoogleData() {
+    return firebase.getAuth().getProviderData();
   }
 }
