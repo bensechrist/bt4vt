@@ -28,7 +28,7 @@ import com.bt4vt.repository.domain.Departure;
 import com.bt4vt.repository.domain.NextDeparture;
 import com.bt4vt.repository.domain.Stop;
 import com.bt4vt.repository.exception.TransitRepositoryException;
-import com.bt4vt.util.NoficationUtil;
+import com.bt4vt.util.NoficationUtils;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
 import com.google.inject.Inject;
@@ -110,7 +110,7 @@ public class GeofenceTransitionsIntentService extends RoboIntentService {
     }
     Intent intent = new Intent(this, MainActivity.class);
     intent.putExtra(MainActivity.EXTRA_STOP, stop.toString());
-    NotificationCompat.Builder builder = NoficationUtil.generateInboxBuilder(this, stop.getName(),
+    NotificationCompat.Builder builder = NoficationUtils.generateInboxBuilder(this, stop.getName(),
         departureStrings, intent, stop.getCode());
     notificationManager.notify(stop.getCode(), builder.build());
   }

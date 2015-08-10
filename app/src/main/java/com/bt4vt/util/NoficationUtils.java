@@ -32,7 +32,7 @@ import java.util.List;
  *
  * @author Ben Sechrist
  */
-public class NoficationUtil {
+public class NoficationUtils {
 
   public static NotificationCompat.Builder generateInboxBuilder(Context context, String title,
                                                                 List<String> content,
