@@ -165,7 +165,8 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
   private void setRouteNames(String[] routeNames) {
     Menu menu = navView.getMenu();
     for (String routeName : routeNames) {
-      menu.add(R.id.nav_routes_group, Menu.NONE, 1, routeName);
+      MenuItem item = menu.add(R.id.nav_routes_group, Menu.NONE, 1, routeName);
+      item.setCheckable(true);
     }
   }
 
