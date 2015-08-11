@@ -15,13 +15,14 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
+
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
   <group
-    android:id="@+id/nav_routes_group"
-    android:checkableBehavior="single">
+    android:id="@+id/nav_routes_group">
     <item
       android:id="@+id/nav_view_all_stops"
       android:orderInCategory="2"
+      android:checkable="true"
       android:title="@string/nav_item_view_all_stops"/>
   </group>
   <group
