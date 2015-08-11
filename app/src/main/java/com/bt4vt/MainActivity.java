@@ -174,4 +174,9 @@ public class MainActivity extends RoboFragmentActivity implements
   public void hideLoadingIcon() {
     mainLoadingView.setVisibility(View.INVISIBLE);
   }
+
+  @Override
+  public void showLoadingIcon() {
+    mainLoadingView.setVisibility(View.VISIBLE);
+  }
 }

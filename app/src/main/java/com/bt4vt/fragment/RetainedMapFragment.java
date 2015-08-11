@@ -160,6 +160,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
     final View.OnClickListener retryListener = new View.OnClickListener() {
       @Override
       public void onClick(View v) {
+        activity.showLoadingIcon();
         fetchStops(route);
       }
     };
@@ -192,6 +193,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
     final View.OnClickListener retryListener = new View.OnClickListener() {
       @Override
       public void onClick(View v) {
+        activity.showLoadingIcon();
         fetchStop(stopString);
       }
     };
@@ -433,5 +435,10 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
      * Hides the loading icon.
      */
     void hideLoadingIcon();
+
+    /**
+     * Shows the loading icon.
+     */
+    void showLoadingIcon();
   }
 }

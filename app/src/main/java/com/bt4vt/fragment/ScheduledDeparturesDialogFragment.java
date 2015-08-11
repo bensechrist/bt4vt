@@ -178,16 +178,13 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   @Override
   public void onClick(View v) {
     switch (v.getId()) {
-      case R.id.refresh_departures_button:
-        listView.setEmptyView(null);
-        loadingView.setVisibility(View.VISIBLE);
-        new DepartureAsyncTask(transitRepository, stop, route, this).execute();
-        break;
       case R.id.button_favorite_stop:
         onFavClick();
         break;
+      case R.id.refresh_departures_button:
       default:
-        // Most likely from a snackbar action
+        listView.setEmptyView(null);
+        loadingView.setVisibility(View.VISIBLE);
         new DepartureAsyncTask(transitRepository, stop, route, this).execute();
         break;
     }
