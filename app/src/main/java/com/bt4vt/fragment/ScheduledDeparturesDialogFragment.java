@@ -26,6 +26,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -166,9 +167,12 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
     e.printStackTrace();
     listView.setEmptyView(emptyDeparturesView);
     loadingView.setVisibility(View.INVISIBLE);
-    Snackbar.make(getView(), R.string.departures_error, Snackbar.LENGTH_LONG)
-        .setAction(R.string.retry, this)
-        .show();
+    View view = getView();
+    if (view != null) {
+      Snackbar.make(view, R.string.departures_error, Snackbar.LENGTH_LONG)
+          .setAction(R.string.retry, this)
+          .show();
+    }
   }
 
   @Override
@@ -218,9 +222,12 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
             onFavClick();
           }
         };
-        Snackbar.make(getView(), R.string.not_logged_in, Snackbar.LENGTH_LONG)
-            .setAction(R.string.login, listener)
-            .show();
+        View view = getView();
+        if (view != null) {
+          Snackbar.make(view, R.string.not_logged_in, Snackbar.LENGTH_LONG)
+              .setAction(R.string.login, listener)
+              .show();
+        }
       }
     }
   }
@@ -256,9 +263,11 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   private void setFavButtonText() {
     if (serviceBound) {
       if (firebaseService.isFavorited(stop)) {
-        favoriteButton.setImageDrawable(getActivity().getResources().getDrawable(R.drawable.heart));
+        favoriteButton.setImageDrawable(ContextCompat.getDrawable(getActivity(),
+            R.drawable.ic_action_star_full));
       } else {
-        favoriteButton.setImageDrawable(getActivity().getResources().getDrawable(R.drawable.empty_heart));
+        favoriteButton.setImageDrawable(ContextCompat.getDrawable(getActivity(),
+            R.drawable.ic_action_star_empty));
       }
     }
   }

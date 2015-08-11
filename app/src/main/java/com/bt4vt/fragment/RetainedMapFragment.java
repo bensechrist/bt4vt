@@ -413,14 +413,12 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
    * @return the marker options
    */
   private MarkerOptions getBusMarker(Bus bus) {
-    BitmapFactory.Options opts = new BitmapFactory.Options();
-    opts.inSampleSize = 10;
     return new MarkerOptions()
         .position(new LatLng(bus.getLatitude(), bus.getLongitude()))
         .title(getString(R.string.bus_marker_title_format, bus.getRouteName(), bus.getId()))
         .snippet(getString(R.string.bus_marker_snippet_format, bus.getPassengerLoad()))
         .icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getResources(),
-            R.drawable.bus, opts)));
+            R.drawable.bus)));
   }
 
   /**

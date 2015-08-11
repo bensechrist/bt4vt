@@ -20,6 +20,7 @@
   <style name="AppTheme" parent="Theme.AppCompat.Light">
     <item name="colorPrimary">@color/PrimaryColor</item>
     <item name="colorPrimaryDark">@color/PrimaryDarkColor</item>
+    <item name="colorAccent">@color/AccentColor</item>
   </style>
 
   <style name="ShowcaseTheme" parent="ShowcaseView.Light">
