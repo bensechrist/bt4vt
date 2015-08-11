@@ -195,6 +195,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
         for (Stop stop : stops) {
           if (stop.toString().equals(stopString)) {
             activity.onStopsReady(Collections.singletonList(stop));
+            return;
           }
         }
         activity.onStopsReady(Collections.EMPTY_LIST);
@@ -260,7 +261,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
 
   @Override
   public void onUpdateBuses(final List<Bus> buses) {
-    if (buses.isEmpty()) {
+    if (buses.isEmpty() || !isAdded()) {
       return;
     }
 
