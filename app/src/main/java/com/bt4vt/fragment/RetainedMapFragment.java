@@ -167,16 +167,23 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
     StopAsyncTask task = new StopAsyncTask(transitRepository, new AsyncCallback<List<Stop>>() {
       @Override
       public void onSuccess(List<Stop> stops) {
-        activity.onStopsReady(stops);
+        if (isAdded()) {
+          activity.onStopsReady(stops);
+        }
       }
 
       @Override
       public void onException(Exception e) {
-        activity.hideLoadingIcon();
+        if (isAdded()) {
+          activity.hideLoadingIcon();
+        }
         e.printStackTrace();
-        Snackbar.make(getView(), R.string.stops_error, Snackbar.LENGTH_LONG)
-            .setAction(R.string.retry, retryListener)
-            .show();
+        View view = getView();
+        if (view != null) {
+          Snackbar.make(view, R.string.stops_error, Snackbar.LENGTH_LONG)
+              .setAction(R.string.retry, retryListener)
+              .show();
+        }
       }
     });
     task.execute(route);
@@ -192,22 +199,30 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
     StopAsyncTask task = new StopAsyncTask(transitRepository, new AsyncCallback<List<Stop>>() {
       @Override
       public void onSuccess(List<Stop> stops) {
+        if (!isAdded()) {
+          return;
+        }
         for (Stop stop : stops) {
           if (stop.toString().equals(stopString)) {
             activity.onStopsReady(Collections.singletonList(stop));
             return;
           }
         }
-        activity.onStopsReady(Collections.EMPTY_LIST);
+        activity.onStopsReady(Collections.<Stop>emptyList());
       }
 
       @Override
       public void onException(Exception e) {
-        activity.hideLoadingIcon();
+        if (isAdded()) {
+          activity.hideLoadingIcon();
+        }
         e.printStackTrace();
-        Snackbar.make(getView(), R.string.stop_error, Snackbar.LENGTH_LONG)
-            .setAction(R.string.retry, retryListener)
-            .show();
+        View view = getView();
+        if (view != null) {
+          Snackbar.make(view, R.string.stop_error, Snackbar.LENGTH_LONG)
+              .setAction(R.string.retry, retryListener)
+              .show();
+        }
       }
     });
     task.execute(null, null);
@@ -220,9 +235,14 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
    */
   public void showStops(List<Stop> stops) {
     if (stops.isEmpty()) {
-      Snackbar.make(getView(), R.string.no_stops, Snackbar.LENGTH_LONG)
-          .show();
-      activity.hideLoadingIcon();
+      View view = getView();
+      if (view != null) {
+        Snackbar.make(view, R.string.no_stops, Snackbar.LENGTH_LONG)
+            .show();
+      }
+      if (isAdded()) {
+        activity.hideLoadingIcon();
+      }
       return;
     }
 
@@ -237,7 +257,9 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
     CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
     mMap.animateCamera(cu);
 
-    activity.hideLoadingIcon();
+    if (isAdded()) {
+      activity.hideLoadingIcon();
+    }
   }
 
   @Override
