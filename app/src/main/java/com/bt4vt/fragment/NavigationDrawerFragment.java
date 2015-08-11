@@ -86,6 +86,8 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
 
   private View navHeader;
 
+  private MenuItem lastMenuItem;
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -184,6 +186,10 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
     }
     int menuItemId = menuItem.getItemId();
     if (menuItem.getGroupId() == R.id.nav_routes_group) {
+      if (lastMenuItem != null) {
+        lastMenuItem.setChecked(false);
+      }
+      lastMenuItem = menuItem;
       menuItem.setChecked(true);
       if (menuItemId == R.id.nav_view_all_stops) {
         activity.showAllStops();
