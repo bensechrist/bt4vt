@@ -49,7 +49,6 @@ import com.google.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 import roboguice.RoboGuice;
@@ -300,7 +299,9 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
             currentBusMarkers.add(marker);
           }
 
-          showRoutePattern(buses.get(0));
+          if (currentRoutePattern == null) {
+            showRoutePattern(buses.get(0));
+          }
         } else {
           for (int i = 0; i < currentBusMarkers.size(); i++) {
             Marker marker = currentBusMarkers.get(i);
@@ -374,18 +375,11 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
   }
 
   private void clearRoute() {
-    if (currentRoutePattern != null) {
-      currentRoutePattern.remove();
-    }
     currentRoutePattern = null;
   }
 
   private void removeMarkers(List<Marker> markers) {
-    Iterator<Marker> it = markers.iterator();
-    while (it.hasNext()) {
-      it.next().remove();
-      it.remove();
-    }
+    markers.clear();
   }
 
   /**
