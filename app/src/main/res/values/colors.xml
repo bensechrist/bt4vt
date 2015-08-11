@@ -15,7 +15,9 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
+
 <resources>
   <color name="PrimaryColor">#607D8B</color>
   <color name="PrimaryDarkColor">#455A64</color>
+  <color name="AccentColor">#ff9800</color>
 </resources>

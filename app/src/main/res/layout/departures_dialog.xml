@@ -43,7 +43,7 @@
     android:paddingRight="0dp"
     android:paddingTop="0dp"
     android:scaleType="centerCrop"
-    android:src="@drawable/empty_heart"
+    android:src="@drawable/ic_action_star_empty"
     android:visibility="invisible"/>
 
   <TextView
