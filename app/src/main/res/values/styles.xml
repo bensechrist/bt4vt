@@ -23,7 +23,7 @@
   </style>
 
   <style name="ShowcaseTheme" parent="ShowcaseView.Light">
-    <item name="sv_backgroundColor">#50607d8b</item>
+    <item name="sv_backgroundColor">@color/PrimaryColor</item>
     <item name="sv_showcaseColor">#fff</item>
     <item name="sv_buttonText">Hide</item>
     <item name="sv_buttonBackgroundColor">@color/PrimaryDarkColor</item>
