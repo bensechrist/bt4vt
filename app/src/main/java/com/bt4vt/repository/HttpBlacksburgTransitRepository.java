@@ -47,6 +47,7 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Timer;
 
@@ -158,8 +159,10 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
         return buses;
       }
       DocumentElement doc = getDocumentElement(busesString);
+      Date now = new Date();
       for (Bus bus : doc.buses) {
         if (!bus.isTripper()) {
+          bus.setLastUpdated(now);
           buses.add(bus);
         }
       }
