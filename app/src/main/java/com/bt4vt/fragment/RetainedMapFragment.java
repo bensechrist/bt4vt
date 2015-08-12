@@ -314,7 +314,8 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
             Bus bus = buses.get(i);
             marker.setPosition(new LatLng(bus.getLatitude(), bus.getLongitude()));
             marker.setTitle(getString(R.string.bus_marker_title_format, bus.getRouteName(), bus.getId()));
-            marker.setSnippet(getString(R.string.bus_marker_snippet_format, bus.getPassengerLoad()));
+            marker.setSnippet(getString(R.string.bus_marker_snippet_format, bus.getPassengerLoad(),
+                bus.getLastUpdated()));
           }
         }
       }
@@ -416,7 +417,8 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
     return new MarkerOptions()
         .position(new LatLng(bus.getLatitude(), bus.getLongitude()))
         .title(getString(R.string.bus_marker_title_format, bus.getRouteName(), bus.getId()))
-        .snippet(getString(R.string.bus_marker_snippet_format, bus.getPassengerLoad()))
+        .snippet(getString(R.string.bus_marker_snippet_format, bus.getPassengerLoad(),
+            bus.getLastUpdated()))
         .icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getResources(),
             R.drawable.bus)));
   }

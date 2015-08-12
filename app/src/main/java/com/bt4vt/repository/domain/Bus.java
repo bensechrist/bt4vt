@@ -19,6 +19,9 @@ package com.bt4vt.repository.domain;
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.Root;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * Transit bus.
  *
@@ -90,6 +93,8 @@ public class Bus {
   @Element(name = "TotalCount")
   private Integer passengerLoad;
 
+  private Date lastUpdated;
+
   public Integer getId() {
     return id;
   }
@@ -120,6 +125,16 @@ public class Bus {
 
   public String getPatternColor() {
     return patternColor;
+  }
+
+  public String getLastUpdated() {
+    return SimpleDateFormat
+        .getTimeInstance()
+        .format(lastUpdated);
+  }
+
+  public void setLastUpdated(Date lastUpdated) {
+    this.lastUpdated = lastUpdated;
   }
 
   @Override
