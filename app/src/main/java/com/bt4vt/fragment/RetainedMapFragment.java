@@ -295,6 +295,10 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
     new Handler(Looper.getMainLooper()).post(new Runnable() {
       @Override
       public void run() {
+        if (!isAdded()) {
+          return;
+        }
+
         if (currentBusMarkers.size() != buses.size()) {
           for (Bus bus : buses) {
             Marker marker = mMap.addMarker(getBusMarker(bus));
