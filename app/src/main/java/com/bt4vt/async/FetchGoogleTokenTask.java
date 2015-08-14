@@ -18,6 +18,8 @@ package com.bt4vt.async;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Looper;
 
 import com.google.android.gms.auth.GoogleAuthException;
 import com.google.android.gms.auth.GoogleAuthUtil;
@@ -46,7 +48,7 @@ public class FetchGoogleTokenTask extends AsyncTask<Void, Void, String> {
       String scope = String.format("oauth2:%s", Scopes.PLUS_LOGIN);
       return GoogleAuthUtil.getToken(context, email, scope);
     } catch (IOException | GoogleAuthException e) {
-      e.printStackTrace();
+      new Handler(Looper.getMainLooper()).post(new CallbackExceptionRunnable(callback, e));
     }
     return null;
   }
