@@ -107,6 +107,9 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   private Route route;
 
   public static ScheduledDeparturesDialogFragment newInstance(Stop stop, Route route) {
+    if (stop == null) {
+      throw new NullPointerException("Stop was null");
+    }
     ScheduledDeparturesDialogFragment fragment = new ScheduledDeparturesDialogFragment();
     fragment.stop = stop;
     fragment.route = route;
