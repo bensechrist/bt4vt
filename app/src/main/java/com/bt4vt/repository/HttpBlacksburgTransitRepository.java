@@ -59,11 +59,11 @@ import java.util.Timer;
 @Singleton
 public class HttpBlacksburgTransitRepository implements TransitRepository {
 
-  private static final String BT_MOBILE_PATH = "http://bt4u.org/Mobile.aspx";
+  private static final String BT_MOBILE_PATH = "http://bt4uclassic.org/Mobile.aspx";
   private static final String ROUTE_LIST_BOX_ID = "routeListBox";
-  private static final String BT_STOPS_PATH = "http://bt4u.org/LiveMap.aspx/GetBusStops";
-  private static final String BT_DEPARTURES_PATH = "http://bt4u.org/LiveMap.aspx/GetNextDepartures";
-  private static final String BT_UPDATE_PATH = "http://bt4u.org/LiveMap.aspx/UpdateLatestInfo";
+  private static final String BT_STOPS_PATH = "http://bt4uclassic.org/LiveMap.aspx/GetBusStops";
+  private static final String BT_DEPARTURES_PATH = "http://bt4uclassic.org/LiveMap.aspx/GetNextDepartures";
+  private static final String BT_UPDATE_PATH = "http://bt4uclassic.org/LiveMap.aspx/UpdateLatestInfo";
 
   @Inject
   RouteFactory routeFactory;
