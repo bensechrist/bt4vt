@@ -72,7 +72,7 @@ public class Bus {
   @Element(name = "StopCode")
   private Integer lastStopCode;
 
-  @Element(name = "IsBusAtStop")
+  @Element(name = "IsBusAtStop", required = false)
   private String isAtStopString;
 
   @Element(name = "IsTimePoint")
