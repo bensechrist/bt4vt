@@ -56,6 +56,7 @@ import java.util.List;
 
 import roboguice.fragment.RoboDialogFragment;
 import roboguice.inject.InjectView;
+import uk.co.deanwild.materialshowcaseview.MaterialShowcaseView;
 
 /**
  * Shows the scheduled departures for the given stop in a dialog.
@@ -71,10 +72,6 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   private static final String STOP_FORMAT = "Stop: %s";
   private static final String ROUTE_FORMAT = "Route: %s";
   private static final String ALL_ROUTES = "ALL";
-  public static final String FIRST_DEPARTURES_VIEW_KEY = "first_departures_view";
-
-  @Inject
-  private LayoutInflater inflater;
 
   @Inject
   private TransitRepository transitRepository;
