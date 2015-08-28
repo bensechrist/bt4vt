@@ -160,21 +160,25 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
 
   @Override
   public void onSuccess(List<Departure> departures) {
-    listView.setAdapter(new DepartureArrayAdapter(getActivity(), departures));
-    listView.setEmptyView(emptyDeparturesView);
-    loadingView.setVisibility(View.INVISIBLE);
+    if (isAdded()) {
+      listView.setAdapter(new DepartureArrayAdapter(getActivity(), departures));
+      listView.setEmptyView(emptyDeparturesView);
+      loadingView.setVisibility(View.INVISIBLE);
+    }
   }
 
   @Override
   public void onException(Exception e) {
-    e.printStackTrace();
-    listView.setEmptyView(emptyDeparturesView);
-    loadingView.setVisibility(View.INVISIBLE);
-    View view = getView();
-    if (view != null) {
-      Snackbar.make(view, R.string.departures_error, Snackbar.LENGTH_LONG)
-          .setAction(R.string.retry, this)
-          .show();
+    if (isAdded()) {
+      e.printStackTrace();
+      listView.setEmptyView(emptyDeparturesView);
+      loadingView.setVisibility(View.INVISIBLE);
+      View view = getView();
+      if (view != null) {
+        Snackbar.make(view, R.string.departures_error, Snackbar.LENGTH_LONG)
+            .setAction(R.string.retry, this)
+            .show();
+      }
     }
   }
 
