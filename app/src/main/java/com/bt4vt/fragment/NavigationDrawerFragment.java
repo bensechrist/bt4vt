@@ -200,7 +200,7 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
     } else {
       // Non-route item
       if (menuItemId == R.id.nav_signin) {
-        showAccountPicker();
+        signIn();
       } else if (menuItemId == NAV_SIGNOUT_ID) {
         firebaseService.logout();
         initHeader();
@@ -224,7 +224,7 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
         View.OnClickListener listener = new View.OnClickListener() {
           @Override
           public void onClick(View v) {
-            showAccountPicker();
+            signIn();
           }
         };
         View view = getView();
@@ -234,6 +234,15 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
               .show();
         }
       }
+    }
+  }
+
+  private void signIn() {
+    String userEmail = preferences.getString(FirebaseService.USER_EMAIL_KEY, null);
+    if (userEmail != null) {
+      new FetchGoogleTokenTask(getActivity(), userEmail, this).execute();
+    } else {
+      showAccountPicker();
     }
   }
 

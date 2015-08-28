@@ -22,6 +22,8 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
+import com.bt4vt.async.AsyncCallback;
+import com.bt4vt.async.FetchGoogleTokenTask;
 import com.bt4vt.geofence.BusStopGeofenceService;
 import com.bt4vt.repository.domain.Stop;
 import com.firebase.client.AuthData;
@@ -34,7 +36,11 @@ import com.google.inject.Inject;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import roboguice.service.RoboService;
 
@@ -44,7 +50,7 @@ import roboguice.service.RoboService;
  * @author Ben Sechrist
  */
 public class FirebaseService extends RoboService implements Firebase.AuthResultHandler,
-    ChildEventListener {
+    ChildEventListener, AsyncCallback<String> {
 
   public static final String USER_EMAIL_KEY = "firebase-user-email";
 
@@ -53,6 +59,9 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
   private static final String FIREBASE_BASE_URL = "https://blinding-torch-6262.firebaseio.com/";
   private static final String FAVORITE_STOPS_PATH = "favorite-stops";
   private static final String GOOGLE_OAUTH_TOKEN_KEY = "google_oauth_token";
+
+  private Lock lock = new ReentrantLock();
+  private Condition authCondition = lock.newCondition();
 
   @Inject
   private BusStopGeofenceService busStopGeofenceService;
@@ -139,6 +148,16 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
    * @return true if the user is logged in, false otherwise
    */
   public boolean isAuthenticated() {
+    if (authenticating.get()) {
+      lock.lock();
+      try {
+        authCondition.await(500, TimeUnit.MILLISECONDS);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      } finally {
+        lock.unlock();
+      }
+    }
     return ((firebase != null) && (firebase.getAuth() != null));
   }
 
@@ -172,7 +191,8 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
   }
 
   /**
-   * Logs the user with the given Google <code>token</code>.
+   * Logs the user with the given Google <code>token</code> and calls the <code>handler</code>
+   * when the auth is finished.
    *
    * @param token the auth token
    */
@@ -190,11 +210,12 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
    */
   public void logout() {
     firebase.unauth();
+    preferences.edit().remove(GOOGLE_OAUTH_TOKEN_KEY).remove(USER_EMAIL_KEY).apply();
   }
 
   @Override
   public void onAuthenticated(AuthData authData) {
-    authenticating.set(false);
+    authFinish();
     Log.i(getClass().getSimpleName(), "Authenticated");
     authSetup(authData);
     if (handler != null) {
@@ -204,16 +225,40 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
 
   @Override
   public void onAuthenticationError(FirebaseError firebaseError) {
-    authenticating.set(false);
+    authFinish();
     Log.e(getClass().getSimpleName(), "Firebase Auth Error: " + firebaseError);
     int errorCode = firebaseError.getCode();
     if (errorCode == FirebaseError.EXPIRED_TOKEN ||
         errorCode == FirebaseError.INVALID_TOKEN ||
         errorCode == FirebaseError.INVALID_CREDENTIALS) {
       preferences.edit().remove(GOOGLE_OAUTH_TOKEN_KEY).apply();
+      String userEmail = preferences.getString(USER_EMAIL_KEY, null);
+      if (userEmail != null) {
+        new FetchGoogleTokenTask(getApplicationContext(), userEmail, this).execute();
+      }
     }
     if (handler != null) {
       handler.onAuthenticationError(firebaseError);
+    }
+  }
+
+  @Override
+  public void onSuccess(String token) {
+    loginGoogle(token, null);
+  }
+
+  @Override
+  public void onException(Exception e) {
+    e.printStackTrace();
+  }
+
+  private void authFinish() {
+    authenticating.set(false);
+    lock.lock();
+    try {
+      authCondition.signalAll();
+    } finally {
+      lock.unlock();
     }
   }
 
