@@ -24,10 +24,6 @@
 -dontpreverify
 -dontwarn roboguice.**, com.fasterxml.**, org.roboguice.**, org.simpleframework.**
 -verbose
--dump build/bin/class_files.txt
--printseeds build/bin/seeds.txt
--printusage build/bin/unused.txt
--printmapping build/bin/mapping.txt
 
 # The -optimizations option disables some arithmetic simplifications that Dalvik 1.0 and 1.5 can't handle.
 -optimizations !code/simplification/arithmetic,!code/allocation/variable,!field/*,!class/merging/*
