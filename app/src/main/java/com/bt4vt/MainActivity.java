@@ -28,8 +28,6 @@ import com.bt4vt.fragment.RetainedMapFragment;
 import com.bt4vt.repository.FirebaseService;
 import com.bt4vt.repository.domain.Route;
 import com.bt4vt.repository.domain.Stop;
-import com.github.amlcurran.showcaseview.ShowcaseView;
-import com.github.amlcurran.showcaseview.targets.ViewTarget;
 import com.google.inject.Inject;
 
 import java.util.List;
@@ -37,6 +35,7 @@ import java.util.List;
 import roboguice.activity.RoboFragmentActivity;
 import roboguice.inject.ContentView;
 import roboguice.inject.InjectView;
+import uk.co.deanwild.materialshowcaseview.MaterialShowcaseView;
 
 /**
  * Handles the layout {@link com.bt4vt.R.layout#activity_main}.
@@ -49,6 +48,7 @@ public class MainActivity extends RoboFragmentActivity implements
 
   public static final String EXTRA_STOP = "com.bt4vt.extra.stop";
   private static final String FIRST_TIME_OPEN_KEY = "first_time_open_app";
+  private static final String SHOWCASE_ID = "com.bt4vt.nav_showcase";
 
   @Inject
   private SharedPreferences preferences;
@@ -106,15 +106,15 @@ public class MainActivity extends RoboFragmentActivity implements
     super.onResume();
     mapFragment.setUpMapIfNeeded();
 
-    if (preferences.getBoolean(FIRST_TIME_OPEN_KEY, true)) {
-      new ShowcaseView.Builder(this)
-          .setTarget(new ViewTarget(navButton))
-          .setContentTitle(R.string.nav_drawer_button_content_desc)
-          .setContentText(R.string.nav_button_showcase_text)
-          .setStyle(R.style.ShowcaseTheme)
-          .hideOnTouchOutside()
-          .build();
-      preferences.edit().putBoolean(FIRST_TIME_OPEN_KEY, false).apply();
+    new MaterialShowcaseView.Builder(this)
+        .setTarget(navButton)
+        .setDismissText(R.string.showcase_confirm)
+        .setContentText(R.string.nav_button_showcase_text)
+        .setDelay(500)
+        .singleUse(SHOWCASE_ID)
+        .show();
+    if (preferences.contains(FIRST_TIME_OPEN_KEY)) {
+      preferences.edit().remove(FIRST_TIME_OPEN_KEY).apply();
     }
   }
 
