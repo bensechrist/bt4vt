@@ -37,7 +37,6 @@
   <string name="bus_marker_title_format">%1$s - %2$d</string>
   <string name="bus_marker_snippet_format">%1$d passengers — Last Updated: %2$s</string>
   <string name="xml_parse_error_format">Error parsing xml %1$s: %2$s</string>
-  <string name="fav_button_showcase_text">Click this button to favorite this stop\\nYou must be logged in to favorite stops</string>
   <string name="nav_routes_subheader">Routes</string>
   <string name="nav_other_subheader">Settings</string>
   <string name="nav_item_view_all_stops">View All Stops</string>
@@ -57,4 +56,5 @@
   <string name="nav_button_showcase_text">Open the navigation drawer to view routes and sign in. Signing in allows you to sync your favorites across devices.</string>
   <string name="app_feedback">BT4VT Feedback</string>
   <string name="app_feedback_email">bensechrist@gmail.com</string>
+  <string name="showcase_confirm">Got It</string>
 </resources>

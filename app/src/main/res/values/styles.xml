@@ -23,22 +23,4 @@
     <item name="colorAccent">@color/AccentColor</item>
   </style>
 
-  <style name="ShowcaseTheme" parent="ShowcaseView.Light">
-    <item name="sv_backgroundColor">@color/PrimaryColor</item>
-    <item name="sv_showcaseColor">#fff</item>
-    <item name="sv_buttonText">Hide</item>
-    <item name="sv_buttonBackgroundColor">@color/PrimaryDarkColor</item>
-    <item name="sv_buttonForegroundColor">#fff</item>
-    <item name="sv_tintButtonColor">false</item>
-    <item name="sv_titleTextAppearance">@style/ShowcaseTitle</item>
-    <item name="sv_detailTextAppearance">@style/ShowcaseDetail</item>
-  </style>
-
-  <style name="ShowcaseTitle" parent="TextAppearance.ShowcaseView.Title">
-    <item name="android:textColor">#fff</item>
-  </style>
-
-  <style name="ShowcaseDetail" parent="TextAppearance.ShowcaseView.Detail">
-    <item name="android:textColor">#fff</item>
-  </style>
 </resources>
