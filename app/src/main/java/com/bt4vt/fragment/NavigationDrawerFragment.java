@@ -142,11 +142,20 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
     RouteAsyncTask task = new RouteAsyncTask(transitRepository, new AsyncCallback<List<Route>>() {
       @Override
       public void onSuccess(List<Route> routes) {
-        String[] routeNames = new String[routes.size()];
-        for (int i = 0; i < routes.size(); i++) {
-          routeNames[i] = routes.get(i).getName();
+        if (routes.isEmpty()) {
+          View view = getView();
+          if (view != null) {
+            Snackbar.make(view, R.string.no_routes, Snackbar.LENGTH_LONG)
+                .setAction(R.string.retry, NavigationDrawerFragment.this)
+                .show();
+          }
+        } else {
+          String[] routeNames = new String[routes.size()];
+          for (int i = 0; i < routes.size(); i++) {
+            routeNames[i] = routes.get(i).getName();
+          }
+          setRouteNames(routeNames);
         }
-        setRouteNames(routeNames);
       }
 
       @Override
