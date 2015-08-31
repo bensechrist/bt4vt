@@ -139,6 +139,7 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
   }
 
   public void fetchRoutes() {
+    navView.getMenu().findItem(R.id.nav_loading).setVisible(true);
     RouteAsyncTask task = new RouteAsyncTask(transitRepository, new AsyncCallback<List<Route>>() {
       @Override
       public void onSuccess(List<Route> routes) {
@@ -175,6 +176,7 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
 
   private void setRouteNames(String[] routeNames) {
     Menu menu = navView.getMenu();
+    menu.findItem(R.id.nav_loading).setVisible(false);
     for (String routeName : routeNames) {
       MenuItem item = menu.add(R.id.nav_routes_group, Menu.NONE, 1, routeName);
       item.setCheckable(true);
