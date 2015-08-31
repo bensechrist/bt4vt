@@ -95,9 +95,9 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
   }
 
   @Override
-  public void onAttach(Activity activity) {
-    super.onAttach(activity);
-    this.activity = (TalkToActivity) activity;
+  public void onAttach(Context context) {
+    super.onAttach(context);
+    this.activity = (TalkToActivity) context;
   }
 
   @Override
@@ -165,7 +165,7 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
         e.printStackTrace();
         View view = getView();
         if (view != null) {
-          Snackbar.make(view, R.string.routes_error, Snackbar.LENGTH_LONG)
+          Snackbar.make(view, R.string.routes_error, Snackbar.LENGTH_INDEFINITE)
               .setAction(R.string.retry, NavigationDrawerFragment.this)
               .show();
         }
@@ -191,12 +191,15 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
           .show();
       return true;
     }
-    if (menuItem.isChecked()) {
+    if (menuItem.equals(lastMenuItem)) {
       activity.closeDrawer();
       return true;
     }
     int menuItemId = menuItem.getItemId();
     if (menuItem.getGroupId() == R.id.nav_routes_group) {
+      if (menuItemId == R.id.nav_loading) {
+        return true;
+      }
       if (lastMenuItem != null) {
         lastMenuItem.setChecked(false);
       }
@@ -303,11 +306,7 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
 
             @Override
             public void onException(Exception e) {
-              View view = getView();
-              if (view != null) {
-                Snackbar.make(view, R.string.fetch_bitmap_error, Snackbar.LENGTH_SHORT)
-                    .show();
-              }
+              // Do nothing
             }
           }).execute(firebaseService.getUserProfileImageUrl());
           profileName.setText(firebaseService.getUserDisplayName());
