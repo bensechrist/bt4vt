@@ -20,6 +20,10 @@
   <group
     android:id="@+id/nav_routes_group">
     <item
+        android:id="@+id/nav_loading"
+        android:orderInCategory="0"
+        android:title="@string/routes_loading_title"/>
+    <item
       android:id="@+id/nav_view_all_stops"
       android:orderInCategory="2"
       android:checkable="true"
