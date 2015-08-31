@@ -17,6 +17,7 @@
 package com.bt4vt.fragment;
 
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -63,6 +64,9 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
     BusListener, GoogleMap.OnInfoWindowClickListener {
 
   private static final String DEPARTURES_DIALOG_TAG = "scheduled_departures_dialog_tag";
+  private static final double BBURG_LAT = 37.2304516;
+  private static final double BBURG_LNG = -80.4294548;
+  private static final float BBURG_ZOOM = 13;
 
   @Inject
   private TransitRepository transitRepository;
@@ -105,9 +109,9 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
   }
 
   @Override
-  public void onAttach(Activity activity) {
-    super.onAttach(activity);
-    this.activity = (TalkToActivity) activity;
+  public void onAttach(Context context) {
+    super.onAttach(context);
+    this.activity = (TalkToActivity) context;
   }
 
   @Override
@@ -364,6 +368,9 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
     mMap.getUiSettings().setRotateGesturesEnabled(false);
     mMap.getUiSettings().setTiltGesturesEnabled(false);
     mMap.setOnInfoWindowClickListener(this);
+
+    CameraUpdate cu = CameraUpdateFactory.newLatLngZoom(new LatLng(BBURG_LAT, BBURG_LNG), BBURG_ZOOM);
+    mMap.animateCamera(cu);
   }
 
   /**

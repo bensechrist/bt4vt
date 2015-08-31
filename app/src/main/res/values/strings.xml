@@ -59,4 +59,5 @@
   <string name="showcase_confirm">Got It</string>
   <string name="no_routes">No routes</string>
   <string name="routes_loading_title">Loading Routes...</string>
+  <string name="no_network_message">Network Failed/Check your internet connection</string>
 </resources>

@@ -18,7 +18,10 @@ package com.bt4vt;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.widget.DrawerLayout;
 import android.view.View;
 import android.widget.ImageButton;
@@ -53,6 +56,9 @@ public class MainActivity extends RoboFragmentActivity implements
   @Inject
   private SharedPreferences preferences;
 
+  @Inject
+  private ConnectivityManager connectivityManager;
+
   @InjectView(R.id.drawer_layout)
   private DrawerLayout mDrawerLayout;
 
@@ -70,9 +76,6 @@ public class MainActivity extends RoboFragmentActivity implements
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
-    Intent serviceIntent = new Intent(this, FirebaseService.class);
-    startService(serviceIntent);
-
     navButton.setOnClickListener(this);
 
     if (navFragment == null) {
@@ -84,13 +87,7 @@ public class MainActivity extends RoboFragmentActivity implements
       mapFragment = (RetainedMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
     }
 
-    Intent intent = getIntent();
-    String stopString = intent.getStringExtra(EXTRA_STOP);
-    if (stopString != null) {
-      mainLoadingView.setVisibility(View.VISIBLE);
-      mapFragment.fetchStop(stopString);
-    }
-    navFragment.fetchRoutes();
+    initData();
   }
 
   @Override
@@ -116,6 +113,8 @@ public class MainActivity extends RoboFragmentActivity implements
     if (preferences.contains(FIRST_TIME_OPEN_KEY)) {
       preferences.edit().remove(FIRST_TIME_OPEN_KEY).apply();
     }
+
+    checkNetwork();
   }
 
   @Override
@@ -143,15 +142,46 @@ public class MainActivity extends RoboFragmentActivity implements
 
   @Override
   public void onClick(View v) {
-    if (navFragment != null) {
-      View view = navFragment.getView();
-      if (view != null) {
-        if (mDrawerLayout.isDrawerOpen(view)) {
-          closeDrawer();
-        } else {
-          mDrawerLayout.openDrawer(view);
+    if (v.getId() == navButton.getId()) {
+      if (navFragment != null) {
+        View view = navFragment.getView();
+        if (view != null) {
+          if (mDrawerLayout.isDrawerOpen(view)) {
+            closeDrawer();
+          } else {
+            mDrawerLayout.openDrawer(view);
+          }
         }
       }
+    } else {
+      initData();
+      checkNetwork();
+    }
+  }
+
+  private void checkNetwork() {
+    if (!isNetworkAvailable()) {
+      View view = mapFragment.getView();
+      if (view != null) {
+        Snackbar.make(view, R.string.no_network_message, Snackbar.LENGTH_INDEFINITE)
+            .setAction(R.string.retry, this)
+            .show();
+      }
+    }
+  }
+
+  private void initData() {
+    if (isNetworkAvailable()) {
+      Intent serviceIntent = new Intent(this, FirebaseService.class);
+      startService(serviceIntent);
+
+      Intent intent = getIntent();
+      String stopString = intent.getStringExtra(EXTRA_STOP);
+      if (stopString != null) {
+        mainLoadingView.setVisibility(View.VISIBLE);
+        mapFragment.fetchStop(stopString);
+      }
+      navFragment.fetchRoutes();
     }
   }
 
@@ -178,5 +208,10 @@ public class MainActivity extends RoboFragmentActivity implements
   @Override
   public void showLoadingIcon() {
     mainLoadingView.setVisibility(View.VISIBLE);
+  }
+
+  private boolean isNetworkAvailable() {
+    NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+    return activeNetworkInfo != null && activeNetworkInfo.isConnected();
   }
 }
