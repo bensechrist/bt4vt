@@ -21,6 +21,7 @@ import com.bt4vt.repository.domain.NextDeparture;
 import com.bt4vt.repository.domain.Route;
 import com.bt4vt.repository.domain.RouteFactory;
 import com.bt4vt.repository.domain.Stop;
+import com.bt4vt.repository.exception.TransitRepositoryException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -29,7 +30,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertTrue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThan;
 
 /**
@@ -90,6 +93,16 @@ public class HttpBlacksburgTransitRepositoryTest {
     for (Route route : routes) {
       List<Bus> buses = repository.getBusLocations(route);
       assertNotNull(buses);
+    }
+  }
+
+  @Test
+  public void testFetchBusesError() throws Exception {
+    try {
+      repository.fetchBuses("TEST");
+      assertTrue(false);
+    } catch (TransitRepositoryException e) {
+      assertThat(e.getMessage(), containsString("error getting buses for TEST"));
     }
   }
 }
