@@ -45,6 +45,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
+import java.net.SocketException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
@@ -298,7 +299,7 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
     }
   }
 
-  private String readResponse(InputStream in) {
+  private String readResponse(InputStream in) throws TransitRepositoryException {
     String result = getResponse(in);
 
     final String[] split = result.split(":", 2);
@@ -318,7 +319,7 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
     return conn;
   }
 
-  private String getResponse(InputStream in) {
+  private String getResponse(InputStream in) throws TransitRepositoryException {
     StringBuilder sb = new StringBuilder();
     String line;
     try {
@@ -328,6 +329,9 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
       }
       br.close();
       return sb.toString();
+    } catch (SocketException e) {
+      // Most likely a network error
+      throw new TransitRepositoryException(e);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
