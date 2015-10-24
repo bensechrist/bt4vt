@@ -211,7 +211,7 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
     return serializer.read(DocumentElement.class, documentString);
   }
 
-  private String fetchBuses(String routeName) throws TransitRepositoryException {
+  protected String fetchBuses(String routeName) throws TransitRepositoryException {
     HttpURLConnection conn = null;
     try {
       URL url = new URL(BT_UPDATE_PATH);
@@ -224,8 +224,10 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
       if (HttpResult == HttpURLConnection.HTTP_OK) {
         return readResponse(conn.getInputStream());
       } else {
-        throw new RuntimeException(HttpResult + " error getting buses for " + routeName
-            + "\n" + conn.getResponseMessage());
+        // Quietly fail and log exception
+        throw new TransitRepositoryException(
+            new Exception(String.format("%d error getting buses for %s\n%s",
+                HttpResult, routeName, conn.getResponseMessage())));
       }
     } catch (IOException e) {
       throw new TransitRepositoryException(e);
