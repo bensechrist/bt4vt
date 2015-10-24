@@ -239,6 +239,10 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
    * @param stops the stops
    */
   public void showStops(List<Stop> stops) {
+    if (mMap == null) {
+      return;
+    }
+
     if (stops.isEmpty()) {
       View view = getView();
       if (view != null) {
@@ -283,11 +287,20 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
    * @param route the route
    */
   public void showBuses(Route route) {
+    if (mMap == null) {
+      return;
+    }
+
     transitRepository.registerBusListener(route, this);
   }
 
   @Override
   public void onUpdateBuses(final List<Bus> buses) {
+    if (mMap == null) {
+      transitRepository.clearBusListener(this);
+      return;
+    }
+
     if (buses.isEmpty() || !isAdded()) {
       return;
     }
@@ -341,6 +354,10 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
    * @param bus the bus
    */
   private void showRoutePattern(Bus bus) {
+    if (mMap == null) {
+      return;
+    }
+
     PolylineOptions polylineOptions = new PolylineOptions();
     List<LatLng> latLngPoints = new ArrayList<>();
     String[] patternPoints = bus.getPatternPoints();
