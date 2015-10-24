@@ -81,12 +81,14 @@ public class BusTimerTask extends TimerTask {
   public void awaitTermination() {
     if (running.get()) {
       lock.lock();
-      try {
-        condition.await();
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      } finally {
-        lock.unlock();
+      if (running.get()) {
+        try {
+          condition.await();
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        } finally {
+          lock.unlock();
+        }
       }
     }
   }
