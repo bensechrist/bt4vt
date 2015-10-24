@@ -16,14 +16,18 @@
 
 package com.bt4vt.fragment;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.view.View;
 
 import com.bt4vt.R;
@@ -61,12 +65,13 @@ import roboguice.inject.InjectResource;
  * @author Ben Sechrist
  */
 public class RetainedMapFragment extends SupportMapFragment implements OnMapReadyCallback,
-    BusListener, GoogleMap.OnInfoWindowClickListener {
+    BusListener, GoogleMap.OnInfoWindowClickListener, View.OnClickListener {
 
   private static final String DEPARTURES_DIALOG_TAG = "scheduled_departures_dialog_tag";
   private static final double BBURG_LAT = 37.2304516;
   private static final double BBURG_LNG = -80.4294548;
   private static final float BBURG_ZOOM = 13;
+  private static final int REQUEST_LOCATION_PERMISSION = 1;
 
   @Inject
   private TransitRepository transitRepository;
@@ -125,6 +130,12 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
   public void onMapReady(GoogleMap googleMap) {
     this.mMap = googleMap;
     setUpMap();
+    checkLocationPermission();
+  }
+
+  @Override
+  public void onClick(View view) {
+    requestLocationPermission();
   }
 
   /**
@@ -388,6 +399,39 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
 
     CameraUpdate cu = CameraUpdateFactory.newLatLngZoom(new LatLng(BBURG_LAT, BBURG_LNG), BBURG_ZOOM);
     mMap.animateCamera(cu);
+  }
+
+  /**
+   * Verify that the user has granted coarse and find location permissions.
+   * <p/>
+   * If permissions are not granted and the user hasn't denied them in the past, ask for permissions.
+   */
+  private void checkLocationPermission() {
+    if (ContextCompat.checkSelfPermission(getActivity(),
+          Manifest.permission.ACCESS_FINE_LOCATION)
+        != PackageManager.PERMISSION_GRANTED) {
+      if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
+          Manifest.permission.ACCESS_FINE_LOCATION)) {
+        View view = getView();
+        if (view != null) {
+          Snackbar.make(view, R.string.location_permission_rationale, Snackbar.LENGTH_INDEFINITE)
+              .setAction(R.string.permission_grant, this)
+              .show();
+        }
+      } else {
+        requestLocationPermission();
+      }
+    }
+  }
+
+  /**
+   * Requests the coarse and find location permissions.
+   */
+  private void requestLocationPermission() {
+    ActivityCompat.requestPermissions(getActivity(),
+        new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.ACCESS_FINE_LOCATION},
+        REQUEST_LOCATION_PERMISSION);
   }
 
   /**

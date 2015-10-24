@@ -16,10 +16,13 @@
 
 package com.bt4vt.geofence;
 
+import android.Manifest;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 
 import com.bt4vt.repository.domain.Stop;
 import com.google.android.gms.common.ConnectionResult;
@@ -71,6 +74,11 @@ public class BusStopGeofenceService implements ResultCallback<Status> {
       } else {
         googleApiClient.blockingConnect();
       }
+    }
+    if (ContextCompat.checkSelfPermission(this.context,
+          Manifest.permission.ACCESS_FINE_LOCATION)
+        != PackageManager.PERMISSION_GRANTED) {
+      return;
     }
     Geofence geofence = generateGeofence(stop);
     LocationServices.GeofencingApi.addGeofences(googleApiClient,
