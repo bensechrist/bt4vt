@@ -154,6 +154,12 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   public void onViewCreated(View view, Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
 
+    // If we get here and the stop is null then we should exit the departures dialog
+    if (stop == null) {
+      getActivity().getSupportFragmentManager().beginTransaction().remove(this).commit();
+      return;
+    }
+
     loadingView.setVisibility(View.VISIBLE);
 
     stopTextView.setText(String.format(STOP_FORMAT, stop.toString()));
