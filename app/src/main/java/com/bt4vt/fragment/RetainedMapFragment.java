@@ -17,7 +17,6 @@
 package com.bt4vt.fragment;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
@@ -67,11 +66,12 @@ import roboguice.inject.InjectResource;
 public class RetainedMapFragment extends SupportMapFragment implements OnMapReadyCallback,
     BusListener, GoogleMap.OnInfoWindowClickListener, View.OnClickListener {
 
+  public static final int REQUEST_LOCATION_PERMISSION = 1;
+
   private static final String DEPARTURES_DIALOG_TAG = "scheduled_departures_dialog_tag";
   private static final double BBURG_LAT = 37.2304516;
   private static final double BBURG_LNG = -80.4294548;
   private static final float BBURG_ZOOM = 13;
-  private static final int REQUEST_LOCATION_PERMISSION = 1;
 
   @Inject
   private TransitRepository transitRepository;
@@ -360,6 +360,18 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
   }
 
   /**
+   * Displays location permission rationale to the user.
+   */
+  public void showLocationPermissionRationale() {
+    View view = getView();
+    if (view != null) {
+      Snackbar.make(view, R.string.location_permission_rationale, Snackbar.LENGTH_INDEFINITE)
+          .setAction(R.string.permission_grant, this)
+          .show();
+    }
+  }
+
+  /**
    * This draws the pattern from the given bus on the map.
    *
    * @param bus the bus
@@ -412,12 +424,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
         != PackageManager.PERMISSION_GRANTED) {
       if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
           Manifest.permission.ACCESS_FINE_LOCATION)) {
-        View view = getView();
-        if (view != null) {
-          Snackbar.make(view, R.string.location_permission_rationale, Snackbar.LENGTH_INDEFINITE)
-              .setAction(R.string.permission_grant, this)
-              .show();
-        }
+        showLocationPermissionRationale();
       } else {
         requestLocationPermission();
       }

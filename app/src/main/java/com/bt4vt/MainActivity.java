@@ -16,12 +16,15 @@
 
 package com.bt4vt;
 
+import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.view.View;
 import android.widget.ImageButton;
@@ -115,6 +118,21 @@ public class MainActivity extends RoboFragmentActivity implements
     }
 
     checkNetwork();
+  }
+
+  @Override
+  public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    switch (requestCode) {
+      case RetainedMapFragment.REQUEST_LOCATION_PERMISSION: {
+        if (mapFragment != null && grantResults.length > 0
+            && grantResults[0] == PackageManager.PERMISSION_DENIED) {
+          if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+              Manifest.permission.ACCESS_FINE_LOCATION)) {
+            mapFragment.showLocationPermissionRationale();
+          }
+        }
+      }
+    }
   }
 
   @Override
