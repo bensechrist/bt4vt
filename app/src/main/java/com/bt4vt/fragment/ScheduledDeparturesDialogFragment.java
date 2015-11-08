@@ -56,7 +56,6 @@ import java.util.List;
 
 import roboguice.fragment.RoboDialogFragment;
 import roboguice.inject.InjectView;
-import uk.co.deanwild.materialshowcaseview.MaterialShowcaseView;
 
 /**
  * Shows the scheduled departures for the given stop in a dialog.
@@ -179,6 +178,10 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   @Override
   public void onSuccess(List<Departure> departures) {
     if (isAdded()) {
+      final int MAX_DEPARTURES = getResources().getInteger(R.integer.max_departures_shown);
+      if (departures.size() > MAX_DEPARTURES) {
+        departures = departures.subList(0, MAX_DEPARTURES);
+      }
       listView.setAdapter(new DepartureArrayAdapter(getActivity(), departures));
       listView.setEmptyView(emptyDeparturesView);
       loadingView.setVisibility(View.INVISIBLE);
