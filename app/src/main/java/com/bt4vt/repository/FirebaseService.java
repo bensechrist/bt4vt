@@ -22,6 +22,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
+import com.bt4vt.BuildConfig;
 import com.bt4vt.async.AsyncCallback;
 import com.bt4vt.async.FetchGoogleTokenTask;
 import com.bt4vt.geofence.BusStopGeofenceService;
@@ -56,6 +57,7 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
 
   private final FirebaseServiceBinder binder = new FirebaseServiceBinder();
 
+  private static final String TAG = "FirebaseService";
   private static final String FIREBASE_BASE_URL = "https://blinding-torch-6262.firebaseio.com/";
   private static final String FAVORITE_STOPS_PATH = "favorite-stops";
   private static final String GOOGLE_OAUTH_TOKEN_KEY = "google_oauth_token";
@@ -216,7 +218,7 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
   @Override
   public void onAuthenticated(AuthData authData) {
     authFinish();
-    Log.i(getClass().getSimpleName(), "Authenticated");
+    Log.i(TAG, "Authenticated");
     authSetup(authData);
     if (handler != null) {
       handler.onAuthenticated(authData);
@@ -226,7 +228,10 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
   @Override
   public void onAuthenticationError(FirebaseError firebaseError) {
     authFinish();
-    Log.e(getClass().getSimpleName(), "Firebase Auth Error: " + firebaseError);
+    if (BuildConfig.DEBUG) {
+      throw new RuntimeException(firebaseError.toException());
+    }
+    Log.e(TAG, "Firebase Auth Error: " + firebaseError);
     int errorCode = firebaseError.getCode();
     if (errorCode == FirebaseError.EXPIRED_TOKEN ||
         errorCode == FirebaseError.INVALID_TOKEN ||
@@ -265,7 +270,7 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
   @Override
   public void onChildAdded(DataSnapshot dataSnapshot, String s) {
     Stop stop = dataSnapshot.getValue(Stop.class);
-    Log.i(getClass().getSimpleName(), "Adding stop to favorites: " + stop);
+    Log.i(TAG, "Adding stop to favorites: " + stop);
     favoritedStops.add(stop);
     // Set Geofence
     busStopGeofenceService.registerGeofence(stop);
@@ -274,7 +279,7 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
   @Override
   public void onChildRemoved(DataSnapshot dataSnapshot) {
     Stop stop = dataSnapshot.getValue(Stop.class);
-    Log.i(getClass().getSimpleName(), "Removing stop from favorites: " + stop);
+    Log.i(TAG, "Removing stop from favorites: " + stop);
     favoritedStops.remove(stop);
     // Remove Geofence
     busStopGeofenceService.unregisterGeofence(stop);
