@@ -49,7 +49,7 @@ public class DepartureArrayAdapter extends ArrayAdapter<Departure> {
 
     TextView departureText = (TextView) convertView.findViewById(R.id.departure_text);
     departureText.setText(String.format("%s: %s", departure.getShortRouteName(),
-        departure.getDepartureTime()));
+        departure.getTextDepartureTime()));
 
     return convertView;
   }

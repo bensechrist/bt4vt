@@ -170,7 +170,7 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
     }
     routeTextView.setText(String.format(ROUTE_FORMAT, routeText));
 
-    new DepartureAsyncTask(transitRepository, stop, route, this).execute();
+    new DepartureAsyncTask(transitRepository, stop, route, this, getContext()).execute();
 
     emptyDeparturesView.findViewById(R.id.refresh_departures_button).setOnClickListener(this);
   }
@@ -213,7 +213,7 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
       default:
         listView.setEmptyView(null);
         loadingView.setVisibility(View.VISIBLE);
-        new DepartureAsyncTask(transitRepository, stop, route, this).execute();
+        new DepartureAsyncTask(transitRepository, stop, route, this, getContext()).execute();
         break;
     }
   }

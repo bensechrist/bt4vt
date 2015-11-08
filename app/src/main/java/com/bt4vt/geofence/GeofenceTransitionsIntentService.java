@@ -110,7 +110,7 @@ public class GeofenceTransitionsIntentService extends RoboIntentService {
     Collections.sort(departures);
     for (Departure departure : departures) {
       departureStrings.add(getString(R.string.notification_departures_format,
-          departure.getDepartureTime(), departure.getShortRouteName()));
+          departure.getTextDepartureTime(), departure.getShortRouteName()));
     }
     Intent intent = new Intent(this, MainActivity.class);
     intent.putExtra(MainActivity.EXTRA_STOP, stop.toString());

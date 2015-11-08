@@ -16,10 +16,10 @@
 
 package com.bt4vt.repository.domain;
 
-import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 /**
  * Transit bus departure.
@@ -27,6 +27,9 @@ import java.util.Date;
  * @author Ben Sechrist
  */
 public class Departure implements Comparable<Departure> {
+
+  private static final String TAG = "Departure";
+  private static final SimpleDateFormat dateFormat = new SimpleDateFormat("h:mm a", Locale.US);
 
   private String shortRouteName;
 
@@ -36,8 +39,12 @@ public class Departure implements Comparable<Departure> {
     return shortRouteName;
   }
 
-  public String getDepartureTime() {
-    return SimpleDateFormat.getTimeInstance(DateFormat.SHORT).format(departureTime);
+  public Date getDepartureTime() {
+    return departureTime;
+  }
+
+  public String getTextDepartureTime() {
+    return dateFormat.format(departureTime);
   }
 
   @Override
@@ -58,7 +65,7 @@ public class Departure implements Comparable<Departure> {
 
   @Override
   public String toString() {
-    return String.format("%s: %s", getShortRouteName(), getDepartureTime());
+    return String.format("%s: %s", getShortRouteName(), getTextDepartureTime());
   }
 
   public static Departure valueOf(String s) {
@@ -69,12 +76,15 @@ public class Departure implements Comparable<Departure> {
     Departure departure = new Departure();
     departure.shortRouteName = split[0];
     String timeString = split[1];
-    try {
-      departure.departureTime = SimpleDateFormat.getTimeInstance(DateFormat.SHORT).parse(timeString);
-    } catch (ParseException e) {
-      throw new IllegalArgumentException("Error reading time: " + timeString
-          + " from string: " + s);
+    String[] timeSplit = timeString.trim().split("[\\ :]");
+    Calendar dTime = Calendar.getInstance();
+    dTime.set(Calendar.HOUR, Integer.parseInt(timeSplit[0]) % 12); // This is to set 12 to 0 as there is no 12th hour in Calendar
+    dTime.set(Calendar.MINUTE, Integer.parseInt(timeSplit[1]));
+    dTime.set(Calendar.AM_PM, (timeSplit[2].contains("AM")) ? Calendar.AM : Calendar.PM);
+    if (dTime.before(Calendar.getInstance())) {
+      dTime.add(Calendar.DAY_OF_YEAR, 1);
     }
+    departure.departureTime = dTime.getTime();
     return departure;
   }
 
