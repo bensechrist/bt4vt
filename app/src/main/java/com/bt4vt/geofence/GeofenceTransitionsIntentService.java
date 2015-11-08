@@ -75,6 +75,10 @@ public class GeofenceTransitionsIntentService extends RoboIntentService {
           Stop stop = Stop.valueOf(geofence.getRequestId());
           try {
             List<NextDeparture> nextDepartures = transitRepository.getNextDepartures(stop);
+            final int MAX_DEPARTURES = getResources().getInteger(R.integer.max_departures_shown);
+            if (nextDepartures.size() > MAX_DEPARTURES) {
+              nextDepartures = nextDepartures.subList(0, MAX_DEPARTURES);
+            }
             sendNotfication(stop, nextDepartures);
           } catch (TransitRepositoryException e) {
             Log.e(getClass().getSimpleName(), e.toString());
