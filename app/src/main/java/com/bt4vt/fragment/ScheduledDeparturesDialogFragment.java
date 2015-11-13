@@ -47,7 +47,6 @@ import com.bt4vt.repository.domain.Route;
 import com.bt4vt.repository.domain.Stop;
 import com.firebase.client.AuthData;
 import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
 import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.google.android.gms.common.AccountPicker;
 import com.google.inject.Inject;
@@ -63,7 +62,7 @@ import roboguice.inject.InjectView;
  * @author Ben Sechrist
  */
 public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
-    implements AsyncCallback<List<Departure>>, View.OnClickListener, Firebase.AuthResultHandler {
+    implements AsyncCallback<List<Departure>>, View.OnClickListener, Firebase.AuthStateListener {
 
   private static final int REQUEST_CODE_PICK_ACCOUNT = 1000;
   private static final int REQUEST_AUTHORIZATION = 2000;
@@ -102,10 +101,12 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   private Stop stop;
   private Route route;
 
+  private boolean isAuthenticated = false;
+
   private AsyncCallback<String> tokenCallback = new AsyncCallback<String>() {
     @Override
     public void onSuccess(String token) {
-      firebaseService.loginGoogle(token, ScheduledDeparturesDialogFragment.this);
+      firebaseService.loginGoogle(token);
     }
 
     @Override
@@ -144,6 +145,7 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   public void onStop() {
     super.onStop();
     if (serviceBound) {
+      firebaseService.unregisterAuthListener(this);
       getActivity().unbindService(connection);
       serviceBound = false;
     }
@@ -244,18 +246,18 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   }
 
   @Override
-  public void onAuthenticated(AuthData authData) {
-    setFavButtonText();
-  }
-
-  @Override
-  public void onAuthenticationError(FirebaseError firebaseError) {
-    // Ignore?
+  public void onAuthStateChanged(AuthData authData) {
+    if (authData == null) {
+      isAuthenticated = false;
+    } else {
+      isAuthenticated = true;
+      setFavButtonText();
+    }
   }
 
   private void onFavClick() {
     if (serviceBound) {
-      if (!firebaseService.isAuthenticated()) {
+      if (!isAuthenticated) {
         String userEmail = preferences.getString(FirebaseService.USER_EMAIL_KEY, null);
         if (userEmail != null) {
           new FetchGoogleTokenTask(getActivity(), userEmail, tokenCallback).execute();
@@ -294,7 +296,7 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
       FirebaseService.FirebaseServiceBinder binder = (FirebaseService.FirebaseServiceBinder) service;
       firebaseService = binder.getService();
       serviceBound = true;
-      setFavButtonText();
+      firebaseService.registerAuthListener(ScheduledDeparturesDialogFragment.this);
       favoriteButton.setOnClickListener(ScheduledDeparturesDialogFragment.this);
       favoriteButton.setVisibility(View.VISIBLE);
     }
