@@ -56,11 +56,12 @@ public class FirebaseServiceTest {
 
   @Before
   public void setup() throws Exception {
-    doReturn(authData).when(firebase).getAuth();
     doReturn(firebase).when(firebase).child(anyString());
+    doReturn(firebase).when(firebase).getParent();
 
     service.firebase = firebase;
     service.init();
+    service.onAuthStateChanged(authData);
   }
 
   @Test

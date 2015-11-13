@@ -35,13 +35,8 @@ import com.firebase.client.FirebaseError;
 import com.google.inject.Inject;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import roboguice.service.RoboService;
 
@@ -51,19 +46,17 @@ import roboguice.service.RoboService;
  * @author Ben Sechrist
  */
 public class FirebaseService extends RoboService implements Firebase.AuthResultHandler,
-    ChildEventListener, AsyncCallback<String> {
+    ChildEventListener, AsyncCallback<String>, Firebase.AuthStateListener {
 
   public static final String USER_EMAIL_KEY = "firebase-user-email";
+  public static final String PROFILE_IMAGE_URL = "profileImageURL";
+  public static final String DISPLAY_NAME = "displayName";
 
   private final FirebaseServiceBinder binder = new FirebaseServiceBinder();
 
   private static final String TAG = "FirebaseService";
   private static final String FIREBASE_BASE_URL = "https://blinding-torch-6262.firebaseio.com/";
   private static final String FAVORITE_STOPS_PATH = "favorite-stops";
-  private static final String GOOGLE_OAUTH_TOKEN_KEY = "google_oauth_token";
-
-  private Lock lock = new ReentrantLock();
-  private Condition authCondition = lock.newCondition();
 
   @Inject
   private BusStopGeofenceService busStopGeofenceService;
@@ -75,9 +68,7 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
 
   private final Set<Stop> favoritedStops = new HashSet<>();
 
-  private AtomicBoolean authenticating = new AtomicBoolean(false);
-
-  private Firebase.AuthResultHandler handler;
+  private AtomicBoolean authenticated = new AtomicBoolean(false);
 
   @Override
   public void onCreate() {
@@ -91,14 +82,7 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
       busStopGeofenceService.unregisterAllGeofences();
       Firebase.setAndroidContext(FirebaseService.this);
       firebase = new Firebase(FIREBASE_BASE_URL);
-      if (isAuthenticated()) {
-        authSetup(firebase.getAuth());
-      } else {
-        String token = preferences.getString(GOOGLE_OAUTH_TOKEN_KEY, null);
-        if (token != null) {
-          loginGoogle(token, null);
-        }
-      }
+      firebase.addAuthStateListener(this);
     }
   }
 
@@ -106,6 +90,7 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
   public void onDestroy() {
     super.onDestroy();
     firebase.removeEventListener(this);
+    firebase.removeAuthStateListener(this);
   }
 
   @Override
@@ -118,12 +103,24 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
     return binder;
   }
 
+  public void registerAuthListener(Firebase.AuthStateListener listener) {
+    if (firebase != null) {
+      firebase.addAuthStateListener(listener);
+    }
+  }
+
+  public void unregisterAuthListener(Firebase.AuthStateListener listener) {
+    if (firebase != null) {
+      firebase.removeAuthStateListener(listener);
+    }
+  }
+
   public boolean isFavorited(Stop stop) {
     return favoritedStops.contains(stop);
   }
 
   public void addFavorite(Stop stop) {
-    if (isAuthenticated()) {
+    if (authenticated.get()) {
       favoritedStops.add(stop);
       firebase.child(FAVORITE_STOPS_PATH)
           .child(String.valueOf(stop.getCode()))
@@ -134,7 +131,7 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
   }
 
   public void removeFavorite(Stop stop) {
-    if (isAuthenticated()) {
+    if (authenticated.get()) {
       favoritedStops.remove(stop);
       firebase.child(FAVORITE_STOPS_PATH)
           .child(String.valueOf(stop.getCode()))
@@ -144,52 +141,20 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
     }
   }
 
-  /**
-   * Returns whether the user has authenticated.
-   *
-   * @return true if the user is logged in, false otherwise
-   */
-  public boolean isAuthenticated() {
-    if (authenticating.get()) {
-      lock.lock();
-      try {
-        authCondition.await(500, TimeUnit.MILLISECONDS);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      } finally {
-        lock.unlock();
+  @Override
+  public void onAuthStateChanged(AuthData authData) {
+    if (authData == null) {
+      authenticated.set(false);
+      String email = preferences.getString(USER_EMAIL_KEY, null);
+      if (email != null) {
+        new FetchGoogleTokenTask(this, email, this).execute();
+      }
+    } else {
+      authenticated.set(true);
+      if (firebase.getParent() == null) { // We are still at the root
+        authSetup(authData);
       }
     }
-    return ((firebase != null) && (firebase.getAuth() != null));
-  }
-
-  /**
-   * Returns a string url of the logged in user's profile image or null if no user logged in.
-   * @return url of user profile image or null
-   */
-  public String getUserProfileImageUrl() {
-    if (isAuthenticated()) {
-      return (String) getGoogleData().get("profileImageURL");
-    }
-    return null;
-  }
-
-  /**
-   * Returns the display name of the logged in user or null if no user logged in
-   * @return display name or null
-   */
-  public String getUserDisplayName() {
-    if (isAuthenticated()) {
-      return (String) getGoogleData().get("displayName");
-    }
-    return null;
-  }
-
-  public String getUserEmail() {
-    if (isAuthenticated()) {
-      return preferences.getString(USER_EMAIL_KEY, null);
-    }
-    return null;
   }
 
   /**
@@ -198,11 +163,8 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
    *
    * @param token the auth token
    */
-  public void loginGoogle(String token, Firebase.AuthResultHandler handler) {
-    if (!isAuthenticated() && !authenticating.get()) {
-      authenticating.set(true);
-      preferences.edit().putString(GOOGLE_OAUTH_TOKEN_KEY, token).apply();
-      this.handler = handler;
+  public void loginGoogle(String token) {
+    if (!authenticated.get()) {
       firebase.authWithOAuthToken("google", token, this);
     }
   }
@@ -211,60 +173,31 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
    * Logs the user out.
    */
   public void logout() {
+    preferences.edit().remove(USER_EMAIL_KEY).apply();
     firebase.unauth();
-    preferences.edit().remove(GOOGLE_OAUTH_TOKEN_KEY).remove(USER_EMAIL_KEY).apply();
   }
 
   @Override
   public void onAuthenticated(AuthData authData) {
-    authFinish();
     Log.i(TAG, "Authenticated");
-    authSetup(authData);
-    if (handler != null) {
-      handler.onAuthenticated(authData);
-    }
   }
 
   @Override
   public void onAuthenticationError(FirebaseError firebaseError) {
-    authFinish();
     if (BuildConfig.DEBUG) {
       throw new RuntimeException(firebaseError.toException());
     }
     Log.e(TAG, "Firebase Auth Error: " + firebaseError);
-    int errorCode = firebaseError.getCode();
-    if (errorCode == FirebaseError.EXPIRED_TOKEN ||
-        errorCode == FirebaseError.INVALID_TOKEN ||
-        errorCode == FirebaseError.INVALID_CREDENTIALS) {
-      preferences.edit().remove(GOOGLE_OAUTH_TOKEN_KEY).apply();
-      String userEmail = preferences.getString(USER_EMAIL_KEY, null);
-      if (userEmail != null) {
-        new FetchGoogleTokenTask(getApplicationContext(), userEmail, this).execute();
-      }
-    }
-    if (handler != null) {
-      handler.onAuthenticationError(firebaseError);
-    }
   }
 
   @Override
   public void onSuccess(String token) {
-    loginGoogle(token, null);
+    loginGoogle(token);
   }
 
   @Override
   public void onException(Exception e) {
     e.printStackTrace();
-  }
-
-  private void authFinish() {
-    authenticating.set(false);
-    lock.lock();
-    try {
-      authCondition.signalAll();
-    } finally {
-      lock.unlock();
-    }
   }
 
   @Override
@@ -312,8 +245,5 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
       return FirebaseService.this;
     }
 
-  }
-  private Map<String, Object> getGoogleData() {
-    return firebase.getAuth().getProviderData();
   }
 }

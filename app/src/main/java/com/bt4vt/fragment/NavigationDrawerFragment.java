@@ -47,7 +47,6 @@ import com.bt4vt.repository.domain.Route;
 import com.bt4vt.util.ViewUtils;
 import com.firebase.client.AuthData;
 import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
 import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.google.android.gms.common.AccountPicker;
 import com.google.inject.Inject;
@@ -64,7 +63,8 @@ import roboguice.inject.InjectView;
  * @author Ben Sechrist
  */
 public class NavigationDrawerFragment extends RoboFragment implements View.OnClickListener,
-    NavigationView.OnNavigationItemSelectedListener, AsyncCallback<String>, Firebase.AuthResultHandler {
+    NavigationView.OnNavigationItemSelectedListener, AsyncCallback<String>,
+    Firebase.AuthStateListener {
 
   private static final int REQUEST_CODE_PICK_ACCOUNT = 1000;
   private static final int REQUEST_AUTHORIZATION = 2000;
@@ -117,6 +117,7 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
   public void onStop() {
     super.onStop();
     if (serviceBound) {
+      firebaseService.unregisterAuthListener(this);
       getActivity().unbindService(connection);
       serviceBound = false;
     }
@@ -217,7 +218,6 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
         signIn();
       } else if (menuItemId == NAV_SIGNOUT_ID) {
         firebaseService.logout();
-        initHeader();
       } else if (menuItemId == R.id.nav_feedback) {
         activity.closeDrawer();
         showFeedbackDialog();
@@ -262,7 +262,7 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
 
   @Override
   public void onSuccess(String token) {
-    firebaseService.loginGoogle(token, this);
+    firebaseService.loginGoogle(token);
   }
 
   @Override
@@ -273,16 +273,6 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
     }
   }
 
-  @Override
-  public void onAuthenticated(AuthData authData) {
-    initHeader();
-  }
-
-  @Override
-  public void onAuthenticationError(FirebaseError firebaseError) {
-    // Ignore?
-  }
-
   private void showAccountPicker() {
     String[] accountTypes = new String[]{"com.google"};
     Intent intent = AccountPicker.newChooseAccountIntent(null, null,
@@ -290,45 +280,56 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
     startActivityForResult(intent, REQUEST_CODE_PICK_ACCOUNT);
   }
 
-  private void initHeader() {
-    if (serviceBound) {
-      if (firebaseService.isAuthenticated()) {
-        if (navHeader == null) {
-          View headerView = View.inflate(getActivity(), R.layout.drawer_header, null);
-          final CircleImageView profileImage = (CircleImageView) headerView.findViewById(R.id.profile_image);
-          TextView profileName = (TextView) headerView.findViewById(R.id.profile_name);
-          TextView profileEmail = (TextView) headerView.findViewById(R.id.profile_email);
-          new FetchBitmapFromUrlTask(new AsyncCallback<Bitmap>() {
-            @Override
-            public void onSuccess(Bitmap bitmap) {
-              profileImage.setImageBitmap(bitmap);
-            }
-
-            @Override
-            public void onException(Exception e) {
-              // Do nothing
-            }
-          }).execute(firebaseService.getUserProfileImageUrl());
-          profileName.setText(firebaseService.getUserDisplayName());
-          profileEmail.setText(firebaseService.getUserEmail());
-          navHeader = headerView;
-          navView.addHeaderView(navHeader);
-
-          Menu menu = navView.getMenu();
-          menu.removeItem(R.id.nav_signin);
-          menu.add(R.id.nav_other_group, NAV_SIGNOUT_ID, 50, R.string.nav_signout);
-        }
+  @Override
+  public void onAuthStateChanged(AuthData authData) {
+    if (authData == null) {
+      if (navHeader == null) {
+        menuSignin();
       } else {
-        if (navHeader != null) {
-          navView.removeHeaderView(navHeader);
-          navHeader = null;
-
-          Menu menu = navView.getMenu();
-          menu.removeItem(NAV_SIGNOUT_ID);
-          menu.add(R.id.nav_other_group, R.id.nav_signin, 50, R.string.nav_signin);
-        }
+        navView.removeHeaderView(navHeader);
+        navHeader = null;
       }
+
+      menuSignout();
+    } else {
+      if (navHeader != null) {
+        navView.removeHeaderView(navHeader);
+        menuSignout();
+      }
+      View headerView = View.inflate(getActivity(), R.layout.drawer_header, null);
+      final CircleImageView profileImage = (CircleImageView) headerView.findViewById(R.id.profile_image);
+      TextView profileName = (TextView) headerView.findViewById(R.id.profile_name);
+      TextView profileEmail = (TextView) headerView.findViewById(R.id.profile_email);
+      new FetchBitmapFromUrlTask(new AsyncCallback<Bitmap>() {
+        @Override
+        public void onSuccess(Bitmap bitmap) {
+          profileImage.setImageBitmap(bitmap);
+        }
+
+        @Override
+        public void onException(Exception e) {
+          // Do nothing
+        }
+      }).execute(String.valueOf(authData.getProviderData().get(FirebaseService.PROFILE_IMAGE_URL)));
+      profileName.setText(String.valueOf(authData.getProviderData().get(FirebaseService.DISPLAY_NAME)));
+      profileEmail.setText(preferences.getString(FirebaseService.USER_EMAIL_KEY, ""));
+      navHeader = headerView;
+      navView.addHeaderView(navHeader);
+
+      menuSignin();
     }
+  }
+
+  private void menuSignin() {
+    Menu menu = navView.getMenu();
+    menu.removeItem(R.id.nav_signin);
+    menu.add(R.id.nav_other_group, NAV_SIGNOUT_ID, 50, R.string.nav_signout);
+  }
+
+  private void menuSignout() {
+    Menu menu = navView.getMenu();
+    menu.removeItem(NAV_SIGNOUT_ID);
+    menu.add(R.id.nav_other_group, R.id.nav_signin, 50, R.string.nav_signin);
   }
 
   private void showFeedbackDialog() {
@@ -379,7 +380,7 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
       FirebaseService.FirebaseServiceBinder binder = (FirebaseService.FirebaseServiceBinder) service;
       firebaseService = binder.getService();
       serviceBound = true;
-      initHeader();
+      firebaseService.registerAuthListener(NavigationDrawerFragment.this);
     }
 
     @Override
