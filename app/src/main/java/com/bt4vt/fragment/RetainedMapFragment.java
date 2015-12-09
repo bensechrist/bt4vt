@@ -20,7 +20,6 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -33,10 +32,11 @@ import com.bt4vt.R;
 import com.bt4vt.async.AsyncCallback;
 import com.bt4vt.async.StopAsyncTask;
 import com.bt4vt.repository.TransitRepository;
-import com.bt4vt.repository.domain.Bus;
-import com.bt4vt.repository.domain.Route;
-import com.bt4vt.repository.domain.Stop;
 import com.bt4vt.repository.listener.BusListener;
+import com.bt4vt.repository.model.BusModel;
+import com.bt4vt.repository.model.RouteModel;
+import com.bt4vt.repository.model.StopModel;
+import com.bt4vt.repository.model.StopModelFactory;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -50,6 +50,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.inject.Inject;
+import com.google.maps.android.PolyUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -76,6 +77,9 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
   @Inject
   private TransitRepository transitRepository;
 
+  @Inject
+  private StopModelFactory stopModelFactory;
+
   @InjectResource(R.string.stop_marker_snippet)
   private String stopMarkerSnippet;
 
@@ -89,7 +93,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
 
   private TalkToActivity activity;
 
-  private Route currentRoute;
+  private RouteModel currentRoute;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -123,7 +127,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
   public void onDetach() {
     super.onDetach();
     this.activity = null;
-    transitRepository.clearBusListeners();
+    transitRepository.clearBusListener(this);
   }
 
   @Override
@@ -161,7 +165,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
     }
   }
 
-  public void setCurrentRoute(Route currentRoute) {
+  public void setCurrentRoute(RouteModel currentRoute) {
     this.currentRoute = currentRoute;
   }
 
@@ -171,7 +175,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
    *
    * @param route the route
    */
-  public void fetchStops(final Route route) {
+  public void fetchStops(final RouteModel route) {
     final View.OnClickListener retryListener = new View.OnClickListener() {
       @Override
       public void onClick(View v) {
@@ -179,9 +183,9 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
         fetchStops(route);
       }
     };
-    StopAsyncTask task = new StopAsyncTask(transitRepository, new AsyncCallback<List<Stop>>() {
+    StopAsyncTask task = new StopAsyncTask(transitRepository, new AsyncCallback<List<StopModel>>() {
       @Override
-      public void onSuccess(List<Stop> stops) {
+      public void onSuccess(List<StopModel> stops) {
         if (isAdded()) {
           activity.onStopsReady(stops);
         }
@@ -212,19 +216,19 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
         fetchStop(stopString);
       }
     };
-    StopAsyncTask task = new StopAsyncTask(transitRepository, new AsyncCallback<List<Stop>>() {
+    StopAsyncTask task = new StopAsyncTask(transitRepository, new AsyncCallback<List<StopModel>>() {
       @Override
-      public void onSuccess(List<Stop> stops) {
+      public void onSuccess(List<StopModel> stops) {
         if (!isAdded()) {
           return;
         }
-        for (Stop stop : stops) {
+        for (StopModel stop : stops) {
           if (stop.toString().equals(stopString)) {
             activity.onStopsReady(Collections.singletonList(stop));
             return;
           }
         }
-        activity.onStopsReady(Collections.<Stop>emptyList());
+        activity.onStopsReady(Collections.<StopModel>emptyList());
       }
 
       @Override
@@ -249,7 +253,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
    *
    * @param stops the stops
    */
-  public void showStops(List<Stop> stops) {
+  public void showStops(List<StopModel> stops) {
     if (mMap == null) {
       return;
     }
@@ -266,8 +270,12 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
       return;
     }
 
+    if (currentRoutePattern == null && areFromSameRoute(stops)) {
+      showRoutePattern(stops.get(0));
+    }
+
     LatLngBounds.Builder builder = new LatLngBounds.Builder();
-    for (Stop stop : stops) {
+    for (StopModel stop : stops) {
       Marker marker = mMap.addMarker(getStopMarker(stop));
       currentStopMarkers.add(marker);
       builder.include(marker.getPosition());
@@ -285,8 +293,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
   @Override
   public void onInfoWindowClick(Marker marker) {
     if (currentStopMarkers.contains(marker)) {
-      Stop stop = Stop.valueOf(marker.getTitle());
-      stop.setLatLng(marker.getPosition());
+      StopModel stop = stopModelFactory.createModel(marker);
       ScheduledDeparturesDialogFragment.newInstance(stop, this.currentRoute)
           .show(getFragmentManager(), DEPARTURES_DIALOG_TAG);
     }
@@ -297,7 +304,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
    *
    * @param route the route
    */
-  public void showBuses(Route route) {
+  public void showBuses(RouteModel route) {
     if (mMap == null) {
       return;
     }
@@ -306,7 +313,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
   }
 
   @Override
-  public void onUpdateBuses(final List<Bus> buses) {
+  public void onUpdateBuses(final List<BusModel> buses) {
     if (mMap == null) {
       transitRepository.clearBusListener(this);
       return;
@@ -316,7 +323,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
       return;
     }
 
-    if (currentRoute != null && !buses.get(0).getRouteName().equals(currentRoute.getName())) {
+    if (currentRoute != null && !buses.get(0).getRouteShortName().equals(currentRoute.getShortName())) {
       return;
     }
 
@@ -328,21 +335,17 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
         }
 
         if (currentBusMarkers.size() != buses.size()) {
-          for (Bus bus : buses) {
+          for (BusModel bus : buses) {
             Marker marker = mMap.addMarker(getBusMarker(bus));
             currentBusMarkers.add(marker);
-          }
-
-          if (currentRoutePattern == null) {
-            showRoutePattern(buses.get(0));
           }
         } else {
           for (int i = 0; i < currentBusMarkers.size(); i++) {
             Marker marker = currentBusMarkers.get(i);
-            Bus bus = buses.get(i);
-            marker.setPosition(new LatLng(bus.getLatitude(), bus.getLongitude()));
-            marker.setTitle(getString(R.string.bus_marker_title_format, bus.getRouteName(), bus.getId()));
-            marker.setSnippet(getString(R.string.bus_marker_snippet_format, bus.getPassengerLoad(),
+            BusModel bus = buses.get(i);
+            marker.setPosition(bus.getLatLng());
+            marker.setTitle(getString(R.string.bus_marker_title_format, bus.getRouteShortName(), bus.getId()));
+            marker.setSnippet(getString(R.string.bus_marker_snippet_format, bus.getPassengers(),
                 bus.getLastUpdated()));
           }
         }
@@ -372,28 +375,22 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
   }
 
   /**
-   * This draws the pattern from the given bus on the map.
+   * This draws the pattern from the given stop on the map.
    *
-   * @param bus the bus
+   * @param stop the stop
    */
-  private void showRoutePattern(Bus bus) {
+  private void showRoutePattern(StopModel stop) {
     if (mMap == null) {
       return;
     }
 
     PolylineOptions polylineOptions = new PolylineOptions();
-    List<LatLng> latLngPoints = new ArrayList<>();
-    String[] patternPoints = bus.getPatternPoints();
-    for (int i = 0; i < patternPoints.length; i = i + 2) {
-      String point1 = patternPoints[i];
-      String point2 = (patternPoints.length < i) ?
-          patternPoints[0] :
-          patternPoints[i + 1];
-      latLngPoints.add(new LatLng(Double.valueOf(point1), Double.valueOf(point2)));
-    }
-    polylineOptions.addAll(latLngPoints);
+    polylineOptions.addAll(PolyUtil.decode(stop.getRoutePattern()));
     polylineOptions.width(8);
-    polylineOptions.color(Color.parseColor(bus.getPatternColor()));
+    if (stop.getRoutePatternColor() != null)
+      polylineOptions.color(stop.getRoutePatternColor());
+    else
+      polylineOptions.color(ContextCompat.getColor(getContext(), R.color.AccentColor));
     currentRoutePattern = mMap.addPolyline(polylineOptions);
   }
 
@@ -432,7 +429,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
   }
 
   /**
-   * Requests the coarse and find location permissions.
+   * Requests the coarse and fine location permissions.
    */
   private void requestLocationPermission() {
     ActivityCompat.requestPermissions(getActivity(),
@@ -464,13 +461,17 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
     markers.clear();
   }
 
+  private boolean areFromSameRoute(List<StopModel> stops) {
+    return stops.get(0).getRoutePattern().equals(stops.get(stops.size()-1).getRoutePattern());
+  }
+
   /**
    * Returns a prebuilt {@link MarkerOptions} for the given <code>stop</code>.
    *
    * @param stop the stop
    * @return the marker options
    */
-  private MarkerOptions getStopMarker(Stop stop) {
+  private MarkerOptions getStopMarker(StopModel stop) {
     BitmapFactory.Options opts = new BitmapFactory.Options();
     opts.inSampleSize = 6;
     return new MarkerOptions()
@@ -488,11 +489,11 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
    * @param bus the bus
    * @return the marker options
    */
-  private MarkerOptions getBusMarker(Bus bus) {
+  private MarkerOptions getBusMarker(BusModel bus) {
     return new MarkerOptions()
-        .position(new LatLng(bus.getLatitude(), bus.getLongitude()))
-        .title(getString(R.string.bus_marker_title_format, bus.getRouteName(), bus.getId()))
-        .snippet(getString(R.string.bus_marker_snippet_format, bus.getPassengerLoad(),
+        .position(bus.getLatLng())
+        .title(getString(R.string.bus_marker_title_format, bus.getRouteShortName(), bus.getId()))
+        .snippet(getString(R.string.bus_marker_snippet_format, bus.getPassengers(),
             bus.getLastUpdated()))
         .icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getResources(),
             R.drawable.bus)));
@@ -510,7 +511,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
      *
      * @param stops the stops
      */
-    void onStopsReady(List<Stop> stops);
+    void onStopsReady(List<StopModel> stops);
 
     /**
      * Hides the loading icon.

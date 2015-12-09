@@ -24,11 +24,10 @@ import android.util.Log;
 
 import com.bt4vt.R;
 import com.bt4vt.repository.TransitRepository;
-import com.bt4vt.repository.domain.Departure;
-import com.bt4vt.repository.domain.NextDeparture;
-import com.bt4vt.repository.domain.Route;
-import com.bt4vt.repository.domain.Stop;
 import com.bt4vt.repository.exception.TransitRepositoryException;
+import com.bt4vt.repository.model.DepartureModel;
+import com.bt4vt.repository.model.RouteModel;
+import com.bt4vt.repository.model.StopModel;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,18 +40,18 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Ben Sechrist
  */
-public class DepartureAsyncTask extends AsyncTask<Void, Void, List<Departure>> {
+public class DepartureAsyncTask extends AsyncTask<Void, Void, List<DepartureModel>> {
 
   private static final String TAG = "DepartureAsyncTask";
 
   private final TransitRepository transitRepository;
-  private final Stop stop;
-  private final Route route;
-  private final AsyncCallback<List<Departure>> callback;
+  private final StopModel stop;
+  private final RouteModel route;
+  private final AsyncCallback<List<DepartureModel>> callback;
   private final Context context;
 
-  public DepartureAsyncTask(TransitRepository transitRepository, Stop stop, Route route,
-                            AsyncCallback<List<Departure>> callback, Context context) {
+  public DepartureAsyncTask(TransitRepository transitRepository, StopModel stop, RouteModel route,
+                            AsyncCallback<List<DepartureModel>> callback, Context context) {
     this.transitRepository = transitRepository;
     this.stop = stop;
     this.route = route;
@@ -61,15 +60,18 @@ public class DepartureAsyncTask extends AsyncTask<Void, Void, List<Departure>> {
   }
 
   @Override
-  protected List<Departure> doInBackground(Void... params) {
+  protected List<DepartureModel> doInBackground(Void... params) {
     try {
-      List<Departure> departures = new ArrayList<>();
+      List<DepartureModel> departures = new ArrayList<>();
       int MAX_DEPARTURE_LOOKAHEAD_MINS = context.getResources().getInteger(R.integer.max_departure_lookahead_mins);
-      for (NextDeparture nd : transitRepository.getNextDepartures(stop, route)) {
-        for (Departure d : nd.getDepartures()) {
-          if (isBefore(MAX_DEPARTURE_LOOKAHEAD_MINS, d)) {
-            departures.add(d);
-          }
+      List<DepartureModel> allDepartures;
+      if (route != null)
+        allDepartures = transitRepository.getDepartures(route, stop);
+      else
+        allDepartures = transitRepository.getDepartures(stop);
+      for (DepartureModel departureModel : allDepartures) {
+        if (isBefore(MAX_DEPARTURE_LOOKAHEAD_MINS, departureModel)) {
+          departures.add(departureModel);
         }
       }
       Collections.sort(departures);
@@ -81,14 +83,14 @@ public class DepartureAsyncTask extends AsyncTask<Void, Void, List<Departure>> {
     }
   }
 
-  private boolean isBefore(int MAX_DEPARTURE_LOOKAHEAD_MINS, Departure d) {
+  private boolean isBefore(int MAX_DEPARTURE_LOOKAHEAD_MINS, DepartureModel d) {
     return d.getDepartureTime().before(
         new Date(new Date().getTime() +
             TimeUnit.MILLISECONDS.convert(MAX_DEPARTURE_LOOKAHEAD_MINS, TimeUnit.MINUTES)));
   }
 
   @Override
-  protected void onPostExecute(List<Departure> departures) {
+  protected void onPostExecute(List<DepartureModel> departures) {
     if (departures != null) {
       callback.onSuccess(departures);
     }

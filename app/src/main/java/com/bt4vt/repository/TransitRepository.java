@@ -16,12 +16,12 @@
 
 package com.bt4vt.repository;
 
-import com.bt4vt.repository.domain.Bus;
-import com.bt4vt.repository.domain.NextDeparture;
-import com.bt4vt.repository.domain.Route;
-import com.bt4vt.repository.domain.Stop;
 import com.bt4vt.repository.exception.TransitRepositoryException;
 import com.bt4vt.repository.listener.BusListener;
+import com.bt4vt.repository.model.BusModel;
+import com.bt4vt.repository.model.DepartureModel;
+import com.bt4vt.repository.model.RouteModel;
+import com.bt4vt.repository.model.StopModel;
 
 import java.util.List;
 
@@ -36,42 +36,50 @@ public interface TransitRepository {
    * Returns a list of all transit routes.
    * @return a list of routes
    */
-  List<Route> getRoutes() throws TransitRepositoryException;
+  List<RouteModel> getRoutes() throws TransitRepositoryException;
+
+  /**
+   * Returns a list of transit routes that service the given <code>stop</code>.
+   * @param stop the stop
+   * @return list of routes
+   * @throws TransitRepositoryException
+   */
+  List<RouteModel> getRoutes(StopModel stop) throws TransitRepositoryException;
 
   /**
    * Returns a list of all stops.
    * @return a list of stops
    */
-  List<Stop> getStops() throws TransitRepositoryException;
+  List<StopModel> getStops() throws TransitRepositoryException;
 
   /**
    * Returns a list of all stops for a route.
    * @param route the route to get stops for
    * @return a list of stops
    */
-  List<Stop> getStops(Route route) throws TransitRepositoryException;
+  List<StopModel> getStops(RouteModel route) throws TransitRepositoryException;
 
   /**
    * Returns a list of the next departures for all routes at a stop.
    * @param stop the stop to get departures for
    * @return a list of departures
    */
-  List<NextDeparture> getNextDepartures(Stop stop) throws TransitRepositoryException;
+  List<DepartureModel> getDepartures(StopModel stop) throws TransitRepositoryException;
 
   /**
    * Returns a list of the next departures for the given route at a stop.
-   * @param stop the stop to get departures for
    * @param route the route to get departures for
+   * @param stop the stop to get departures for
    * @return a list of departures
    */
-  List<NextDeparture> getNextDepartures(Stop stop, Route route) throws TransitRepositoryException;
+  List<DepartureModel> getDepartures(RouteModel route, StopModel stop) throws TransitRepositoryException;
 
   /**
    * Returns a list of the current bus locations for the <code>route</code>.
    * @param route the route
    * @return the bus locations
    */
-  List<Bus> getBusLocations(Route route) throws TransitRepositoryException;
+  List<BusModel> getBusLocations(RouteModel route) throws TransitRepositoryException;
 
   /**
    * Registers the <code>busListener</code> to be called every time new
@@ -79,7 +87,7 @@ public interface TransitRepository {
    * @param route the route to watch
    * @param busListener the callback listener
    */
-  void registerBusListener(Route route, BusListener busListener);
+  void registerBusListener(RouteModel route, BusListener busListener);
 
   /**
    * Clears the <code>busListener</code>.

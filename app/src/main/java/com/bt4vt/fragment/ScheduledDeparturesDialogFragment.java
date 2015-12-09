@@ -42,9 +42,9 @@ import com.bt4vt.async.DepartureAsyncTask;
 import com.bt4vt.async.FetchGoogleTokenTask;
 import com.bt4vt.repository.FirebaseService;
 import com.bt4vt.repository.TransitRepository;
-import com.bt4vt.repository.domain.Departure;
-import com.bt4vt.repository.domain.Route;
-import com.bt4vt.repository.domain.Stop;
+import com.bt4vt.repository.model.DepartureModel;
+import com.bt4vt.repository.model.RouteModel;
+import com.bt4vt.repository.model.StopModel;
 import com.firebase.client.AuthData;
 import com.firebase.client.Firebase;
 import com.google.android.gms.auth.UserRecoverableAuthException;
@@ -62,7 +62,7 @@ import roboguice.inject.InjectView;
  * @author Ben Sechrist
  */
 public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
-    implements AsyncCallback<List<Departure>>, View.OnClickListener, Firebase.AuthStateListener {
+    implements AsyncCallback<List<DepartureModel>>, View.OnClickListener, Firebase.AuthStateListener {
 
   private static final int REQUEST_CODE_PICK_ACCOUNT = 1000;
   private static final int REQUEST_AUTHORIZATION = 2000;
@@ -98,8 +98,8 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   private FirebaseService firebaseService;
   private boolean serviceBound = false;
 
-  private Stop stop;
-  private Route route;
+  private StopModel stop;
+  private RouteModel route;
 
   private boolean isAuthenticated = false;
 
@@ -118,7 +118,7 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
     }
   };
 
-  public static ScheduledDeparturesDialogFragment newInstance(Stop stop, Route route) {
+  public static ScheduledDeparturesDialogFragment newInstance(StopModel stop, RouteModel route) {
     if (stop == null) {
       throw new NullPointerException("Stop was null");
     }
@@ -178,7 +178,7 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   }
 
   @Override
-  public void onSuccess(List<Departure> departures) {
+  public void onSuccess(List<DepartureModel> departures) {
     if (isAdded()) {
       final int MAX_DEPARTURES = getResources().getInteger(R.integer.max_departures_shown);
       if (departures.size() > MAX_DEPARTURES) {

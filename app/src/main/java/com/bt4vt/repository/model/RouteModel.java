@@ -14,23 +14,25 @@
  * limitations under the License.
  */
 
-package com.bt4vt.repository.listener;
-
-import com.bt4vt.repository.model.BusModel;
-
-import java.io.Serializable;
-import java.util.List;
+package com.bt4vt.repository.model;
 
 /**
- * Callback for receiving bus updates.
+ * Transit route model.
  *
  * @author Ben Sechrist
  */
-public interface BusListener extends Serializable {
+public interface RouteModel {
 
   /**
-   * Called when information is received about buses
-   * @param buses the updated bus information
+   * Returns the full route name.
+   * @return the route name
    */
-  void onUpdateBuses(List<BusModel> buses);
+  String getName();
+
+  /**
+   * Returns the short route name.
+   * @return the short route name
+   */
+  String getShortName();
+
 }

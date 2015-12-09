@@ -23,33 +23,31 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import com.bt4vt.R;
-import com.bt4vt.repository.domain.Departure;
-import com.bt4vt.repository.domain.NextDeparture;
+import com.bt4vt.repository.model.DepartureModel;
 
 import java.util.List;
 
 /**
- * Adapter for {@link NextDeparture} lists.
+ * Adapter for {@link DepartureModel} lists.
  *
  * @author Ben Sechrist
  */
-public class DepartureArrayAdapter extends ArrayAdapter<Departure> {
+public class DepartureArrayAdapter extends ArrayAdapter<DepartureModel> {
 
-  public DepartureArrayAdapter(Context context, List<Departure> departures) {
+  public DepartureArrayAdapter(Context context, List<DepartureModel> departures) {
     super(context, R.layout.departure_entry, departures);
   }
 
   @Override
   public View getView(int position, View convertView, ViewGroup parent) {
-    Departure departure = getItem(position);
+    DepartureModel departure = getItem(position);
 
     if (convertView == null) {
       convertView = View.inflate(getContext(), R.layout.departure_entry, null);
     }
 
     TextView departureText = (TextView) convertView.findViewById(R.id.departure_text);
-    departureText.setText(String.format("%s: %s", departure.getShortRouteName(),
-        departure.getTextDepartureTime()));
+    departureText.setText(departure.toString());
 
     return convertView;
   }

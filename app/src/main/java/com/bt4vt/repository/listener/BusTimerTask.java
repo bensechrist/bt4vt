@@ -17,9 +17,9 @@
 package com.bt4vt.repository.listener;
 
 import com.bt4vt.repository.TransitRepository;
-import com.bt4vt.repository.domain.Bus;
-import com.bt4vt.repository.domain.Route;
 import com.bt4vt.repository.exception.TransitRepositoryException;
+import com.bt4vt.repository.model.BusModel;
+import com.bt4vt.repository.model.RouteModel;
 
 import java.util.List;
 import java.util.TimerTask;
@@ -39,11 +39,11 @@ public class BusTimerTask extends TimerTask {
   private final Condition condition = lock.newCondition();
   private AtomicBoolean running = new AtomicBoolean(false);
 
-  private final Route route;
+  private final RouteModel route;
   private final List<BusListener> busListeners;
   private final TransitRepository transitRepository;
 
-  public BusTimerTask(Route route, List<BusListener> busListeners, TransitRepository transitRepository) {
+  public BusTimerTask(RouteModel route, List<BusListener> busListeners, TransitRepository transitRepository) {
     this.route = route;
     this.busListeners = busListeners;
     this.transitRepository = transitRepository;
@@ -61,7 +61,7 @@ public class BusTimerTask extends TimerTask {
   public void run() {
     running.set(true);
     try {
-      final List<Bus> buses = transitRepository.getBusLocations(route);
+      final List<BusModel> buses = transitRepository.getBusLocations(route);
       for (BusListener busListener : busListeners) {
         busListener.onUpdateBuses(buses);
       }
