@@ -45,8 +45,12 @@ import com.bt4vt.repository.TransitRepository;
 import com.bt4vt.repository.model.DepartureModel;
 import com.bt4vt.repository.model.RouteModel;
 import com.bt4vt.repository.model.StopModel;
+import com.bt4vt.repository.model.StopModelFactory;
 import com.firebase.client.AuthData;
+import com.firebase.client.ChildEventListener;
+import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
+import com.firebase.client.FirebaseError;
 import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.google.android.gms.common.AccountPicker;
 import com.google.inject.Inject;
@@ -62,7 +66,7 @@ import roboguice.inject.InjectView;
  * @author Ben Sechrist
  */
 public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
-    implements AsyncCallback<List<DepartureModel>>, View.OnClickListener, Firebase.AuthStateListener {
+    implements AsyncCallback<List<DepartureModel>>, View.OnClickListener, Firebase.AuthStateListener, ChildEventListener {
 
   private static final int REQUEST_CODE_PICK_ACCOUNT = 1000;
   private static final int REQUEST_AUTHORIZATION = 2000;
@@ -73,6 +77,9 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
 
   @Inject
   private TransitRepository transitRepository;
+
+  @Inject
+  private StopModelFactory stopModelFactory;
 
   @Inject
   private SharedPreferences preferences;
@@ -145,6 +152,7 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   public void onStop() {
     super.onStop();
     if (serviceBound) {
+      firebaseService.unregisterStopListener(this);
       firebaseService.unregisterAuthListener(this);
       getActivity().unbindService(connection);
       serviceBound = false;
@@ -247,12 +255,7 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
 
   @Override
   public void onAuthStateChanged(AuthData authData) {
-    if (authData == null) {
-      isAuthenticated = false;
-    } else {
-      isAuthenticated = true;
-      setFavButtonText();
-    }
+    isAuthenticated = authData != null;
   }
 
   private void onFavClick() {
@@ -273,21 +276,39 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
         } else {
           firebaseService.addFavorite(stop);
         }
-        setFavButtonText();
       }
     }
   }
 
-  private void setFavButtonText() {
-    if (serviceBound) {
-      if (firebaseService.isFavorited(stop)) {
-        favoriteButton.setImageDrawable(ContextCompat.getDrawable(getActivity(),
-            R.drawable.ic_action_star_full));
-      } else {
-        favoriteButton.setImageDrawable(ContextCompat.getDrawable(getActivity(),
-            R.drawable.ic_action_star_empty));
-      }
-    }
+  @Override
+  public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+    Context context = getActivity();
+    if (context != null)
+      favoriteButton.setImageDrawable(ContextCompat.getDrawable(context,
+          R.drawable.ic_action_star_full));
+  }
+
+  @Override
+  public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+    stop = stopModelFactory.createModel(dataSnapshot);
+  }
+
+  @Override
+  public void onChildRemoved(DataSnapshot dataSnapshot) {
+    Context context = getActivity();
+    if (context != null)
+      favoriteButton.setImageDrawable(ContextCompat.getDrawable(getActivity(),
+          R.drawable.ic_action_star_empty));
+  }
+
+  @Override
+  public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+    // We don't care about this for now
+  }
+
+  @Override
+  public void onCancelled(FirebaseError firebaseError) {
+    // We don't care about this for now
   }
 
   private ServiceConnection connection = new ServiceConnection() {
@@ -297,6 +318,7 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
       firebaseService = binder.getService();
       serviceBound = true;
       firebaseService.registerAuthListener(ScheduledDeparturesDialogFragment.this);
+      firebaseService.registerStopListener(stop, ScheduledDeparturesDialogFragment.this);
       favoriteButton.setOnClickListener(ScheduledDeparturesDialogFragment.this);
       favoriteButton.setVisibility(View.VISIBLE);
     }
