@@ -16,13 +16,19 @@
 
 package com.bt4vt.repository;
 
+import com.bt4vt.repository.bt.BusFetcher;
 import com.bt4vt.repository.bt.DepartureFetcher;
 import com.bt4vt.repository.bt.RouteFetcher;
 import com.bt4vt.repository.bt.StopFetcher;
+import com.bt4vt.repository.domain.Bus;
 import com.bt4vt.repository.domain.Departure;
 import com.bt4vt.repository.domain.Route;
 import com.bt4vt.repository.domain.ScheduledRoute;
 import com.bt4vt.repository.domain.Stop;
+import com.bt4vt.repository.listener.BusListener;
+import com.bt4vt.repository.listener.BusTimerTask;
+import com.bt4vt.repository.model.BusModel;
+import com.bt4vt.repository.model.BusModelFactory;
 import com.bt4vt.repository.model.DepartureModel;
 import com.bt4vt.repository.model.DepartureModelFactory;
 import com.bt4vt.repository.model.RouteModel;
@@ -30,6 +36,7 @@ import com.bt4vt.repository.model.RouteModelFactory;
 import com.bt4vt.repository.model.StopModel;
 import com.bt4vt.repository.model.StopModelFactory;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -41,9 +48,13 @@ import java.util.List;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertNull;
+import static junit.framework.Assert.assertSame;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 /**
  * Tests the {@link HttpBlacksburgTransitRepository}.
@@ -72,6 +83,12 @@ public class HttpBlacksburgTransitRepositoryTest {
   private DepartureModelFactory departureModelFactory;
 
   @Mock
+  private BusFetcher busFetcher;
+
+  @Mock
+  private BusModelFactory busModelFactory;
+
+  @Mock
   private Route route;
 
   @Mock
@@ -92,8 +109,22 @@ public class HttpBlacksburgTransitRepositoryTest {
   @Mock
   private DepartureModel departureModel;
 
+  @Mock
+  private Bus bus;
+
+  @Mock
+  private BusModel busModel;
+
+  @Mock
+  private BusTimerTask busTimerTask;
+
   @InjectMocks
   private HttpBlacksburgTransitRepository repository;
+
+  @Before
+  public void setup() throws Exception {
+    repository.busTimerTask = busTimerTask;
+  }
 
   @Test
   public void testGetRoutesSuccessfully() throws Exception {
@@ -164,60 +195,67 @@ public class HttpBlacksburgTransitRepositoryTest {
     assertEquals(results.get(0), departureModel);
   }
 
-//  @Test
-//  public void testGetRoutesStopsDepartures() throws Exception {
-//    List<Route> routes = repository.getRoutes();
-//    assertNotNull(routes);
-//    assertThat(routes.size(), greaterThan(0));
-//
-//    List<Stop> stops = new ArrayList<>();
-//    for (Route route : routes) {
-//      List<Stop> routeStops = repository.getStops(route);
-//      stops.addAll(routeStops);
-//      assertNotNull(stops);
-//      assertThat(stops.size(), greaterThan(0));
-//
-//      for (Stop stop : routeStops) {
-//        List<NextDeparture> nextDeparturesForRoute = repository.getNextDepartures(stop, route);
-//        assertNotNull(nextDeparturesForRoute);
-//      }
-//    }
-//  }
-//
-//  @Test
-//  public void testGetStopsDepartures() throws Exception {
-//    List<Stop> stops = repository.getStops();
-//    assertNotNull(stops);
-//    assertThat(stops.size(), greaterThan(0));
-//
-//    for (Stop stop : stops) {
-//      List<NextDeparture> nextDepartures = repository.getNextDepartures(stop);
-//      assertNotNull(nextDepartures);
-//      for (NextDeparture nd : nextDepartures) {
-//        assertNotNull(nd.getDepartures());
-//      }
-//    }
-//  }
-//
-//  @Test
-//  public void testGetBuses() throws Exception {
-//    List<Route> routes = repository.getRoutes();
-//    assertNotNull(routes);
-//    assertThat(routes.size(), greaterThan(0));
-//
-//    for (Route route : routes) {
-//      List<Bus> buses = repository.getBusLocations(route);
-//      assertNotNull(buses);
-//    }
-//  }
-//
-//  @Test
-//  public void testFetchBusesError() throws Exception {
-//    try {
-//      repository.fetchBuses("TEST");
-//      assertTrue(false);
-//    } catch (TransitRepositoryException e) {
-//      assertThat(e.getMessage(), containsString("error getting buses for TEST"));
-//    }
-//  }
+  @Test
+  public void testGetBusLocationsSuccessfully() throws Exception {
+    doReturn("ROUTE").when(routeModel).getShortName();
+    doReturn(Collections.singletonList(bus)).when(busFetcher).get(anyString());
+    doReturn(busModel).when(busModelFactory).createModel(bus);
+
+    List<BusModel> results = repository.getBusLocations(routeModel);
+    assertNotNull(results);
+    assertEquals(results.get(0), busModel);
+  }
+
+  @Test
+  public void testRegisterBusListenerAndClearSuccessfully() throws Exception {
+    BusListener busListener = new BusListener() {
+      @Override
+      public void onUpdateBuses(List<BusModel> buses) {
+      }
+    };
+    repository.registerBusListener(routeModel, busListener);
+
+    verify(busTimerTask).addListener(busListener);
+    assertEquals(repository.busListeners.size(), 1);
+    assertSame(repository.busListeners.get(0), busListener);
+
+    repository.clearBusListener(busListener);
+
+    verify(busTimerTask, times(2)).awaitTermination();
+    verify(busTimerTask).cancel();
+    assertEquals(repository.busListeners.size(), 0);
+    assertNull(repository.busTimerTask);
+  }
+
+  @Test
+  public void testRegisterBusListenerAndClearAllSuccessfully() throws Exception {
+    BusListener busListener = new BusListener() {
+      @Override
+      public void onUpdateBuses(List<BusModel> buses) {
+      }
+    };
+    BusListener busListener2 = new BusListener() {
+      @Override
+      public void onUpdateBuses(List<BusModel> buses) {
+      }
+    };
+    repository.registerBusListener(routeModel, busListener);
+
+    verify(busTimerTask).addListener(busListener);
+    assertEquals(repository.busListeners.size(), 1);
+    assertSame(repository.busListeners.get(0), busListener);
+
+    repository.registerBusListener(routeModel, busListener2);
+
+    verify(busTimerTask).addListener(busListener2);
+    assertEquals(repository.busListeners.size(), 2);
+    assertSame(repository.busListeners.get(1), busListener2);
+
+    repository.clearBusListeners();
+
+    verify(busTimerTask).awaitTermination();
+    verify(busTimerTask).cancel();
+    assertEquals(repository.busListeners.size(), 0);
+    assertNull(repository.busTimerTask);
+  }
 }
