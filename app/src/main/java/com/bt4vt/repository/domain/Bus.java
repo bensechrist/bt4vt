@@ -16,10 +16,11 @@
 
 package com.bt4vt.repository.domain;
 
-import org.simpleframework.xml.Element;
-import org.simpleframework.xml.Root;
+import com.google.android.gms.maps.model.LatLng;
 
-import java.text.SimpleDateFormat;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.Date;
 
 /**
@@ -27,119 +28,113 @@ import java.util.Date;
  *
  * @author Ben Sechrist
  */
-@Root(name = "LatestInfoTable")
 public class Bus {
 
-  @Element(name = "AgencyVehicleName")
-  private Integer id;
+  private long id;
 
-  @Element(name = "RouteShortName")
-  private String routeShortName;
+  private int direction;
 
-  @Element(name = "RouteName")
-  private String routeName;
+  private boolean isTripper;
 
-  @Element(name = "Latitude")
-  private Double latitude;
+  private int lastStopCode;
 
-  @Element(name = "Longitude")
-  private Double longitude;
-
-  @Element(name = "BlockID")
-  private String blockId;
-
-  @Element(name = "TripID")
-  private String tripId;
-
-  @Element(name = "IsTripper")
-  private String isTripperString;
-
-  @Element(name = "PatternName")
-  private String patternName;
-
-  @Element(name = "PatternPoints")
-  private String patternPointsString;
-
-  @Element(name = "PatternColor")
-  private String patternColor;
-
-  @Element(name = "TripStartTime", required = false)
-  private String tripStartTime;
-
-  @Element(name = "LastStopName")
   private String lastStopName;
 
-  @Element(name = "StopCode")
-  private Integer lastStopCode;
+  private LatLng latLng;
 
-  @Element(name = "IsBusAtStop", required = false)
-  private String isAtStopString;
+  private int passengers;
 
-  @Element(name = "IsTimePoint")
-  private String isTimePointString;
+  private String fullRouteName;
 
-  @Element(name = "LatestEvent", required = false)
-  private String latestEventTime;
+  private String routeShortName;
 
-  @Element(name = "LatestRSAEvent", required = false)
-  private String latestRSAEvent;
+  private Date timestamp;
 
-  @Element(name = "Direction", required = false)
-  private Integer direction;
+  private Bus() {}
 
-  @Element(name = "Speed")
-  private Integer speed;
-
-  @Element(name = "TotalCount")
-  private Integer passengerLoad;
-
-  private Date lastUpdated;
-
-  public Integer getId() {
+  public long getId() {
     return id;
   }
 
-  public String getRouteName() {
-    return routeName;
+  private void setId(long id) {
+    this.id = id;
+  }
+
+  public int getDirection() {
+    return direction;
+  }
+
+  private void setDirection(int direction) {
+    this.direction = direction;
   }
 
   public boolean isTripper() {
-    return isTripperString.equalsIgnoreCase("Y");
+    return isTripper;
   }
 
-  public Double getLatitude() {
-    return latitude;
+  private void setIsTripper(boolean isTripper) {
+    this.isTripper = isTripper;
   }
 
-  public Double getLongitude() {
-    return longitude;
+  public int getLastStopCode() {
+    return lastStopCode;
   }
 
-  public Integer getPassengerLoad() {
-    return passengerLoad;
+  private void setLastStopCode(int lastStopCode) {
+    this.lastStopCode = lastStopCode;
   }
 
-  public String[] getPatternPoints() {
-    return patternPointsString.split(",");
+  public String getLastStopName() {
+    return lastStopName;
   }
 
-  public String getPatternColor() {
-    return patternColor;
+  private void setLastStopName(String lastStopName) {
+    this.lastStopName = lastStopName;
   }
 
-  public String getLastUpdated() {
-    return SimpleDateFormat
-        .getTimeInstance()
-        .format(lastUpdated);
+  public LatLng getLatLng() {
+    return latLng;
   }
 
-  public void setLastUpdated(Date lastUpdated) {
-    this.lastUpdated = lastUpdated;
+  private void setLatLng(LatLng latLng) {
+    this.latLng = latLng;
+  }
+
+  public int getPassengers() {
+    return passengers;
+  }
+
+  private void setPassengers(int passengers) {
+    this.passengers = passengers;
+  }
+
+  public String getFullRouteName() {
+    return fullRouteName;
+  }
+
+  private void setFullRouteName(String fullRouteName) {
+    this.fullRouteName = fullRouteName;
+  }
+
+  public String getRouteShortName() {
+    return routeShortName;
+  }
+
+  private void setRouteShortName(String routeShortName) {
+    this.routeShortName = routeShortName;
+  }
+
+  public Date getTimestamp() {
+    return timestamp;
+  }
+
+  private void setTimestamp(Date timestamp) {
+    this.timestamp = timestamp;
   }
 
   @Override
   public int hashCode() {
-    return (id == null) ? 0 : id.hashCode();
+    return Long.valueOf(id).hashCode();
   }
 
   @Override
@@ -147,6 +142,21 @@ public class Bus {
     if (this == o) return true;
     if (!(o instanceof Bus)) return false;
     Bus that = (Bus) o;
-    return !(this.id == null || that.id == null) && this.id.equals(that.id);
+    return Long.valueOf(this.id).equals(that.id);
+  }
+
+  public static Bus valueOf(JSONObject obj) throws JSONException {
+    Bus bus = new Bus();
+    bus.setId(obj.getLong("busId"));
+    bus.setDirection(obj.getInt("direction"));
+    bus.setIsTripper(obj.getBoolean("isTripper"));
+    bus.setLastStopCode(obj.getInt("lastStopCode"));
+    bus.setLastStopName(obj.getString("lastStopName"));
+    bus.setLatLng(new LatLng(obj.getDouble("latitude"), obj.getDouble("longitude")));
+    bus.setPassengers(obj.getInt("passengers"));
+    bus.setFullRouteName(obj.getString("pattern"));
+    bus.setRouteShortName(obj.getString("route"));
+    bus.setTimestamp(new Date(obj.getLong("timestamp")));
+    return bus;
   }
 }

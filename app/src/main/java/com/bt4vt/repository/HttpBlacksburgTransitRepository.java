@@ -16,63 +16,65 @@
 
 package com.bt4vt.repository;
 
-import android.content.Context;
-
-import com.bt4vt.R;
+import com.bt4vt.repository.bt.BusFetcher;
+import com.bt4vt.repository.bt.DepartureFetcher;
+import com.bt4vt.repository.bt.RouteFetcher;
+import com.bt4vt.repository.bt.StopFetcher;
 import com.bt4vt.repository.domain.Bus;
-import com.bt4vt.repository.domain.DocumentElement;
-import com.bt4vt.repository.domain.NextDeparture;
+import com.bt4vt.repository.domain.Departure;
 import com.bt4vt.repository.domain.Route;
-import com.bt4vt.repository.domain.RouteFactory;
+import com.bt4vt.repository.domain.ScheduledRoute;
 import com.bt4vt.repository.domain.Stop;
+import com.bt4vt.repository.exception.FetchException;
 import com.bt4vt.repository.exception.TransitRepositoryException;
 import com.bt4vt.repository.listener.BusListener;
 import com.bt4vt.repository.listener.BusTimerTask;
+import com.bt4vt.repository.model.BusModel;
+import com.bt4vt.repository.model.BusModelFactory;
+import com.bt4vt.repository.model.DepartureModel;
+import com.bt4vt.repository.model.DepartureModelFactory;
+import com.bt4vt.repository.model.RouteModel;
+import com.bt4vt.repository.model.RouteModelFactory;
+import com.bt4vt.repository.model.StopModel;
+import com.bt4vt.repository.model.StopModelFactory;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-import org.simpleframework.xml.Serializer;
-import org.simpleframework.xml.core.Persister;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.SocketException;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Timer;
 
 /**
- * Http-based Blacksburg Transit implementation of {@link TransitRepository}.
+ * Injectable implementation of {@link TransitRepository}.
  *
  * @author Ben Sechrist
  */
 @Singleton
 public class HttpBlacksburgTransitRepository implements TransitRepository {
 
-  private static final String BT_MOBILE_PATH = "http://bt4uclassic.org/Mobile.aspx";
-  private static final String ROUTE_LIST_BOX_ID = "routeListBox";
-  private static final String BT_STOPS_PATH = "http://bt4uclassic.org/LiveMap.aspx/GetBusStops";
-  private static final String BT_DEPARTURES_PATH = "http://bt4uclassic.org/LiveMap.aspx/GetNextDepartures";
-  private static final String BT_UPDATE_PATH = "http://bt4uclassic.org/LiveMap.aspx/UpdateLatestInfo";
+  @Inject
+  RouteFetcher routeFetcher;
 
   @Inject
-  RouteFactory routeFactory;
+  RouteModelFactory routeModelFactory;
 
   @Inject
-  Context context;
+  StopFetcher stopFetcher;
 
-  private final Serializer serializer = new Persister();
+  @Inject
+  StopModelFactory stopModelFactory;
+
+  @Inject
+  DepartureFetcher departureFetcher;
+
+  @Inject
+  DepartureModelFactory departureModelFactory;
+
+  @Inject
+  BusFetcher busFetcher;
+
+  @Inject
+  BusModelFactory busModelFactory;
 
   private final List<BusListener> busListeners = new ArrayList<>();
 
@@ -81,101 +83,110 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
   private final Timer timer = new Timer();
 
   @Override
-  public List<Route> getRoutes() throws TransitRepositoryException {
-    List<Route> routes = new ArrayList<>();
+  public List<RouteModel> getRoutes() throws TransitRepositoryException {
     try {
-      Document doc = Jsoup.connect(BT_MOBILE_PATH).get();
-      Element elem = doc.getElementById(ROUTE_LIST_BOX_ID);
-      Elements children = elem.children();
-      for (Element e : children) {
-        if (!e.val().isEmpty()) {
-          routes.add(routeFactory.createRoute(e.val()));
-        }
+      List<Route> routes = routeFetcher.getAll();
+      List<RouteModel> models = new ArrayList<>();
+      for (Route route : routes) {
+        models.add(routeModelFactory.createModel(route));
       }
-    } catch (IOException e) {
+      return models;
+    } catch (FetchException e) {
       throw new TransitRepositoryException(e);
     }
-    return routes;
   }
 
   @Override
-  public List<Stop> getStops() throws TransitRepositoryException {
-    return getStops(null);
-  }
-
-  @Override
-  public List<Stop> getStops(Route route) throws TransitRepositoryException {
-    List<Stop> stops = new ArrayList<>();
-
-    final String routeName = (route != null) ? route.getName() : "";
-    String stopsString = fetchStops(routeName);
-
+  public List<RouteModel> getRoutes(StopModel stop) throws TransitRepositoryException {
     try {
-      DocumentElement doc = getDocumentElement(stopsString);
-      stops.addAll(doc.stops);
-
-      return stops;
-    } catch (Exception e) { // Exception from reading xml by serializer
-      throw new RuntimeException(context.getString(R.string.xml_parse_error_format, stopsString, e));
-    }
-  }
-
-  @Override
-  public List<NextDeparture> getNextDepartures(Stop stop) throws TransitRepositoryException {
-    return getNextDepartures(stop, null);
-  }
-
-  @Override
-  public List<NextDeparture> getNextDepartures(Stop stop, Route route) throws TransitRepositoryException {
-    List<NextDeparture> departures = new ArrayList<>();
-
-    final String stopId;
-    if (route == null) {
-      stopId = String.valueOf(stop.getCode());
-    } else {
-      stopId = String.format("%s,%s", stop.getCode(), route.getName());
-    }
-    String departuresString = fetchDepartures(stopId);
-
-    try {
-      DocumentElement doc = getDocumentElement(departuresString);
-      if (!doc.nextDepartures.isEmpty()) {
-        departures.addAll(doc.nextDepartures);
+      List<ScheduledRoute> routes = routeFetcher.get(stop.getCode());
+      List<RouteModel> models = new ArrayList<>();
+      for (Route route : routes) {
+        models.add(routeModelFactory.createModel(route));
       }
-
-      return departures;
-    } catch (Exception e) { // Exception from reading xml by serializer
-      throw new RuntimeException(context.getString(R.string.xml_parse_error_format, departuresString, e));
+      return models;
+    } catch (FetchException e) {
+      throw new TransitRepositoryException(e);
     }
   }
 
   @Override
-  public List<Bus> getBusLocations(Route route) throws TransitRepositoryException {
-    List<Bus> buses = new ArrayList<>();
-
-    String busesString = fetchBuses(route.getName());
-
+  public List<StopModel> getStops() throws TransitRepositoryException {
     try {
-      if (busesString.isEmpty()) {
-        return buses;
-      }
-      DocumentElement doc = getDocumentElement(busesString);
-      Date now = new Date();
-      for (Bus bus : doc.buses) {
-        if (!bus.isTripper()) {
-          bus.setLastUpdated(now);
-          buses.add(bus);
+      List<StopModel> models = new ArrayList<>();
+      for (Route route : routeFetcher.getAll()) {
+        List<Stop> stops = stopFetcher.get(route.getShortName());
+        for (Stop stop : stops) {
+          models.add(stopModelFactory.createModel(stop));
         }
       }
-
-      return buses;
-    } catch (Exception e) { // Exception from reading xml by serializer
-      throw new RuntimeException(context.getString(R.string.xml_parse_error_format, busesString, e));
+      return models;
+    } catch (FetchException e) {
+      throw new TransitRepositoryException(e);
     }
   }
 
   @Override
-  public void registerBusListener(Route route, BusListener busListener) {
+  public List<StopModel> getStops(RouteModel route) throws TransitRepositoryException {
+    try {
+      List<Stop> stops = stopFetcher.get(route.getShortName());
+      List<StopModel> models = new ArrayList<>();
+      for (Stop stop : stops) {
+        models.add(stopModelFactory.createModel(stop));
+      }
+      return models;
+    } catch (FetchException e) {
+      throw new TransitRepositoryException(e);
+    }
+  }
+
+  @Override
+  public List<DepartureModel> getDepartures(StopModel stop) throws TransitRepositoryException {
+    try {
+      List<DepartureModel> models = new ArrayList<>();
+      for (Route route : routeFetcher.getAll()) {
+        List<Departure> departures = departureFetcher.get(route.getShortName(), stop.getCode());
+        for (Departure departure : departures) {
+          models.add(departureModelFactory.createModel(departure));
+        }
+      }
+      return models;
+    } catch (FetchException e) {
+      throw new TransitRepositoryException(e);
+    }
+  }
+
+  @Override
+  public List<DepartureModel> getDepartures(RouteModel route, StopModel stop) throws TransitRepositoryException {
+    try {
+      List<Departure> departures = departureFetcher.get(route.getShortName(), stop.getCode());
+      List<DepartureModel> models = new ArrayList<>();
+      for (Departure departure : departures) {
+        models.add(departureModelFactory.createModel(departure));
+      }
+      System.out.println(models);
+      return models;
+    } catch (FetchException e) {
+      throw new TransitRepositoryException(e);
+    }
+  }
+
+  @Override
+  public List<BusModel> getBusLocations(RouteModel route) throws TransitRepositoryException {
+    try {
+      List<Bus> buses = busFetcher.get(route.getShortName());
+      List<BusModel> models = new ArrayList<>();
+      for (Bus bus : buses) {
+        models.add(busModelFactory.createModel(bus));
+      }
+      return models;
+    } catch (FetchException e) {
+      throw new TransitRepositoryException(e);
+    }
+  }
+
+  @Override
+  public void registerBusListener(RouteModel route, BusListener busListener) {
     busListeners.add(busListener);
     if (busTimerTask == null) {
       busTimerTask = new BusTimerTask(route, busListeners, this);
@@ -206,154 +217,5 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
     }
     busListeners.clear();
     busTimerTask = null;
-  }
-
-  private DocumentElement getDocumentElement(String documentString) throws Exception {
-    return serializer.read(DocumentElement.class, documentString);
-  }
-
-  protected String fetchBuses(String routeName) throws TransitRepositoryException {
-    HttpURLConnection conn = null;
-    try {
-      URL url = new URL(BT_UPDATE_PATH);
-
-      conn = getHttpURLConnection(url);
-
-      writeEventArgument(routeName, conn.getOutputStream());
-
-      int HttpResult = conn.getResponseCode();
-      if (HttpResult == HttpURLConnection.HTTP_OK) {
-        return readResponse(conn.getInputStream());
-      } else {
-        // Quietly fail and log exception
-        throw new TransitRepositoryException(
-            new Exception(String.format("%d error getting buses for %s\n%s",
-                HttpResult, routeName, conn.getResponseMessage())));
-      }
-    } catch (IOException e) {
-      throw new TransitRepositoryException(e);
-    } finally {
-      if (conn != null) {
-        conn.disconnect();
-      }
-    }
-  }
-
-  private String fetchDepartures(String stopId) throws TransitRepositoryException {
-    HttpURLConnection conn = null;
-    try {
-      URL url = new URL(BT_DEPARTURES_PATH);
-
-      conn = getHttpURLConnection(url);
-
-      writeEventArgument(stopId, conn.getOutputStream());
-
-      int HttpResult = conn.getResponseCode();
-      if (HttpResult == HttpURLConnection.HTTP_OK) {
-        return readResponse(conn.getInputStream());
-      } else {
-        throw new RuntimeException(HttpResult + " error getting departures for " + stopId
-            + "\n" + conn.getResponseMessage());
-      }
-    } catch (IOException e) {
-      throw new TransitRepositoryException(e);
-    } finally {
-      if (conn != null) {
-        conn.disconnect();
-      }
-    }
-  }
-
-  private String fetchStops(String routeName) throws TransitRepositoryException {
-    HttpURLConnection conn = null;
-    try {
-      URL url = new URL(BT_STOPS_PATH);
-
-      conn = getHttpURLConnection(url);
-
-      writeEventArgument(routeName, conn.getOutputStream());
-
-      int HttpResult = conn.getResponseCode();
-      if (HttpResult == HttpURLConnection.HTTP_OK) {
-        return readResponse(conn.getInputStream());
-      } else {
-        throw new RuntimeException(HttpResult + " error getting stops for " + routeName
-            + "\n" + conn.getResponseMessage());
-      }
-    } catch (IOException e) {
-      throw new TransitRepositoryException(e);
-    } finally {
-      if (conn != null) {
-        conn.disconnect();
-      }
-    }
-  }
-
-  private void writeEventArgument(String argument, OutputStream out) {
-    try {
-      OutputStreamWriter wr = new OutputStreamWriter(out);
-      wr.write("{\"eventArgument\":\"" + argument + "\"}");
-      wr.flush();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private String readResponse(InputStream in) throws TransitRepositoryException {
-    String result = getResponse(in);
-
-    final String[] split = result.split(":", 2);
-    final String encodedString = split[1].replaceAll("\"", "");
-
-    final String unescapedString = unescapeJava(encodedString);
-    return unescapedString.substring(0, unescapedString.length() - 1);
-  }
-
-  private HttpURLConnection getHttpURLConnection(URL url) throws IOException {
-    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-    conn.setDoOutput(true);
-    conn.setDoInput(true);
-    conn.setRequestProperty("Content-Type", "application/json");
-    conn.setRequestProperty("Accept", "application/json");
-    conn.setRequestMethod("POST");
-    return conn;
-  }
-
-  private String getResponse(InputStream in) throws TransitRepositoryException {
-    StringBuilder sb = new StringBuilder();
-    String line;
-    try {
-      BufferedReader br = new BufferedReader(new InputStreamReader(in, "utf-8"));
-      while ((line = br.readLine()) != null) {
-        sb.append(line);
-      }
-      br.close();
-      return sb.toString();
-    } catch (SocketException e) {
-      // Most likely a network error
-      throw new TransitRepositoryException(e);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private static String unescapeJava(String escaped) {
-    if (!escaped.contains("\\u"))
-      return escaped;
-
-    String processed = "";
-
-    int position = escaped.indexOf("\\u");
-    while (position != -1) {
-      if (position != 0)
-        processed += escaped.substring(0, position);
-      String token = escaped.substring(position + 2, position + 6);
-      escaped = escaped.substring(position + 6);
-      processed += (char) Integer.parseInt(token, 16);
-      position = escaped.indexOf("\\u");
-    }
-    processed += escaped;
-
-    return processed;
   }
 }

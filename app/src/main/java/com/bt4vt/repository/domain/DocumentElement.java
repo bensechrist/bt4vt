@@ -23,18 +23,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Document wrapper for {@link Stop} objects.
+ * Document wrapper for transit objects.
  *
  * @author Ben Sechrist
  */
 @Root
 public class DocumentElement {
 
+  @ElementList(name = "CurrentRoutes", inline = true, required = false)
+  public List<Route> routes = new ArrayList<>();
+
+  @ElementList(name = "ScheduledRoutes", inline = true, required = false)
+  public List<ScheduledRoute> scheduledRoutes = new ArrayList<>();
+
   @ElementList(name = "ScheduledStops", inline = true, required = false)
   public List<Stop> stops = new ArrayList<>();
 
   @ElementList(name = "NextDepartures", inline = true, required = false)
-  public List<NextDeparture> nextDepartures = new ArrayList<>();
+  public List<Departure> departures = new ArrayList<>();
 
   @ElementList(name = "LatestInfoTable", inline = true, required = false)
   public List<Bus> buses = new ArrayList<>();
