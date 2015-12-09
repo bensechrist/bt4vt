@@ -16,6 +16,9 @@
 
 package com.bt4vt.repository;
 
+import android.content.Context;
+
+import com.bt4vt.R;
 import com.bt4vt.repository.bt.BusFetcher;
 import com.bt4vt.repository.bt.DepartureFetcher;
 import com.bt4vt.repository.bt.RouteFetcher;
@@ -76,9 +79,12 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
   @Inject
   BusModelFactory busModelFactory;
 
-  private final List<BusListener> busListeners = new ArrayList<>();
+  @Inject
+  Context context;
 
-  private BusTimerTask busTimerTask;
+  protected final List<BusListener> busListeners = new ArrayList<>();
+
+  protected BusTimerTask busTimerTask;
 
   private final Timer timer = new Timer();
 
@@ -164,7 +170,6 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
       for (Departure departure : departures) {
         models.add(departureModelFactory.createModel(departure));
       }
-      System.out.println(models);
       return models;
     } catch (FetchException e) {
       throw new TransitRepositoryException(e);
@@ -190,7 +195,8 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
     busListeners.add(busListener);
     if (busTimerTask == null) {
       busTimerTask = new BusTimerTask(route, busListeners, this);
-      timer.scheduleAtFixedRate(busTimerTask, 0, 1000);
+      int interval = context.getResources().getInteger(R.integer.bus_listener_interval_ms);
+      timer.scheduleAtFixedRate(busTimerTask, 0, interval);
     } else {
       busTimerTask.addListener(busListener);
     }
