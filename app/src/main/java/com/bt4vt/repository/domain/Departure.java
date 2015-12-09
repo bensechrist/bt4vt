@@ -16,35 +16,59 @@
 
 package com.bt4vt.repository.domain;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
+import org.simpleframework.xml.Element;
+import org.simpleframework.xml.Root;
+import org.simpleframework.xml.convert.Convert;
+
 import java.util.Date;
-import java.util.Locale;
 
 /**
  * Transit bus departure.
  *
  * @author Ben Sechrist
  */
-public class Departure implements Comparable<Departure> {
+@Root(name = "NextDepartures")
+public class Departure {
 
   private static final String TAG = "Departure";
-  private static final SimpleDateFormat dateFormat = new SimpleDateFormat("h:mm a", Locale.US);
 
-  private String shortRouteName;
+  @Element(name = "RouteShortName")
+  private String routeShortName;
 
+  @Element(name = "PatternName")
+  private String routeDisplayName;
+
+  @Element(name = "StopName")
+  private String stopName;
+
+  @Element(name = "AdjustedDepartureTime")
+  @Convert(DepartureTimeConverter.class)
   private Date departureTime;
 
-  public String getShortRouteName() {
-    return shortRouteName;
+  @Element(name = "StopNotes", required = false)
+  private String notes;
+
+  @Element(name = "TripPointID", required = false)
+  private String tripPointID;
+
+  public String getRouteShortName() {
+    return routeShortName;
+  }
+
+  public String getRouteName() {
+    return routeDisplayName;
+  }
+
+  public String getStopName() {
+    return stopName;
   }
 
   public Date getDepartureTime() {
     return departureTime;
   }
 
-  public String getTextDepartureTime() {
-    return dateFormat.format(departureTime);
+  public String getNotes() {
+    return notes;
   }
 
   @Override
@@ -61,35 +85,5 @@ public class Departure implements Comparable<Departure> {
     if (!(o instanceof Departure)) return false;
     Departure that = (Departure) o;
     return this.departureTime.equals(that.departureTime);
-  }
-
-  @Override
-  public String toString() {
-    return String.format("%s: %s", getShortRouteName(), getTextDepartureTime());
-  }
-
-  public static Departure valueOf(String s) {
-    String[] split = s.split(":", 2);
-    if (split.length != 2) {
-      throw new IllegalArgumentException("String not properly formatted: " + s);
-    }
-    Departure departure = new Departure();
-    departure.shortRouteName = split[0];
-    String timeString = split[1];
-    String[] timeSplit = timeString.trim().split("[\\ :]");
-    Calendar dTime = Calendar.getInstance();
-    dTime.set(Calendar.HOUR, Integer.parseInt(timeSplit[0]) % 12); // This is to set 12 to 0 as there is no 12th hour in Calendar
-    dTime.set(Calendar.MINUTE, Integer.parseInt(timeSplit[1]));
-    dTime.set(Calendar.AM_PM, (timeSplit[2].contains("AM")) ? Calendar.AM : Calendar.PM);
-    if (dTime.before(Calendar.getInstance())) {
-      dTime.add(Calendar.DAY_OF_YEAR, 1);
-    }
-    departure.departureTime = dTime.getTime();
-    return departure;
-  }
-
-  @Override
-  public int compareTo(Departure another) {
-    return this.departureTime.compareTo(another.departureTime);
   }
 }

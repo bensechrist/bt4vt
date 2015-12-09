@@ -14,19 +14,33 @@
  * limitations under the License.
  */
 
-package com.bt4vt.repository.domain;
+package com.bt4vt.repository.bt;
 
-import com.google.inject.Singleton;
+import com.bt4vt.repository.domain.Route;
+
+import org.junit.Test;
+
+import java.util.List;
+
+import static org.junit.Assert.assertNotNull;
 
 /**
- * Factory for creating {@link Route} objects.
+ * Tests the {@link RouteFetcher}.
  *
  * @author Ben Sechrist
  */
-@Singleton
-public class RouteFactory {
-  public Route createRoute(String routeName) {
-    String extractedRouteName = routeName.split(" - ", 2)[1];
-    return new Route(extractedRouteName);
+public class RouteFetcherTest {
+
+  private final RouteFetcher fetcher = new RouteFetcher();
+
+  @Test
+  public void testGetAll() throws Exception {
+    List<Route> routes = fetcher.getAll();
+    assertNotNull(routes);
+  }
+
+  @Test
+  public void testGetByStop() throws Exception {
+    assertNotNull(fetcher.get(1609));
   }
 }

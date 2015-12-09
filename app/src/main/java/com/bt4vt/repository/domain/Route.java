@@ -16,6 +16,9 @@
 
 package com.bt4vt.repository.domain;
 
+import org.simpleframework.xml.Element;
+import org.simpleframework.xml.Root;
+
 import java.io.Serializable;
 
 /**
@@ -23,16 +26,21 @@ import java.io.Serializable;
  *
  * @author Ben Sechrist
  */
+@Root(name = "CurrentRoutes")
 public class Route implements Serializable {
 
+  @Element(name = "RouteName")
   private String name;
 
-  public Route(String routeName) {
-    this.name = routeName;
-  }
+  @Element(name = "RouteShortName")
+  private String shortName;
 
   public String getName() {
     return name;
+  }
+
+  public String getShortName() {
+    return shortName;
   }
 
   @Override
@@ -49,10 +57,5 @@ public class Route implements Serializable {
     if (!(o instanceof Route)) return false;
     Route that = (Route) o;
     return !(this.getName() == null || that.getName() == null) && this.getName().equals(that.getName());
-  }
-
-  @Override
-  public String toString() {
-    return String.format("%s", getName());
   }
 }

@@ -16,30 +16,24 @@
 
 package com.bt4vt.repository.domain;
 
-import com.google.android.gms.maps.model.LatLng;
-
-import org.simpleframework.xml.Element;
-import org.simpleframework.xml.Root;
-
 /**
  * Transit stop.
  *
  * @author Ben Sechrist
  */
-@Root(name = "ScheduledStops")
 public class Stop {
 
-  @Element(name = "StopName")
   private String name;
 
-  @Element(name = "StopCode")
   private Integer code;
 
-  @Element(name = "Latitude")
   private Double latitude;
 
-  @Element(name = "Longitude")
   private Double longitude;
+
+  private String routePattern;
+
+  private Integer routePatternColor;
 
   public Stop(String name, Integer code) {
     this.name = name;
@@ -61,13 +55,32 @@ public class Stop {
     return latitude;
   }
 
+  public void setLatitude(Double latitude) {
+    this.latitude = latitude;
+  }
+
   public Double getLongitude() {
     return longitude;
   }
 
-  public void setLatLng(LatLng latLng) {
-    this.latitude = latLng.latitude;
-    this.longitude = latLng.longitude;
+  public void setLongitude(Double longitude) {
+    this.longitude = longitude;
+  }
+
+  public String getRoutePattern() {
+    return routePattern;
+  }
+
+  public void setRoutePattern(String routePattern) {
+    this.routePattern = routePattern;
+  }
+
+  public Integer getRoutePatternColor() {
+    return routePatternColor;
+  }
+
+  public void setRoutePatternColor(Integer routePatternColor) {
+    this.routePatternColor = routePatternColor;
   }
 
   @Override
@@ -88,15 +101,15 @@ public class Stop {
 
   @Override
   public String toString() {
-    return String.format("%s - %d", getName(), getCode());
+    return String.format("%s (#%d)", getName(), getCode());
   }
 
   public static Stop valueOf(String string) {
-    String[] split = string.split(" - ");
+    String[] split = string.split(" \\(#");
     if (split.length != 2) {
       throw new IllegalArgumentException("String improperly formatted: " + string);
     }
 
-    return new Stop(split[0], Integer.valueOf(split[1]));
+    return new Stop(split[0], Integer.valueOf(split[1].substring(0, split[1].length()-1)));
   }
 }
