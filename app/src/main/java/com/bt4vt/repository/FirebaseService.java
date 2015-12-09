@@ -119,6 +119,24 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
     }
   }
 
+  public void registerStopListener(StopModel stop, ChildEventListener listener) {
+    if (authenticated.get()) {
+      firebase.child(FAVORITE_STOPS_PATH)
+          .child(String.valueOf(stop.getCode()))
+          .addChildEventListener(listener);
+    } else {
+      throw new IllegalStateException("Firebase not authenticated");
+    }
+  }
+
+  public void unregisterStopListener(ChildEventListener listener) {
+    if (authenticated.get()) {
+      firebase.removeEventListener(listener);
+    } else {
+      throw new IllegalStateException("Firebase not authenticated");
+    }
+  }
+
   public boolean isFavorited(StopModel stop) {
     return favoritedStops.contains(stop);
   }
