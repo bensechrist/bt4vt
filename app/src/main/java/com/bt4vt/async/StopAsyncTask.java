@@ -21,9 +21,9 @@ import android.os.Handler;
 import android.os.Looper;
 
 import com.bt4vt.repository.TransitRepository;
-import com.bt4vt.repository.domain.Route;
-import com.bt4vt.repository.domain.Stop;
 import com.bt4vt.repository.exception.TransitRepositoryException;
+import com.bt4vt.repository.model.RouteModel;
+import com.bt4vt.repository.model.StopModel;
 
 import java.util.List;
 
@@ -32,20 +32,20 @@ import java.util.List;
  *
  * @author Ben Sechrist
  */
-public class StopAsyncTask extends AsyncTask<Route, Integer, List<Stop>> {
+public class StopAsyncTask extends AsyncTask<RouteModel, Integer, List<StopModel>> {
 
   private final TransitRepository transitRepository;
-  private final AsyncCallback<List<Stop>> callback;
+  private final AsyncCallback<List<StopModel>> callback;
 
-  public StopAsyncTask(TransitRepository transitRepository, AsyncCallback<List<Stop>> callback) {
+  public StopAsyncTask(TransitRepository transitRepository, AsyncCallback<List<StopModel>> callback) {
     this.transitRepository = transitRepository;
     this.callback = callback;
   }
 
   @Override
-  protected List<Stop> doInBackground(Route... params) {
+  protected List<StopModel> doInBackground(RouteModel... params) {
     try {
-      Route route = params[0];
+      RouteModel route = params[0];
       if (route == null) {
         return transitRepository.getStops();
       } else {
@@ -58,7 +58,7 @@ public class StopAsyncTask extends AsyncTask<Route, Integer, List<Stop>> {
   }
 
   @Override
-  protected void onPostExecute(List<Stop> stops) {
+  protected void onPostExecute(List<StopModel> stops) {
     if (stops != null) {
       callback.onSuccess(stops);
     }

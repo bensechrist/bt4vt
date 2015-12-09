@@ -24,7 +24,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 
-import com.bt4vt.repository.domain.Stop;
+import com.bt4vt.repository.model.StopModel;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
@@ -67,7 +67,7 @@ public class BusStopGeofenceService implements ResultCallback<Status> {
     googleApiClient.connect();
   }
 
-  public void registerGeofence(Stop stop) {
+  public void registerGeofence(StopModel stop) {
     if (!googleApiClient.isConnected()) {
       if (googleApiClient.isConnecting()) {
         throw new IllegalStateException("Google Location API already connecting");
@@ -86,7 +86,7 @@ public class BusStopGeofenceService implements ResultCallback<Status> {
         getGeofencePendingIntent()).setResultCallback(this);
   }
 
-  public void unregisterGeofence(Stop stop) {
+  public void unregisterGeofence(StopModel stop) {
     if (!googleApiClient.isConnected()) {
       if (googleApiClient.isConnecting()) {
         throw new IllegalStateException("Google Location API already connecting");
@@ -142,7 +142,7 @@ public class BusStopGeofenceService implements ResultCallback<Status> {
     return builder.build();
   }
 
-  private Geofence generateGeofence(Stop stop) {
+  private Geofence generateGeofence(StopModel stop) {
     return new Geofence.Builder()
         // Must be to string to use valueOf when the geofence is triggered
         .setRequestId(stop.toString())

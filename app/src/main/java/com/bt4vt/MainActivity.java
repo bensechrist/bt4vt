@@ -32,8 +32,8 @@ import android.widget.ImageButton;
 import com.bt4vt.fragment.NavigationDrawerFragment;
 import com.bt4vt.fragment.RetainedMapFragment;
 import com.bt4vt.repository.FirebaseService;
-import com.bt4vt.repository.domain.Route;
-import com.bt4vt.repository.domain.Stop;
+import com.bt4vt.repository.model.RouteModel;
+import com.bt4vt.repository.model.StopModel;
 import com.google.inject.Inject;
 
 import java.util.List;
@@ -136,18 +136,17 @@ public class MainActivity extends RoboFragmentActivity implements
   }
 
   @Override
-  public void onStopsReady(List<Stop> stops) {
+  public void onStopsReady(List<StopModel> stops) {
     mapFragment.showStops(stops);
   }
 
   @Override
-  public void onRouteSelected(String routeName) {
-    Route currentRoute = new Route(routeName);
+  public void onRouteSelected(RouteModel route) {
     mainLoadingView.setVisibility(View.VISIBLE);
-    mapFragment.setCurrentRoute(currentRoute);
+    mapFragment.setCurrentRoute(route);
     mapFragment.clearMap();
-    mapFragment.fetchStops(currentRoute);
-    mapFragment.showBuses(currentRoute);
+    mapFragment.fetchStops(route);
+    mapFragment.showBuses(route);
   }
 
   @Override

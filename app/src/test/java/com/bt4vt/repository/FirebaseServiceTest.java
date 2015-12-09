@@ -18,7 +18,7 @@ package com.bt4vt.repository;
 
 import android.content.SharedPreferences;
 
-import com.bt4vt.repository.domain.Stop;
+import com.bt4vt.repository.model.StopModelImpl;
 import com.firebase.client.AuthData;
 import com.firebase.client.Firebase;
 
@@ -66,7 +66,7 @@ public class FirebaseServiceTest {
 
   @Test
   public void testFavoriteStops() throws Exception {
-    Stop stop = new Stop();
+    StopModelImpl stop = new StopModelImpl("Name", 1);
     assertFalse(service.isFavorited(stop));
     service.addFavorite(stop);
     assertTrue(service.isFavorited(stop));

@@ -24,10 +24,10 @@ import android.util.Log;
 import com.bt4vt.MainActivity;
 import com.bt4vt.R;
 import com.bt4vt.repository.TransitRepository;
-import com.bt4vt.repository.domain.Departure;
-import com.bt4vt.repository.domain.NextDeparture;
-import com.bt4vt.repository.domain.Stop;
 import com.bt4vt.repository.exception.TransitRepositoryException;
+import com.bt4vt.repository.model.DepartureModel;
+import com.bt4vt.repository.model.StopModel;
+import com.bt4vt.repository.model.StopModelFactory;
 import com.bt4vt.util.NoficationUtils;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
@@ -48,6 +48,9 @@ public class GeofenceTransitionsIntentService extends RoboIntentService {
 
   @Inject
   private TransitRepository transitRepository;
+
+  @Inject
+  private StopModelFactory stopModelFactory;
 
   @Inject
   private NotificationManager notificationManager;
@@ -72,14 +75,14 @@ public class GeofenceTransitionsIntentService extends RoboIntentService {
     switch (geofenceTransition) {
       case Geofence.GEOFENCE_TRANSITION_DWELL:
         for (Geofence geofence : triggeringGeofences) {
-          Stop stop = Stop.valueOf(geofence.getRequestId());
           try {
-            List<NextDeparture> nextDepartures = transitRepository.getNextDepartures(stop);
+            StopModel stop = stopModelFactory.createModel(geofence);
+            List<DepartureModel> departures = transitRepository.getDepartures(stop);
             final int MAX_DEPARTURES = getResources().getInteger(R.integer.max_departures_shown);
-            if (nextDepartures.size() > MAX_DEPARTURES) {
-              nextDepartures = nextDepartures.subList(0, MAX_DEPARTURES);
+            if (departures.size() > MAX_DEPARTURES) {
+              departures = departures.subList(0, MAX_DEPARTURES);
             }
-            sendNotfication(stop, nextDepartures);
+            sendNotfication(stop, departures);
           } catch (TransitRepositoryException e) {
             Log.e(getClass().getSimpleName(), e.toString());
           }
@@ -88,8 +91,7 @@ public class GeofenceTransitionsIntentService extends RoboIntentService {
 
       case Geofence.GEOFENCE_TRANSITION_EXIT:
         for (Geofence geofence : triggeringGeofences) {
-          Stop stop = Stop.valueOf(geofence.getRequestId());
-          removeNotification(stop);
+          removeNotification(stopModelFactory.createModel(geofence));
         }
         break;
 
@@ -101,16 +103,12 @@ public class GeofenceTransitionsIntentService extends RoboIntentService {
     }
   }
 
-  private void sendNotfication(Stop stop, List<NextDeparture> nextDepartures) {
+  private void sendNotfication(StopModel stop, List<DepartureModel> departures) {
     List<String> departureStrings = new ArrayList<>();
-    List<Departure> departures = new ArrayList<>();
-    for (NextDeparture nextDeparture : nextDepartures) {
-      departures.addAll(nextDeparture.getDepartures());
-    }
     Collections.sort(departures);
-    for (Departure departure : departures) {
+    for (DepartureModel departure : departures) {
       departureStrings.add(getString(R.string.notification_departures_format,
-          departure.getTextDepartureTime(), departure.getShortRouteName()));
+          departure.getTextDepartureTime(), departure.getRouteShortName()));
     }
     Intent intent = new Intent(this, MainActivity.class);
     intent.putExtra(MainActivity.EXTRA_STOP, stop.toString());
@@ -119,7 +117,7 @@ public class GeofenceTransitionsIntentService extends RoboIntentService {
     notificationManager.notify(stop.getCode(), builder.build());
   }
 
-  private void removeNotification(Stop stop) {
+  private void removeNotification(StopModel stop) {
     notificationManager.cancel(stop.getCode());
   }
 }

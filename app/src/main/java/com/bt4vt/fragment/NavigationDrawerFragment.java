@@ -43,7 +43,8 @@ import com.bt4vt.async.FetchGoogleTokenTask;
 import com.bt4vt.async.RouteAsyncTask;
 import com.bt4vt.repository.FirebaseService;
 import com.bt4vt.repository.TransitRepository;
-import com.bt4vt.repository.domain.Route;
+import com.bt4vt.repository.model.RouteModel;
+import com.bt4vt.repository.model.RouteModelFactory;
 import com.bt4vt.util.ViewUtils;
 import com.firebase.client.AuthData;
 import com.firebase.client.Firebase;
@@ -51,6 +52,7 @@ import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.google.android.gms.common.AccountPicker;
 import com.google.inject.Inject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -75,6 +77,9 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
 
   @Inject
   private SharedPreferences preferences;
+
+  @Inject
+  private RouteModelFactory routeModelFactory;
 
   @InjectView(R.id.nav_view)
   private NavigationView navView;
@@ -141,9 +146,10 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
 
   public void fetchRoutes() {
     navView.getMenu().findItem(R.id.nav_loading).setVisible(true);
-    RouteAsyncTask task = new RouteAsyncTask(transitRepository, new AsyncCallback<List<Route>>() {
+    RouteAsyncTask task = new RouteAsyncTask(transitRepository, new AsyncCallback<List<RouteModel>>() {
       @Override
-      public void onSuccess(List<Route> routes) {
+      public void onSuccess(List<RouteModel> routes) {
+        setRouteNames(routes);
         if (routes.isEmpty()) {
           View view = getView();
           if (view != null) {
@@ -151,18 +157,12 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
                 .setAction(R.string.retry, NavigationDrawerFragment.this)
                 .show();
           }
-        } else {
-          String[] routeNames = new String[routes.size()];
-          for (int i = 0; i < routes.size(); i++) {
-            routeNames[i] = routes.get(i).getName();
-          }
-          setRouteNames(routeNames);
         }
       }
 
       @Override
       public void onException(Exception e) {
-        setRouteNames(new String[]{});
+        setRouteNames(new ArrayList<RouteModel>());
         e.printStackTrace();
         View view = getView();
         if (view != null) {
@@ -175,21 +175,22 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
     task.execute();
   }
 
-  private void setRouteNames(String[] routeNames) {
+  private void setRouteNames(List<RouteModel> routes) {
     Menu menu = navView.getMenu();
     menu.findItem(R.id.nav_loading).setVisible(false);
-    for (String routeName : routeNames) {
-      MenuItem item = menu.add(R.id.nav_routes_group, Menu.NONE, 1, routeName);
+    for (RouteModel route : routes) {
+      MenuItem item = menu.add(R.id.nav_routes_group, Menu.NONE, 1, route.getName());
+      item.setTitleCondensed(route.getShortName());
       item.setCheckable(true);
     }
   }
 
   @Override
   public boolean onNavigationItemSelected(MenuItem menuItem) {
-    String menuTitle = menuItem.getTitle().toString();
     if (activity.isLoadingContent()) {
       Snackbar.make(navView, R.string.content_loading, Snackbar.LENGTH_LONG)
           .show();
+      lastMenuItem.setChecked(true);
       return true;
     }
     if (menuItem.equals(lastMenuItem)) {
@@ -209,7 +210,7 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
       if (menuItemId == R.id.nav_view_all_stops) {
         activity.showAllStops();
       } else {
-        activity.onRouteSelected(menuTitle);
+        activity.onRouteSelected(routeModelFactory.createModel(menuItem));
       }
       activity.closeDrawer();
     } else {
@@ -354,7 +355,7 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
      *
      * @param routeName name of the route
      */
-    void onRouteSelected(String routeName);
+    void onRouteSelected(RouteModel routeName);
 
     /**
      * Closes the drawer.

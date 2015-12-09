@@ -21,8 +21,8 @@ import android.os.Handler;
 import android.os.Looper;
 
 import com.bt4vt.repository.TransitRepository;
-import com.bt4vt.repository.domain.Route;
 import com.bt4vt.repository.exception.TransitRepositoryException;
+import com.bt4vt.repository.model.RouteModel;
 
 import java.util.List;
 
@@ -31,28 +31,28 @@ import java.util.List;
  *
  * @author Ben Sechrist
  */
-public class RouteAsyncTask extends AsyncTask<Void, Integer, List<Route>> {
+public class RouteAsyncTask extends AsyncTask<Void, Integer, List<RouteModel>> {
 
   private final TransitRepository transitRepository;
-  private final AsyncCallback<List<Route>> callback;
+  private final AsyncCallback<List<RouteModel>> callback;
 
-  public RouteAsyncTask(TransitRepository transitRepository, AsyncCallback<List<Route>> callback) {
+  public RouteAsyncTask(TransitRepository transitRepository, AsyncCallback<List<RouteModel>> callback) {
     this.transitRepository = transitRepository;
     this.callback = callback;
   }
 
   @Override
-  protected List<Route> doInBackground(Void... params) {
+  protected List<RouteModel> doInBackground(Void... params) {
     try {
       return transitRepository.getRoutes();
-    } catch (final TransitRepositoryException e) {
+    } catch (TransitRepositoryException e) {
       new Handler(Looper.getMainLooper()).post(new CallbackExceptionRunnable(callback, e));
       return null;
     }
   }
 
   @Override
-  protected void onPostExecute(List<Route> routes) {
+  protected void onPostExecute(List<RouteModel> routes) {
     if (routes != null) {
       callback.onSuccess(routes);
     }

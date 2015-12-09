@@ -26,7 +26,8 @@ import com.bt4vt.BuildConfig;
 import com.bt4vt.async.AsyncCallback;
 import com.bt4vt.async.FetchGoogleTokenTask;
 import com.bt4vt.geofence.BusStopGeofenceService;
-import com.bt4vt.repository.domain.Stop;
+import com.bt4vt.repository.model.StopModel;
+import com.bt4vt.repository.model.StopModelFactory;
 import com.firebase.client.AuthData;
 import com.firebase.client.ChildEventListener;
 import com.firebase.client.DataSnapshot;
@@ -62,11 +63,14 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
   private BusStopGeofenceService busStopGeofenceService;
 
   @Inject
+  private StopModelFactory stopModelFactory;
+
+  @Inject
   private SharedPreferences preferences;
 
   Firebase firebase;
 
-  private final Set<Stop> favoritedStops = new HashSet<>();
+  private final Set<StopModel> favoritedStops = new HashSet<>();
 
   private AtomicBoolean authenticated = new AtomicBoolean(false);
 
@@ -115,11 +119,11 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
     }
   }
 
-  public boolean isFavorited(Stop stop) {
+  public boolean isFavorited(StopModel stop) {
     return favoritedStops.contains(stop);
   }
 
-  public void addFavorite(Stop stop) {
+  public void addFavorite(StopModel stop) {
     if (authenticated.get()) {
       favoritedStops.add(stop);
       firebase.child(FAVORITE_STOPS_PATH)
@@ -130,7 +134,7 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
     }
   }
 
-  public void removeFavorite(Stop stop) {
+  public void removeFavorite(StopModel stop) {
     if (authenticated.get()) {
       favoritedStops.remove(stop);
       firebase.child(FAVORITE_STOPS_PATH)
@@ -202,7 +206,7 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
 
   @Override
   public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-    Stop stop = dataSnapshot.getValue(Stop.class);
+    StopModel stop = stopModelFactory.createModel(dataSnapshot);
     Log.i(TAG, "Adding stop to favorites: " + stop);
     favoritedStops.add(stop);
     // Set Geofence
@@ -211,7 +215,7 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
 
   @Override
   public void onChildRemoved(DataSnapshot dataSnapshot) {
-    Stop stop = dataSnapshot.getValue(Stop.class);
+    StopModel stop = stopModelFactory.createModel(dataSnapshot);
     Log.i(TAG, "Removing stop from favorites: " + stop);
     favoritedStops.remove(stop);
     // Remove Geofence

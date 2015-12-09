@@ -14,23 +14,31 @@
  * limitations under the License.
  */
 
-package com.bt4vt.repository.listener;
+package com.bt4vt.repository.model;
 
-import com.bt4vt.repository.model.BusModel;
-
-import java.io.Serializable;
-import java.util.List;
+import com.bt4vt.repository.domain.Bus;
+import com.google.inject.Singleton;
 
 /**
- * Callback for receiving bus updates.
+ * Factory for creating {@link BusModel} objects.
  *
  * @author Ben Sechrist
  */
-public interface BusListener extends Serializable {
+@Singleton
+public class BusModelFactory {
 
   /**
-   * Called when information is received about buses
-   * @param buses the updated bus information
+   * Creates a {@link BusModel} from the given <code>bus</code>.
+   * @param bus the bus
+   * @return the bus model
    */
-  void onUpdateBuses(List<BusModel> buses);
+  public BusModel createModel(Bus bus) {
+    BusModelImpl model = new BusModelImpl();
+    model.setId(bus.getId());
+    model.setLatLng(bus.getLatLng());
+    model.setPassengers(bus.getPassengers());
+    model.setRouteShortName(bus.getRouteShortName());
+    model.setLastUpdated(bus.getTimestamp());
+    return model;
+  }
 }
