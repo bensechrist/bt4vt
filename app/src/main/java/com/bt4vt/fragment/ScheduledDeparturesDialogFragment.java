@@ -109,6 +109,7 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   private RouteModel route;
 
   private boolean isAuthenticated = false;
+  private boolean isFavorited = false;
 
   private AsyncCallback<String> tokenCallback = new AsyncCallback<String>() {
     @Override
@@ -256,6 +257,9 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   @Override
   public void onAuthStateChanged(AuthData authData) {
     isAuthenticated = authData != null;
+    if (isAuthenticated) {
+      firebaseService.registerStopListener(stop, this);
+    }
   }
 
   private void onFavClick() {
@@ -271,7 +275,7 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
           startActivityForResult(intent, REQUEST_CODE_PICK_ACCOUNT);
         }
       } else {
-        if (firebaseService.isFavorited(stop)) {
+        if (isFavorited) {
           firebaseService.removeFavorite(stop);
         } else {
           firebaseService.addFavorite(stop);
@@ -282,6 +286,7 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
 
   @Override
   public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+    isFavorited = true;
     Context context = getActivity();
     if (context != null)
       favoriteButton.setImageDrawable(ContextCompat.getDrawable(context,
@@ -295,6 +300,7 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
 
   @Override
   public void onChildRemoved(DataSnapshot dataSnapshot) {
+    isFavorited = false;
     Context context = getActivity();
     if (context != null)
       favoriteButton.setImageDrawable(ContextCompat.getDrawable(getActivity(),
@@ -318,7 +324,6 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
       firebaseService = binder.getService();
       serviceBound = true;
       firebaseService.registerAuthListener(ScheduledDeparturesDialogFragment.this);
-      firebaseService.registerStopListener(stop, ScheduledDeparturesDialogFragment.this);
       favoriteButton.setOnClickListener(ScheduledDeparturesDialogFragment.this);
       favoriteButton.setVisibility(View.VISIBLE);
     }
