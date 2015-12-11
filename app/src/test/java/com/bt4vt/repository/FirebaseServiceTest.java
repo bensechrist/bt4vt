@@ -18,8 +18,9 @@ package com.bt4vt.repository;
 
 import android.content.SharedPreferences;
 
-import com.bt4vt.repository.model.StopModelImpl;
+import com.bt4vt.repository.model.StopModel;
 import com.firebase.client.AuthData;
+import com.firebase.client.ChildEventListener;
 import com.firebase.client.Firebase;
 
 import org.junit.Before;
@@ -29,10 +30,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 /**
  * Tests the {@link FirebaseService}.
@@ -46,10 +47,16 @@ public class FirebaseServiceTest {
   private SharedPreferences preferences;
 
   @Mock
+  private SharedPreferences.Editor editor;
+
+  @Mock
   private Firebase firebase;
 
   @Mock
   private AuthData authData;
+
+  @Mock
+  private StopModel stopModel;
 
   @InjectMocks
   private FirebaseService service;
@@ -58,19 +65,82 @@ public class FirebaseServiceTest {
   public void setup() throws Exception {
     doReturn(firebase).when(firebase).child(anyString());
     doReturn(firebase).when(firebase).getParent();
+    doReturn(editor).when(preferences).edit();
+    doReturn(editor).when(editor).remove(anyString());
 
     service.firebase = firebase;
-    service.init();
     service.onAuthStateChanged(authData);
+    verify(firebase).getParent();
   }
 
   @Test
-  public void testFavoriteStops() throws Exception {
-    StopModelImpl stop = new StopModelImpl("Name", 1);
-    assertFalse(service.isFavorited(stop));
-    service.addFavorite(stop);
-    assertTrue(service.isFavorited(stop));
-    service.removeFavorite(stop);
-    assertFalse(service.isFavorited(stop));
+  public void testRegisterAuthListener() throws Exception {
+    Firebase.AuthStateListener listenerMock = mock(Firebase.AuthStateListener.class);
+    service.registerAuthListener(listenerMock);
+    verify(firebase).addAuthStateListener(listenerMock);
+  }
+
+  @Test
+  public void testUnregisterAuthListener() throws Exception {
+    Firebase.AuthStateListener listenerMock = mock(Firebase.AuthStateListener.class);
+    service.unregisterAuthListener(listenerMock);
+    verify(firebase).removeAuthStateListener(listenerMock);
+  }
+
+  @Test
+  public void testRegisterStopListener() throws Exception {
+    ChildEventListener listenerMock = mock(ChildEventListener.class);
+    doReturn(1).when(stopModel).getCode();
+
+    service.registerStopListener(stopModel, listenerMock);
+    verify(firebase).child(FirebaseService.FAVORITE_STOPS_PATH);
+    verify(firebase).child("1");
+    verify(firebase).addChildEventListener(listenerMock);
+  }
+
+  @Test
+  public void testUnregisterStopListener() throws Exception {
+    ChildEventListener listenerMock = mock(ChildEventListener.class);
+
+    service.unregisterStopListener(listenerMock);
+    verify(firebase).removeEventListener(listenerMock);
+  }
+
+  @Test
+  public void testAddFavorite() throws Exception {
+    doReturn(1).when(stopModel).getCode();
+
+    service.addFavorite(stopModel);
+    verify(firebase).child(FirebaseService.FAVORITE_STOPS_PATH);
+    verify(firebase).child("1");
+    verify(firebase).setValue(stopModel);
+  }
+
+  @Test
+  public void testRemoveFavorite() throws Exception {
+    doReturn(1).when(stopModel).getCode();
+
+    service.removeFavorite(stopModel);
+    verify(firebase).child(FirebaseService.FAVORITE_STOPS_PATH);
+    verify(firebase).child("1");
+    verify(firebase).removeValue();
+  }
+
+  @Test
+  public void testLoginGoogle() throws Exception {
+    String token = "token";
+
+    service.onAuthStateChanged(null);
+    service.loginGoogle(token);
+    verify(firebase).authWithOAuthToken("google", token, service);
+  }
+
+  @Test
+  public void testLogout() throws Exception {
+    service.logout();
+    verify(preferences).edit();
+    verify(editor).remove(FirebaseService.USER_EMAIL_KEY);
+    verify(editor).apply();
+    verify(firebase).unauth();
   }
 }

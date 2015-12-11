@@ -35,8 +35,6 @@ import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.google.inject.Inject;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import roboguice.service.RoboService;
@@ -57,7 +55,7 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
 
   private static final String TAG = "FirebaseService";
   private static final String FIREBASE_BASE_URL = "https://blinding-torch-6262.firebaseio.com/";
-  private static final String FAVORITE_STOPS_PATH = "favorite-stops";
+  protected static final String FAVORITE_STOPS_PATH = "favorite-stops";
 
   @Inject
   private BusStopGeofenceService busStopGeofenceService;
@@ -69,8 +67,6 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
   private SharedPreferences preferences;
 
   Firebase firebase;
-
-  private final Set<StopModel> favoritedStops = new HashSet<>();
 
   private AtomicBoolean authenticated = new AtomicBoolean(false);
 
@@ -124,26 +120,17 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
       firebase.child(FAVORITE_STOPS_PATH)
           .child(String.valueOf(stop.getCode()))
           .addChildEventListener(listener);
-    } else {
-      throw new IllegalStateException("Firebase not authenticated");
     }
   }
 
   public void unregisterStopListener(ChildEventListener listener) {
     if (authenticated.get()) {
       firebase.removeEventListener(listener);
-    } else {
-      throw new IllegalStateException("Firebase not authenticated");
     }
-  }
-
-  public boolean isFavorited(StopModel stop) {
-    return favoritedStops.contains(stop);
   }
 
   public void addFavorite(StopModel stop) {
     if (authenticated.get()) {
-      favoritedStops.add(stop);
       firebase.child(FAVORITE_STOPS_PATH)
           .child(String.valueOf(stop.getCode()))
           .setValue(stop);
@@ -154,7 +141,6 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
 
   public void removeFavorite(StopModel stop) {
     if (authenticated.get()) {
-      favoritedStops.remove(stop);
       firebase.child(FAVORITE_STOPS_PATH)
           .child(String.valueOf(stop.getCode()))
           .removeValue();
@@ -225,8 +211,6 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
   @Override
   public void onChildAdded(DataSnapshot dataSnapshot, String s) {
     StopModel stop = stopModelFactory.createModel(dataSnapshot);
-    Log.i(TAG, "Adding stop to favorites: " + stop);
-    favoritedStops.add(stop);
     // Set Geofence
     busStopGeofenceService.registerGeofence(stop);
   }
@@ -234,8 +218,6 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
   @Override
   public void onChildRemoved(DataSnapshot dataSnapshot) {
     StopModel stop = stopModelFactory.createModel(dataSnapshot);
-    Log.i(TAG, "Removing stop from favorites: " + stop);
-    favoritedStops.remove(stop);
     // Remove Geofence
     busStopGeofenceService.unregisterGeofence(stop);
   }
