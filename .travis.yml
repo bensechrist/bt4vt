@@ -10,7 +10,7 @@ android:
     - build-tools-23.0.0
 
 before_script:
-  - echo $ANDROID_TARGET
+  - android list targets
   # Create and start emulator
   - echo no | android create avd --force -n test -t $ANDROID_TARGET --abi $ANDROID_ABI
   - emulator -avd test -no-skin -no-audio -no-window &
