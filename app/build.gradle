@@ -23,8 +23,8 @@ android {
     applicationId "com.bt4vt"
     minSdkVersion 15
     targetSdkVersion 23
-    versionCode 12
-    versionName "1.4-beta3"
+    versionCode 13
+    versionName "1.4-beta4"
     multiDexEnabled = true
   }
   buildTypes {
