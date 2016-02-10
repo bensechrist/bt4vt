@@ -51,6 +51,9 @@ public class Departure {
   @Element(name = "TripPointID", required = false)
   private String tripPointID;
 
+  @Element(name = "TripNotes", required = false)
+  private String tripNotes;
+
   public String getRouteShortName() {
     return routeShortName;
   }
