@@ -17,25 +17,17 @@
 package com.bt4vt.repository;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Binder;
 import android.os.IBinder;
-import android.util.Log;
 
-import com.bt4vt.BuildConfig;
-import com.bt4vt.async.AsyncCallback;
-import com.bt4vt.async.FetchGoogleTokenTask;
 import com.bt4vt.geofence.BusStopGeofenceService;
 import com.bt4vt.repository.model.StopModel;
 import com.bt4vt.repository.model.StopModelFactory;
-import com.firebase.client.AuthData;
 import com.firebase.client.ChildEventListener;
 import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.google.inject.Inject;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import roboguice.service.RoboService;
 
@@ -44,17 +36,14 @@ import roboguice.service.RoboService;
  *
  * @author Ben Sechrist
  */
-public class FirebaseService extends RoboService implements Firebase.AuthResultHandler,
-    ChildEventListener, AsyncCallback<String>, Firebase.AuthStateListener {
+public class FirebaseService extends RoboService implements ChildEventListener {
 
   public static final String USER_EMAIL_KEY = "firebase-user-email";
-  public static final String PROFILE_IMAGE_URL = "profileImageURL";
-  public static final String DISPLAY_NAME = "displayName";
 
   private final FirebaseServiceBinder binder = new FirebaseServiceBinder();
 
   private static final String TAG = "FirebaseService";
-  private static final String FIREBASE_BASE_URL = "https://blinding-torch-6262.firebaseio.com/";
+  public static final String FIREBASE_BASE_URL = "https://blinding-torch-6262.firebaseio.com/";
   protected static final String FAVORITE_STOPS_PATH = "favorite-stops";
 
   @Inject
@@ -63,12 +52,7 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
   @Inject
   private StopModelFactory stopModelFactory;
 
-  @Inject
-  private SharedPreferences preferences;
-
   Firebase firebase;
-
-  private AtomicBoolean authenticated = new AtomicBoolean(false);
 
   @Override
   public void onCreate() {
@@ -80,9 +64,8 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
     if (firebase == null) {
       // Remove all Geofences
       busStopGeofenceService.unregisterAllGeofences();
-      Firebase.setAndroidContext(FirebaseService.this);
+      Firebase.setAndroidContext(this);
       firebase = new Firebase(FIREBASE_BASE_URL);
-      firebase.addAuthStateListener(this);
     }
   }
 
@@ -90,7 +73,6 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
   public void onDestroy() {
     super.onDestroy();
     firebase.removeEventListener(this);
-    firebase.removeAuthStateListener(this);
   }
 
   @Override
@@ -116,96 +98,25 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
   }
 
   public void registerStopListener(StopModel stop, ChildEventListener listener) {
-    if (authenticated.get()) {
-      firebase.child(FAVORITE_STOPS_PATH)
-          .child(String.valueOf(stop.getCode()))
-          .addChildEventListener(listener);
-    }
+    firebase.child(FAVORITE_STOPS_PATH)
+        .child(String.valueOf(stop.getCode()))
+        .addChildEventListener(listener);
   }
 
   public void unregisterStopListener(ChildEventListener listener) {
-    if (authenticated.get()) {
-      firebase.removeEventListener(listener);
-    }
+    firebase.removeEventListener(listener);
   }
 
   public void addFavorite(StopModel stop) {
-    if (authenticated.get()) {
-      firebase.child(FAVORITE_STOPS_PATH)
-          .child(String.valueOf(stop.getCode()))
-          .setValue(stop);
-    } else {
-      throw new IllegalStateException("Firebase not authenticated");
-    }
+    firebase.child(FAVORITE_STOPS_PATH)
+        .child(String.valueOf(stop.getCode()))
+        .setValue(stop);
   }
 
   public void removeFavorite(StopModel stop) {
-    if (authenticated.get()) {
-      firebase.child(FAVORITE_STOPS_PATH)
-          .child(String.valueOf(stop.getCode()))
-          .removeValue();
-    } else {
-      throw new IllegalStateException("Firebase not authenticated");
-    }
-  }
-
-  @Override
-  public void onAuthStateChanged(AuthData authData) {
-    if (authData == null) {
-      authenticated.set(false);
-      String email = preferences.getString(USER_EMAIL_KEY, null);
-      if (email != null) {
-        new FetchGoogleTokenTask(this, email, this).execute();
-      }
-    } else {
-      authenticated.set(true);
-      if (firebase.getParent() == null) { // We are still at the root
-        authSetup(authData);
-      }
-    }
-  }
-
-  /**
-   * Logs the user with the given Google <code>token</code> and calls the <code>handler</code>
-   * when the auth is finished.
-   *
-   * @param token the auth token
-   */
-  public void loginGoogle(String token) {
-    if (!authenticated.get()) {
-      firebase.authWithOAuthToken("google", token, this);
-    }
-  }
-
-  /**
-   * Logs the user out.
-   */
-  public void logout() {
-    preferences.edit().remove(USER_EMAIL_KEY).apply();
-    firebase.unauth();
-  }
-
-  @Override
-  public void onAuthenticated(AuthData authData) {
-    Log.i(TAG, "Authenticated");
-  }
-
-  @Override
-  public void onAuthenticationError(FirebaseError firebaseError) {
-    if (BuildConfig.DEBUG) {
-      throw new RuntimeException(firebaseError.toException());
-    }
-    Log.e(TAG, "Firebase Auth Error: " + firebaseError);
-  }
-
-  @Override
-  public void onSuccess(String token) {
-    loginGoogle(token);
-  }
-
-  @Override
-  public void onException(Exception e) {
-    e.printStackTrace();
+    firebase.child(FAVORITE_STOPS_PATH)
+        .child(String.valueOf(stop.getCode()))
+        .removeValue();
   }
 
   @Override
@@ -235,12 +146,6 @@ public class FirebaseService extends RoboService implements Firebase.AuthResultH
   @Override
   public void onCancelled(FirebaseError firebaseError) {
     // We don't care about this for now
-  }
-
-  private void authSetup(AuthData authData) {
-    firebase = firebase.child(authData.getUid());
-    firebase.child(FAVORITE_STOPS_PATH)
-        .addChildEventListener(this);
   }
 
   public class FirebaseServiceBinder extends Binder {

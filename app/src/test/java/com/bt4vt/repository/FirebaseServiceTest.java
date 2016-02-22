@@ -64,13 +64,8 @@ public class FirebaseServiceTest {
   @Before
   public void setup() throws Exception {
     doReturn(firebase).when(firebase).child(anyString());
-    doReturn(firebase).when(firebase).getParent();
-    doReturn(editor).when(preferences).edit();
-    doReturn(editor).when(editor).remove(anyString());
 
     service.firebase = firebase;
-    service.onAuthStateChanged(authData);
-    verify(firebase).getParent();
   }
 
   @Test
@@ -124,23 +119,5 @@ public class FirebaseServiceTest {
     verify(firebase).child(FirebaseService.FAVORITE_STOPS_PATH);
     verify(firebase).child("1");
     verify(firebase).removeValue();
-  }
-
-  @Test
-  public void testLoginGoogle() throws Exception {
-    String token = "token";
-
-    service.onAuthStateChanged(null);
-    service.loginGoogle(token);
-    verify(firebase).authWithOAuthToken("google", token, service);
-  }
-
-  @Test
-  public void testLogout() throws Exception {
-    service.logout();
-    verify(preferences).edit();
-    verify(editor).remove(FirebaseService.USER_EMAIL_KEY);
-    verify(editor).apply();
-    verify(firebase).unauth();
   }
 }
