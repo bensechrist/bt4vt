@@ -34,11 +34,14 @@ import com.bt4vt.fragment.RetainedMapFragment;
 import com.bt4vt.repository.FirebaseService;
 import com.bt4vt.repository.model.RouteModel;
 import com.bt4vt.repository.model.StopModel;
+import com.firebase.client.AuthData;
+import com.firebase.client.Firebase;
+import com.firebase.ui.auth.core.AuthProviderType;
+import com.firebase.ui.auth.core.FirebaseLoginError;
 import com.google.inject.Inject;
 
 import java.util.List;
 
-import roboguice.activity.RoboFragmentActivity;
 import roboguice.inject.ContentView;
 import roboguice.inject.InjectView;
 import uk.co.deanwild.materialshowcaseview.MaterialShowcaseView;
@@ -49,7 +52,7 @@ import uk.co.deanwild.materialshowcaseview.MaterialShowcaseView;
  * @author Ben Sechrist
  */
 @ContentView(R.layout.activity_main)
-public class MainActivity extends RoboFragmentActivity implements
+public class MainActivity extends SuperActivity implements
     RetainedMapFragment.TalkToActivity, NavigationDrawerFragment.TalkToActivity, View.OnClickListener {
 
   public static final String EXTRA_STOP = "com.bt4vt.extra.stop";
@@ -75,9 +78,13 @@ public class MainActivity extends RoboFragmentActivity implements
 
   private NavigationDrawerFragment navFragment;
 
+  private Firebase firebaseRef;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    Firebase.setAndroidContext(this);
+    firebaseRef = new Firebase(FirebaseService.FIREBASE_BASE_URL);
 
     navButton.setOnClickListener(this);
 
@@ -121,17 +128,59 @@ public class MainActivity extends RoboFragmentActivity implements
   }
 
   @Override
+  protected void onStart() {
+    super.onStart();
+    setEnabledAuthProvider(AuthProviderType.PASSWORD);
+    setEnabledAuthProvider(AuthProviderType.GOOGLE);
+    setEnabledAuthProvider(AuthProviderType.FACEBOOK);
+    setEnabledAuthProvider(AuthProviderType.TWITTER);
+  }
+
+  @Override
   public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
     switch (requestCode) {
       case RetainedMapFragment.REQUEST_LOCATION_PERMISSION: {
-        if (mapFragment != null && grantResults.length > 0
-            && grantResults[0] == PackageManager.PERMISSION_DENIED) {
-          if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+        if (mapFragment != null) {
+          if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            mapFragment.setUpMap();
+          } else if (ActivityCompat.shouldShowRequestPermissionRationale(this,
               Manifest.permission.ACCESS_FINE_LOCATION)) {
             mapFragment.showLocationPermissionRationale();
           }
         }
       }
+    }
+  }
+
+  @Override
+  public Firebase getFirebaseRef() {
+    return firebaseRef;
+  }
+
+  @Override
+  public void onFirebaseLoggedIn(AuthData authData) {
+    navFragment.onLoggedIn(authData);
+  }
+
+  @Override
+  public void onFirebaseLoggedOut() {
+    navFragment.onLoggedOut();
+  }
+
+  @Override
+  public void onFirebaseLoginProviderError(FirebaseLoginError firebaseError) {
+    throw new RuntimeException(firebaseError.message);
+  }
+
+  @Override
+  public void onFirebaseLoginUserError(FirebaseLoginError firebaseError) {
+    if (BuildConfig.DEBUG) {
+      throw new RuntimeException(firebaseError.message);
+    }
+    View view = mapFragment.getView();
+    if (view != null) {
+      Snackbar.make(view, R.string.login_error, Snackbar.LENGTH_SHORT)
+          .show();
     }
   }
 
@@ -155,6 +204,16 @@ public class MainActivity extends RoboFragmentActivity implements
     mapFragment.setCurrentRoute(null);
     mapFragment.clearMap();
     mapFragment.fetchStops(null);
+  }
+
+  @Override
+  public void signIn() {
+    showFirebaseLoginPrompt();
+  }
+
+  @Override
+  public void signOut() {
+    firebaseRef.unauth();
   }
 
   @Override

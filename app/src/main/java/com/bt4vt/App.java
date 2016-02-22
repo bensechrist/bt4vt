@@ -46,6 +46,7 @@ public class App extends Application {
   public void onCreate() {
     super.onCreate();
 
+    RoboGuice.setUseAnnotationDatabases(false);
     // Setup RoboGuice modules
     RoboGuice.getOrCreateBaseApplicationInjector(this,
         RoboGuice.DEFAULT_STAGE,

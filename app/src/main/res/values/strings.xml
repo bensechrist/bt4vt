@@ -58,8 +58,9 @@
   <string name="app_feedback_email">bensechrist@gmail.com</string>
   <string name="showcase_confirm">Got It</string>
   <string name="no_routes">No routes</string>
-  <string name="routes_loading_title">Loading Routes...</string>
+  <string name="routes_loading_title">Loading Routes…</string>
   <string name="no_network_message">Network Failed/Check your internet connection</string>
   <string name="location_permission_rationale">Location permission is needed for the app to function properly</string>
   <string name="permission_grant">Grant</string>
+  <string name="login_error">Error Logging In</string>
 </resources>

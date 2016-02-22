@@ -133,8 +133,8 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
   @Override
   public void onMapReady(GoogleMap googleMap) {
     this.mMap = googleMap;
-    setUpMap();
-    checkLocationPermission();
+    if (checkLocationPermission())
+      setUpMap();
   }
 
   @Override
@@ -399,7 +399,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
    * <p/>
    * This should only be called once and when we are sure that {@link #mMap} is not null.
    */
-  private void setUpMap() {
+  public void setUpMap() {
     mMap.setMyLocationEnabled(true);
     mMap.getUiSettings().setCompassEnabled(false);
     mMap.getUiSettings().setRotateGesturesEnabled(false);
@@ -414,8 +414,9 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
    * Verify that the user has granted coarse and find location permissions.
    * <p/>
    * If permissions are not granted and the user hasn't denied them in the past, ask for permissions.
+   * @return true if permission was granted, false otherwise
    */
-  private void checkLocationPermission() {
+  private boolean checkLocationPermission() {
     if (ContextCompat.checkSelfPermission(getActivity(),
           Manifest.permission.ACCESS_FINE_LOCATION)
         != PackageManager.PERMISSION_GRANTED) {
@@ -425,7 +426,9 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
       } else {
         requestLocationPermission();
       }
+      return false;
     }
+    return true;
   }
 
   /**

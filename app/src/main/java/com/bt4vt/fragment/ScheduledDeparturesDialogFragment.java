@@ -16,8 +16,6 @@
 
 package com.bt4vt.fragment;
 
-import android.accounts.AccountManager;
-import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -39,7 +37,6 @@ import com.bt4vt.R;
 import com.bt4vt.adapter.DepartureArrayAdapter;
 import com.bt4vt.async.AsyncCallback;
 import com.bt4vt.async.DepartureAsyncTask;
-import com.bt4vt.async.FetchGoogleTokenTask;
 import com.bt4vt.repository.FirebaseService;
 import com.bt4vt.repository.TransitRepository;
 import com.bt4vt.repository.model.DepartureModel;
@@ -51,8 +48,6 @@ import com.firebase.client.ChildEventListener;
 import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
-import com.google.android.gms.auth.UserRecoverableAuthException;
-import com.google.android.gms.common.AccountPicker;
 import com.google.inject.Inject;
 
 import java.util.List;
@@ -66,10 +61,8 @@ import roboguice.inject.InjectView;
  * @author Ben Sechrist
  */
 public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
-    implements AsyncCallback<List<DepartureModel>>, View.OnClickListener, Firebase.AuthStateListener, ChildEventListener {
-
-  private static final int REQUEST_CODE_PICK_ACCOUNT = 1000;
-  private static final int REQUEST_AUTHORIZATION = 2000;
+    implements AsyncCallback<List<DepartureModel>>, View.OnClickListener,
+    Firebase.AuthStateListener, ChildEventListener {
 
   private static final String STOP_FORMAT = "Stop: %s";
   private static final String ROUTE_FORMAT = "Route: %s";
@@ -110,21 +103,6 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
 
   private boolean isAuthenticated = false;
   private boolean isFavorited = false;
-
-  private AsyncCallback<String> tokenCallback = new AsyncCallback<String>() {
-    @Override
-    public void onSuccess(String token) {
-      firebaseService.loginGoogle(token);
-    }
-
-    @Override
-    public void onException(Exception e) {
-      e.printStackTrace();
-      if (e instanceof UserRecoverableAuthException) {
-        startActivityForResult(((UserRecoverableAuthException) e).getIntent(), REQUEST_AUTHORIZATION);
-      }
-    }
-  };
 
   public static ScheduledDeparturesDialogFragment newInstance(StopModel stop, RouteModel route) {
     if (stop == null) {
@@ -230,31 +208,6 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   }
 
   @Override
-  public void onActivityResult(int requestCode, int resultCode, Intent data) {
-    if (requestCode == REQUEST_CODE_PICK_ACCOUNT || requestCode == REQUEST_AUTHORIZATION) {
-      if (resultCode == Activity.RESULT_OK) {
-        String userEmail = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
-        preferences.edit().putString(FirebaseService.USER_EMAIL_KEY, userEmail).apply();
-        new FetchGoogleTokenTask(getActivity(), userEmail, tokenCallback).execute();
-      } else if (resultCode == Activity.RESULT_CANCELED) {
-        // The account picker dialog closed without selecting an account.
-        View.OnClickListener listener = new View.OnClickListener() {
-          @Override
-          public void onClick(View v) {
-            onFavClick();
-          }
-        };
-        View view = getView();
-        if (view != null) {
-          Snackbar.make(view, R.string.not_logged_in, Snackbar.LENGTH_LONG)
-              .setAction(R.string.login, listener)
-              .show();
-        }
-      }
-    }
-  }
-
-  @Override
   public void onAuthStateChanged(AuthData authData) {
     isAuthenticated = authData != null;
     if (isAuthenticated) {
@@ -264,21 +217,16 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
 
   private void onFavClick() {
     if (serviceBound) {
-      if (!isAuthenticated) {
-        String userEmail = preferences.getString(FirebaseService.USER_EMAIL_KEY, null);
-        if (userEmail != null) {
-          new FetchGoogleTokenTask(getActivity(), userEmail, tokenCallback).execute();
-        } else {
-          String[] accountTypes = new String[]{"com.google"};
-          Intent intent = AccountPicker.newChooseAccountIntent(null, null,
-              accountTypes, false, null, null, null, null);
-          startActivityForResult(intent, REQUEST_CODE_PICK_ACCOUNT);
-        }
-      } else {
+      if (isAuthenticated) {
         if (isFavorited) {
           firebaseService.removeFavorite(stop);
         } else {
           firebaseService.addFavorite(stop);
+        }
+      } else {
+        View view = getView();
+        if (view != null) {
+          Snackbar.make(view, R.string.not_logged_in, Snackbar.LENGTH_LONG).show();
         }
       }
     }

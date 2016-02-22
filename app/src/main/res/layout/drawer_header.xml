@@ -44,7 +44,6 @@
     android:gravity="start"
     android:paddingBottom="8dp"
     android:paddingTop="8dp"
-    android:text="Profile Name"
     android:textColor="@android:color/white"
     android:textSize="14sp"
     android:textStyle="bold"/>
@@ -57,7 +56,6 @@
     android:layout_marginLeft="20dp"
     android:layout_marginStart="20dp"
     android:gravity="start"
-    android:text="profile@gmail.com"
     android:textColor="#fff"
     android:textSize="14sp"/>
 
