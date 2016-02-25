@@ -166,7 +166,7 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
         profileName.setText(String.valueOf(authData.getProviderData().get("displayName")));
       if (authData.getProviderData().containsKey("email"))
         profileEmail.setText(String.valueOf(authData.getProviderData().get("email")));
-      if (authData.getProvider().equals(AuthProviderType.TWITTER))
+      if (authData.getProvider().equals(AuthProviderType.TWITTER.getName()))
         profileEmail.setText(String.valueOf(authData.getProviderData().get("username")));
       navHeader = headerView;
       navView.addHeaderView(navHeader);
