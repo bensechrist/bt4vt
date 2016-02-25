@@ -21,7 +21,7 @@ package com.bt4vt.repository.model;
  *
  * @author Ben Sechrist
  */
-public interface RouteModel {
+public interface RouteModel extends Comparable<RouteModel> {
 
   /**
    * Returns the full route name.

@@ -44,6 +44,7 @@ import com.firebase.ui.auth.core.AuthProviderType;
 import com.google.inject.Inject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -189,6 +190,7 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
   }
 
   private void setRouteNames(List<RouteModel> routes) {
+    Collections.sort(routes);
     Menu menu = navView.getMenu();
     menu.findItem(R.id.nav_loading).setVisible(false);
     for (RouteModel route : routes) {

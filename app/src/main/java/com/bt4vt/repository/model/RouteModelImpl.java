@@ -16,6 +16,8 @@
 
 package com.bt4vt.repository.model;
 
+import android.support.annotation.NonNull;
+
 /**
  * Implementation of {@link RouteModel}.
  *
@@ -63,5 +65,10 @@ public class RouteModelImpl implements RouteModel {
   public String toString() {
 //    return String.format("%s:%s", getName(), getShortName());
     return getShortName();
+  }
+
+  @Override
+  public int compareTo(@NonNull RouteModel another) {
+    return this.getShortName().compareTo(another.getShortName());
   }
 }
