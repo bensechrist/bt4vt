@@ -16,15 +16,11 @@
 
 package com.bt4vt.fragment;
 
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,11 +29,11 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.bt4vt.MainActivity;
 import com.bt4vt.R;
 import com.bt4vt.adapter.DepartureArrayAdapter;
 import com.bt4vt.async.AsyncCallback;
 import com.bt4vt.async.DepartureAsyncTask;
-import com.bt4vt.repository.FirebaseService;
 import com.bt4vt.repository.TransitRepository;
 import com.bt4vt.repository.model.DepartureModel;
 import com.bt4vt.repository.model.RouteModel;
@@ -64,6 +60,7 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
     implements AsyncCallback<List<DepartureModel>>, View.OnClickListener,
     Firebase.AuthStateListener, ChildEventListener {
 
+  private static final String TAG = "DeparturesDialog";
   private static final String STOP_FORMAT = "Stop: %s";
   private static final String ROUTE_FORMAT = "Route: %s";
   private static final String ALL_ROUTES = "ALL";
@@ -73,9 +70,6 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
 
   @Inject
   private StopModelFactory stopModelFactory;
-
-  @Inject
-  private SharedPreferences preferences;
 
   @InjectView(R.id.stop_text)
   private TextView stopTextView;
@@ -95,14 +89,13 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   @InjectView(R.id.button_favorite_stop)
   private ImageButton favoriteButton;
 
-  private FirebaseService firebaseService;
-  private boolean serviceBound = false;
+  private Firebase firebaseRef;
 
   private StopModel stop;
   private RouteModel route;
 
-  private boolean isAuthenticated = false;
   private boolean isFavorited = false;
+  private boolean isAuthenticated = false;
 
   public static ScheduledDeparturesDialogFragment newInstance(StopModel stop, RouteModel route) {
     if (stop == null) {
@@ -123,18 +116,21 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   @Override
   public void onStart() {
     super.onStart();
-    Intent intent = new Intent(getActivity(), FirebaseService.class);
-    getActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE);
+    Firebase.setAndroidContext(getActivity());
+    firebaseRef = new Firebase(MainActivity.FIREBASE_BASE_URL);
+    firebaseRef.addAuthStateListener(this);
   }
 
   @Override
   public void onStop() {
     super.onStop();
-    if (serviceBound) {
-      firebaseService.unregisterStopListener(this);
-      firebaseService.unregisterAuthListener(this);
-      getActivity().unbindService(connection);
-      serviceBound = false;
+    if (firebaseRef != null) {
+      firebaseRef.removeAuthStateListener(this);
+      if (firebaseRef.getAuth() != null) {
+        firebaseRef.child("favorite-stops")
+            .child(String.valueOf(stop.getCode()))
+            .removeEventListener(this);
+      }
     }
   }
 
@@ -144,11 +140,13 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
 
     // If we get here and the stop is null then we should exit the departures dialog
     if (stop == null) {
-      getActivity().getSupportFragmentManager().beginTransaction().remove(this).commit();
+      getDialog().dismiss();
       return;
     }
 
     loadingView.setVisibility(View.VISIBLE);
+
+    favoriteButton.setOnClickListener(this);
 
     stopTextView.setText(String.format(STOP_FORMAT, stop.toString()));
     String routeText;
@@ -159,7 +157,7 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
     }
     routeTextView.setText(String.format(ROUTE_FORMAT, routeText));
 
-    new DepartureAsyncTask(transitRepository, stop, route, this, getContext()).execute();
+    new DepartureAsyncTask(transitRepository, stop, route, this, getActivity()).execute();
 
     emptyDeparturesView.findViewById(R.id.refresh_departures_button).setOnClickListener(this);
   }
@@ -202,7 +200,7 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
       default:
         listView.setEmptyView(null);
         loadingView.setVisibility(View.VISIBLE);
-        new DepartureAsyncTask(transitRepository, stop, route, this, getContext()).execute();
+        new DepartureAsyncTask(transitRepository, stop, route, this, getActivity()).execute();
         break;
     }
   }
@@ -211,29 +209,43 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   public void onAuthStateChanged(AuthData authData) {
     isAuthenticated = authData != null;
     if (isAuthenticated) {
-      firebaseService.registerStopListener(stop, this);
+      Log.i(TAG, "User is authenticated");
+      if (firebaseRef.getParent() == null) {
+        firebaseRef = firebaseRef.child(authData.getUid());
+      }
+      firebaseRef.child("favorite-stops")
+          .child(String.valueOf(stop.getCode()))
+          .addChildEventListener(this);
+      favoriteButton.setVisibility(View.VISIBLE);
+    } else {
+      Log.i(TAG, "User is not authenticated");
+      firebaseRef.child("favorite-stops")
+          .child(String.valueOf(stop.getCode()))
+          .removeEventListener(this);
+      favoriteButton.setVisibility(View.INVISIBLE);
     }
   }
 
   private void onFavClick() {
-    if (serviceBound) {
-      if (isAuthenticated) {
-        if (isFavorited) {
-          firebaseService.removeFavorite(stop);
-        } else {
-          firebaseService.addFavorite(stop);
-        }
+    if (isAuthenticated) {
+      if (isFavorited) {
+        Log.i(TAG, "Removing favorite");
+        firebaseRef.child("favorite-stops").child(String.valueOf(stop.getCode())).removeValue();
       } else {
-        View view = getView();
-        if (view != null) {
-          Snackbar.make(view, R.string.not_logged_in, Snackbar.LENGTH_LONG).show();
-        }
+        Log.i(TAG, "Adding favorite");
+        firebaseRef.child("favorite-stops").child(String.valueOf(stop.getCode())).setValue(stop);
+      }
+    } else {
+      View view = getView();
+      if (view != null) {
+        Snackbar.make(view, R.string.not_logged_in, Snackbar.LENGTH_LONG).show();
       }
     }
   }
 
   @Override
   public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+    Log.i(TAG, "Stop added to favorites");
     isFavorited = true;
     Context context = getActivity();
     if (context != null)
@@ -248,6 +260,7 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
 
   @Override
   public void onChildRemoved(DataSnapshot dataSnapshot) {
+    Log.i(TAG, "Stop removed from favorites");
     isFavorited = false;
     Context context = getActivity();
     if (context != null)
@@ -264,21 +277,4 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   public void onCancelled(FirebaseError firebaseError) {
     // We don't care about this for now
   }
-
-  private ServiceConnection connection = new ServiceConnection() {
-    @Override
-    public void onServiceConnected(ComponentName name, IBinder service) {
-      FirebaseService.FirebaseServiceBinder binder = (FirebaseService.FirebaseServiceBinder) service;
-      firebaseService = binder.getService();
-      serviceBound = true;
-      firebaseService.registerAuthListener(ScheduledDeparturesDialogFragment.this);
-      favoriteButton.setOnClickListener(ScheduledDeparturesDialogFragment.this);
-      favoriteButton.setVisibility(View.VISIBLE);
-    }
-
-    @Override
-    public void onServiceDisconnected(ComponentName name) {
-      serviceBound = false;
-    }
-  };
 }

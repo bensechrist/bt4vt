@@ -23,7 +23,6 @@ import com.bt4vt.repository.bt.StopFetcher;
 import com.bt4vt.repository.domain.Bus;
 import com.bt4vt.repository.domain.Departure;
 import com.bt4vt.repository.domain.Route;
-import com.bt4vt.repository.domain.ScheduledRoute;
 import com.bt4vt.repository.domain.Stop;
 import com.bt4vt.repository.listener.BusListener;
 import com.bt4vt.repository.listener.BusTimerTask;
@@ -92,9 +91,6 @@ public class HttpBlacksburgTransitRepositoryTest {
   private Route route;
 
   @Mock
-  private ScheduledRoute scheduledRoute;
-
-  @Mock
   private RouteModel routeModel;
 
   @Mock
@@ -139,8 +135,8 @@ public class HttpBlacksburgTransitRepositoryTest {
   @Test
   public void testGetRoutesByStopSuccessfully() throws Exception {
     doReturn(1).when(stopModel).getCode();
-    doReturn(Collections.singletonList(scheduledRoute)).when(routeFetcher).get(1);
-    doReturn(routeModel).when(routeModelFactory).createModel(scheduledRoute);
+    doReturn(Collections.singletonList(route)).when(routeFetcher).get(1);
+    doReturn(routeModel).when(routeModelFactory).createModel(route);
 
     List<RouteModel> results = repository.getRoutes(stopModel);
     assertNotNull(results);
