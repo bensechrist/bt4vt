@@ -14,15 +14,19 @@
  * limitations under the License.
  */
 
-package com.bt4vt.repository.domain;
+package com.bt4vt.repository.model;
 
-import org.simpleframework.xml.Root;
+import com.firebase.client.DataSnapshot;
 
 /**
- * Transit route.
+ * Utility class for {@link StopModel} objects.
  *
  * @author Ben Sechrist
  */
-@Root(name = "ScheduledRoutes")
-public class ScheduledRoute extends Route {
+public class StopModels {
+
+  public static StopModel fromDataSnapshot(DataSnapshot dataSnapshot) {
+    return dataSnapshot.getValue(StopModelImpl.class);
+  }
+
 }

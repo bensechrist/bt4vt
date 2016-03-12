@@ -26,7 +26,6 @@ import com.bt4vt.repository.bt.StopFetcher;
 import com.bt4vt.repository.domain.Bus;
 import com.bt4vt.repository.domain.Departure;
 import com.bt4vt.repository.domain.Route;
-import com.bt4vt.repository.domain.ScheduledRoute;
 import com.bt4vt.repository.domain.Stop;
 import com.bt4vt.repository.exception.FetchException;
 import com.bt4vt.repository.exception.TransitRepositoryException;
@@ -105,7 +104,7 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
   @Override
   public List<RouteModel> getRoutes(StopModel stop) throws TransitRepositoryException {
     try {
-      List<ScheduledRoute> routes = routeFetcher.get(stop.getCode());
+      List<Route> routes = routeFetcher.get(stop.getCode());
       List<RouteModel> models = new ArrayList<>();
       for (Route route : routes) {
         models.add(routeModelFactory.createModel(route));

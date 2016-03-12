@@ -33,9 +33,6 @@ public class DocumentElement {
   @ElementList(name = "CurrentRoutes", inline = true, required = false)
   public List<Route> routes = new ArrayList<>();
 
-  @ElementList(name = "ScheduledRoutes", inline = true, required = false)
-  public List<ScheduledRoute> scheduledRoutes = new ArrayList<>();
-
   @ElementList(name = "ScheduledStops", inline = true, required = false)
   public List<Stop> stops = new ArrayList<>();
 
