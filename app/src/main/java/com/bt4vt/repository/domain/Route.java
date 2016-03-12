@@ -26,7 +26,7 @@ import java.io.Serializable;
  *
  * @author Ben Sechrist
  */
-@Root(name = "CurrentRoutes")
+@Root(name = "ScheduledRoutes")
 public class Route implements Serializable {
 
   @Element(name = "RouteName")

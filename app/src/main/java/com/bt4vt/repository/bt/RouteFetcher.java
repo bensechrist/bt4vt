@@ -17,7 +17,6 @@
 package com.bt4vt.repository.bt;
 
 import com.bt4vt.repository.domain.Route;
-import com.bt4vt.repository.domain.ScheduledRoute;
 import com.bt4vt.repository.exception.FetchException;
 import com.google.inject.Singleton;
 
@@ -33,7 +32,6 @@ import java.util.List;
 @Singleton
 public class RouteFetcher extends Fetcher {
 
-  private static final String BT_ROUTE_PATH = "http://216.252.195.248/webservices/bt4u_webservice.asmx/GetCurrentRoutes";
   private static final String BT_ROUTE_STOP_PATH = "http://216.252.195.248/webservices/bt4u_webservice.asmx/GetScheduledRoutes?stopCode=";
 
   /**
@@ -43,7 +41,7 @@ public class RouteFetcher extends Fetcher {
    */
   public List<Route> getAll() throws FetchException {
     try {
-      return fetch(new URL(BT_ROUTE_PATH)).routes;
+      return fetch(new URL(BT_ROUTE_STOP_PATH)).routes;
     } catch (MalformedURLException e) {
       throw new RuntimeException(e);
     }
@@ -55,10 +53,10 @@ public class RouteFetcher extends Fetcher {
    * @return list of routes
    * @throws FetchException Non serious error occurs fetching routes
    */
-  public List<ScheduledRoute> get(int stopCode) throws FetchException {
+  public List<Route> get(int stopCode) throws FetchException {
     try {
       URL url = new URL(BT_ROUTE_STOP_PATH + String.valueOf(stopCode));
-      return fetch(url).scheduledRoutes;
+      return fetch(url).routes;
     } catch (MalformedURLException e) {
       throw new RuntimeException(e);
     }
