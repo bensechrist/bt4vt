@@ -50,6 +50,20 @@
 
     <service android:name=".geofence.GeofenceTransitionsIntentService"/>
 
+    <service
+        android:name=".geofence.SyncGeofenceService"
+        android:exported="false">
+    </service>
+
+    <receiver
+        android:name=".geofence.BootReceiver"
+        android:enabled="true"
+        android:exported="false">
+      <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED"/>
+      </intent-filter>
+    </receiver>
+
     <!-- ACRA Configuration -->
     <activity
         android:name="org.acra.CrashReportDialog"
@@ -79,11 +93,6 @@
     <meta-data
         android:name="com.firebase.ui.TwitterSecret"
         android:value="@string/twitter_app_secret"/>
-
-    <service
-        android:name=".geofence.SyncGeofenceService"
-        android:exported="false">
-    </service>
   </application>
 
 </manifest>

@@ -21,18 +21,13 @@ import android.util.Log;
 
 import com.bt4vt.MainActivity;
 import com.bt4vt.repository.model.StopModel;
-import com.bt4vt.repository.model.StopModelImpl;
 import com.bt4vt.repository.model.StopModels;
 import com.firebase.client.AuthData;
-import com.firebase.client.ChildEventListener;
 import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
-import com.firebase.client.GenericTypeIndicator;
 import com.firebase.client.ValueEventListener;
 import com.google.inject.Inject;
-
-import java.util.List;
 
 import roboguice.service.RoboIntentService;
 
