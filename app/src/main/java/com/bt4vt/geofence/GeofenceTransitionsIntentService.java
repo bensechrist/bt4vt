@@ -46,6 +46,7 @@ import roboguice.service.RoboIntentService;
  */
 public class GeofenceTransitionsIntentService extends RoboIntentService {
 
+  private static final String TAG = "GeofenceTransitions";
   @Inject
   private TransitRepository transitRepository;
 
@@ -61,10 +62,11 @@ public class GeofenceTransitionsIntentService extends RoboIntentService {
 
   @Override
   protected void onHandleIntent(Intent intent) {
+    Log.i(TAG, "Got geofence transition intent: " + intent.toString());
+
     GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
     if (geofencingEvent.hasError()) {
-      Log.e(getClass().getSimpleName(), String.format("Geofence transition error: %d",
-          geofencingEvent.getErrorCode()));
+      Log.e(TAG, String.format("Geofence transition error: %d", geofencingEvent.getErrorCode()));
       return;
     }
 
@@ -74,6 +76,7 @@ public class GeofenceTransitionsIntentService extends RoboIntentService {
 
     switch (geofenceTransition) {
       case Geofence.GEOFENCE_TRANSITION_DWELL:
+        Log.i(TAG, "Dwelling transition");
         for (Geofence geofence : triggeringGeofences) {
           try {
             StopModel stop = stopModelFactory.createModel(geofence);
@@ -90,6 +93,7 @@ public class GeofenceTransitionsIntentService extends RoboIntentService {
         break;
 
       case Geofence.GEOFENCE_TRANSITION_EXIT:
+        Log.i(TAG, "Exit transition");
         for (Geofence geofence : triggeringGeofences) {
           removeNotification(stopModelFactory.createModel(geofence));
         }
@@ -97,7 +101,7 @@ public class GeofenceTransitionsIntentService extends RoboIntentService {
 
       default:
         // Log the error.
-        Log.e(getClass().getSimpleName(), getString(R.string.geofence_transition_invalid_type,
+        Log.e(TAG, getString(R.string.geofence_transition_invalid_type,
             geofenceTransition));
         break;
     }

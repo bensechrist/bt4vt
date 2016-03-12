@@ -31,13 +31,15 @@ import android.widget.ImageButton;
 
 import com.bt4vt.fragment.NavigationDrawerFragment;
 import com.bt4vt.fragment.RetainedMapFragment;
-import com.bt4vt.repository.FirebaseService;
+import com.bt4vt.geofence.SyncGeofenceService;
 import com.bt4vt.repository.model.RouteModel;
 import com.bt4vt.repository.model.StopModel;
 import com.firebase.client.AuthData;
 import com.firebase.client.Firebase;
 import com.firebase.ui.auth.core.AuthProviderType;
 import com.firebase.ui.auth.core.FirebaseLoginError;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.inject.Inject;
 
 import java.util.List;
@@ -56,6 +58,7 @@ public class MainActivity extends SuperActivity implements
     RetainedMapFragment.TalkToActivity, NavigationDrawerFragment.TalkToActivity, View.OnClickListener {
 
   public static final String EXTRA_STOP = "com.bt4vt.extra.stop";
+  public static final String FIREBASE_BASE_URL = "https://blinding-torch-6262.firebaseio.com/";
   private static final String FIRST_TIME_OPEN_KEY = "first_time_open_app";
   private static final String SHOWCASE_ID = "com.bt4vt.nav_showcase";
 
@@ -84,7 +87,7 @@ public class MainActivity extends SuperActivity implements
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     Firebase.setAndroidContext(this);
-    firebaseRef = new Firebase(FirebaseService.FIREBASE_BASE_URL);
+    firebaseRef = new Firebase(FIREBASE_BASE_URL);
 
     navButton.setOnClickListener(this);
 
@@ -98,14 +101,6 @@ public class MainActivity extends SuperActivity implements
     }
 
     initData();
-  }
-
-  @Override
-  protected void onDestroy() {
-    super.onDestroy();
-
-    Intent serviceIntent = new Intent(this, FirebaseService.class);
-    stopService(serviceIntent);
   }
 
   @Override
@@ -125,6 +120,16 @@ public class MainActivity extends SuperActivity implements
     }
 
     checkNetwork();
+
+    if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(this) != ConnectionResult.SUCCESS) {
+      View view = mapFragment.getView();
+      if (view != null) {
+        Snackbar.make(view, R.string.no_play_services, Snackbar.LENGTH_LONG).show();
+      }
+    } else {
+      Intent syncGeofenceIntent = new Intent(this, SyncGeofenceService.class);
+      startService(syncGeofenceIntent);
+    }
   }
 
   @Override
@@ -248,9 +253,6 @@ public class MainActivity extends SuperActivity implements
 
   private void initData() {
     if (isNetworkAvailable()) {
-      Intent serviceIntent = new Intent(this, FirebaseService.class);
-      startService(serviceIntent);
-
       Intent intent = getIntent();
       String stopString = intent.getStringExtra(EXTRA_STOP);
       if (stopString != null) {

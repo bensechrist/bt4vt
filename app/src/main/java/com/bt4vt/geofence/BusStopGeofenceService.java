@@ -23,6 +23,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 
 import com.bt4vt.repository.model.StopModel;
 import com.google.android.gms.common.ConnectionResult;
@@ -47,6 +48,7 @@ import java.util.List;
 @Singleton
 public class BusStopGeofenceService implements ResultCallback<Status> {
 
+  private static final String TAG = "BusStopGeofenceService";
   private static final float GEOFENCE_RADIUS_IN_METERS = 25;
   private static final long GEOFENCE_EXPIRATION_IN_MILLISECONDS = Geofence.NEVER_EXPIRE;
   private static final int GEOFENCE_LOITERING_DELAY = 10000; // 10 seconds
@@ -104,31 +106,15 @@ public class BusStopGeofenceService implements ResultCallback<Status> {
     } else {
       googleApiClient = new GoogleApiClient.Builder(context)
           .addApi(LocationServices.API)
-          .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
-            @Override
-            public void onConnected(Bundle bundle) {
-              LocationServices.GeofencingApi.removeGeofences(googleApiClient,
-                  getGeofencePendingIntent());
-            }
-
-            @Override
-            public void onConnectionSuspended(int i) {
-              throw new RuntimeException(String.valueOf(i));
-            }
-          })
-          .addOnConnectionFailedListener(new GoogleApiClient.OnConnectionFailedListener() {
-            @Override
-            public void onConnectionFailed(ConnectionResult connectionResult) {
-              throw new RuntimeException(connectionResult.toString());
-            }
-          })
           .build();
-      googleApiClient.connect();
+      googleApiClient.blockingConnect();
+      LocationServices.GeofencingApi.removeGeofences(googleApiClient, getGeofencePendingIntent()).await();
     }
   }
 
   @Override
   public void onResult(Status status) {
+    Log.i(TAG, "Register geofence result: " + status.toString());
     int statusCode = status.getStatusCode();
     if (statusCode == GeofenceStatusCodes.GEOFENCE_TOO_MANY_GEOFENCES) {
       throw new IllegalStateException(GeofenceStatusCodes.getStatusCodeString(statusCode));

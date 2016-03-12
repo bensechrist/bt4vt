@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <!--
   ~ Copyright 2015 Ben Sechrist
   ~
@@ -14,11 +13,9 @@
   ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
-  -->
-
-<manifest
-    package="com.bt4vt"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+-->
+<manifest package="com.bt4vt"
+          xmlns:android="http://schemas.android.com/apk/res/android">
 
   <uses-permission android:name="android.permission.INTERNET"/>
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
@@ -51,10 +48,6 @@
       </intent-filter>
     </activity>
 
-    <service
-        android:name=".repository.FirebaseService"
-        android:exported="false"/>
-
     <service android:name=".geofence.GeofenceTransitionsIntentService"/>
 
     <!-- ACRA Configuration -->
@@ -71,19 +64,26 @@
         android:name="com.facebook.FacebookActivity"
         android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
         android:label="@string/app_name"
-        android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        android:theme="@android:style/Theme.Translucent.NoTitleBar"/>
+
     <meta-data
         android:name="com.facebook.sdk.ApplicationId"
-        android:value="@string/facebook_app_id" />
+        android:value="@string/facebook_app_id"/>
 
     <!-- Twitter Configuration -->
-    <activity android:name="com.firebase.ui.auth.twitter.TwitterPromptActivity" />
+    <activity android:name="com.firebase.ui.auth.twitter.TwitterPromptActivity"/>
+
     <meta-data
         android:name="com.firebase.ui.TwitterKey"
         android:value="@string/twitter_app_key"/>
     <meta-data
         android:name="com.firebase.ui.TwitterSecret"
         android:value="@string/twitter_app_secret"/>
+
+    <service
+        android:name=".geofence.SyncGeofenceService"
+        android:exported="false">
+    </service>
   </application>
 
 </manifest>
