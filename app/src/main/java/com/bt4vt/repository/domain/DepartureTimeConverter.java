@@ -36,7 +36,7 @@ public class DepartureTimeConverter implements Converter<Date> {
 
   @Override
   public Date read(InputNode inputNode) throws Exception {
-    FORMAT.setTimeZone(TimeZone.getTimeZone("EST"));
+    FORMAT.setTimeZone(TimeZone.getTimeZone("America/New_York"));
     return FORMAT.parse(inputNode.getValue());
   }
 
