@@ -126,7 +126,7 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
     super.onStop();
     if (firebaseRef != null) {
       firebaseRef.removeAuthStateListener(this);
-      if (firebaseRef.getAuth() != null) {
+      if (firebaseRef.getAuth() != null && stop != null) {
         firebaseRef.child("favorite-stops")
             .child(String.valueOf(stop.getCode()))
             .removeEventListener(this);
