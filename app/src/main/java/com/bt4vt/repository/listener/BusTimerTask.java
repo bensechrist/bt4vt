@@ -68,9 +68,9 @@ public class BusTimerTask extends TimerTask {
     } catch (TransitRepositoryException e) {
       e.printStackTrace();
     } finally {
-      running.set(false);
       lock.lock();
       try {
+        running.set(false);
         condition.signalAll();
       } finally {
         lock.unlock();
