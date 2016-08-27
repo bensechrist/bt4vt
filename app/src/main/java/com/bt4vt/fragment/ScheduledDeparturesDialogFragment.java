@@ -207,6 +207,7 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
 
   @Override
   public void onAuthStateChanged(AuthData authData) {
+    if (stop == null) return;
     isAuthenticated = authData != null;
     if (isAuthenticated) {
       Log.i(TAG, "User is authenticated");
