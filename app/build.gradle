@@ -23,9 +23,9 @@ android {
   defaultConfig {
     applicationId "com.bt4vt"
     minSdkVersion 16
-    targetSdkVersion 23
-    versionCode 16
-    versionName "1.4"
+    targetSdkVersion 24
+    versionCode 17
+    versionName "1.5-beta1"
     multiDexEnabled = true
   }
   buildTypes {
