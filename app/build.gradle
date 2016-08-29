@@ -15,7 +15,6 @@
  */
 
 apply plugin: 'com.android.application'
-apply plugin: 'com.google.gms.google-services'
 
 android {
   compileSdkVersion 24
@@ -51,12 +50,12 @@ dependencies {
   compile 'ch.acra:acra:4.6.2'
   compile 'com.android.support:appcompat-v7:24.2.0'
   compile 'com.android.support:design:24.2.0'
-  compile 'com.google.maps.android:android-maps-utils:0.4'
+  compile 'com.google.maps.android:android-maps-utils:0.4.3'
   compile 'org.jsoup:jsoup:1.8.2'
   compile 'org.roboguice:roboguice:3.0.1'
   provided 'org.roboguice:roboblender:3.0.1'
-  compile 'com.google.android.gms:play-services:8.3.0'
-  compile 'com.google.android.gms:play-services-auth:8.3.0'
+  compile 'com.google.android.gms:play-services:9.4.0'
+  compile 'com.google.android.gms:play-services-auth:9.4.0'
   compile 'com.firebase:firebase-client-android:2.5.0'
   compile 'com.firebaseui:firebase-ui:0.3.1'
   compile 'com.github.deano2390:MaterialShowcaseView:1.0.5'
@@ -73,3 +72,5 @@ dependencies {
 project.tasks.withType(JavaCompile) { task ->
   options.compilerArgs << "-AguiceAnnotationDatabasePackageName=com.bt4vt"
 }
+
+apply plugin: 'com.google.gms.google-services'
