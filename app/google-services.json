@@ -1,15 +1,14 @@
 {
   "project_info": {
-    "project_id": "named-enigma-101514",
     "project_number": "1082413187504",
-    "name": "BT4VT"
+    "firebase_url": "https://named-enigma-101514.firebaseio.com",
+    "project_id": "named-enigma-101514",
+    "storage_bucket": "named-enigma-101514.appspot.com"
   },
   "client": [
     {
       "client_info": {
         "mobilesdk_app_id": "1:1082413187504:android:05bdb1aba3509c50",
-        "client_id": "android:com.bt4vt",
-        "client_type": 1,
         "android_client_info": {
           "package_name": "com.bt4vt"
         }
@@ -32,6 +31,10 @@
           }
         },
         {
+          "client_id": "1082413187504-74tbjd7ad5t4e9ba1t4l66rf1pe8khgs.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
           "client_id": "1082413187504-916galh8un8tnic0bvfbp3fpu3lku26g.apps.googleusercontent.com",
           "client_type": 3
         },
@@ -40,7 +43,11 @@
           "client_type": 3
         }
       ],
-      "api_key": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCP7Uz8zVvIbPPVIC4aU-T1dM4NLdc9_Ys"
+        }
+      ],
       "services": {
         "analytics_service": {
           "status": 2,
@@ -48,23 +55,20 @@
             "tracking_id": "UA-73602709-1"
           }
         },
-        "cloud_messaging_service": {
-          "status": 1,
-          "apns_config": []
-        },
         "appinvite_service": {
-          "status": 1,
-          "other_platform_oauth_client": []
-        },
-        "google_signin_service": {
-          "status": 2
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1082413187504-74tbjd7ad5t4e9ba1t4l66rf1pe8khgs.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         },
         "ads_service": {
-          "status": 1
+          "status": 2
         }
       }
     }
   ],
-  "client_info": [],
-  "ARTIFACT_VERSION": "1"
+  "configuration_version": "1"
 }
