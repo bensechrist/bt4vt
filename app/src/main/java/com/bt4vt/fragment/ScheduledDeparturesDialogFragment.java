@@ -104,6 +104,7 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
     ScheduledDeparturesDialogFragment fragment = new ScheduledDeparturesDialogFragment();
     fragment.stop = stop;
     fragment.route = route;
+    fragment.setRetainInstance(true);
     return fragment;
   }
 
