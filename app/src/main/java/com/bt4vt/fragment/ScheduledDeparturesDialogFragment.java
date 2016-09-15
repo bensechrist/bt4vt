@@ -32,13 +32,11 @@ import com.bt4vt.adapter.DepartureArrayAdapter;
 import com.bt4vt.async.AsyncCallback;
 import com.bt4vt.async.DepartureAsyncTask;
 import com.bt4vt.async.StopAsyncTask;
-import com.bt4vt.async.StopsAsyncTask;
 import com.bt4vt.geofence.BusStopGeofenceService;
 import com.bt4vt.repository.TransitRepository;
 import com.bt4vt.repository.model.DepartureModel;
 import com.bt4vt.repository.model.RouteModel;
 import com.bt4vt.repository.model.StopModel;
-import com.bt4vt.repository.model.StopModelFactory;
 import com.google.inject.Inject;
 
 import java.util.List;
