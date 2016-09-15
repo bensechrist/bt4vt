@@ -347,6 +347,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
             marker.setTitle(getString(R.string.bus_marker_title_format, bus.getRouteShortName(), bus.getId()));
             marker.setSnippet(getString(R.string.bus_marker_snippet_format, bus.getPassengers(),
                 bus.getLastUpdated()));
+            marker.setRotation(bus.getDirection());
           }
         }
       }
@@ -495,11 +496,14 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
   private MarkerOptions getBusMarker(BusModel bus) {
     return new MarkerOptions()
         .position(bus.getLatLng())
+        .rotation(bus.getDirection())
+        .infoWindowAnchor(0.5f, 0.5f)
+        .zIndex(10)
         .title(getString(R.string.bus_marker_title_format, bus.getRouteShortName(), bus.getId()))
         .snippet(getString(R.string.bus_marker_snippet_format, bus.getPassengers(),
             bus.getLastUpdated()))
         .icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getResources(),
-            R.drawable.bus)));
+            R.drawable.bus_arrow)));
   }
 
   /**
