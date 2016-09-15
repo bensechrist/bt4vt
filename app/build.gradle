@@ -49,7 +49,8 @@ dependencies {
   compile 'org.jsoup:jsoup:1.8.2'
   compile 'org.roboguice:roboguice:3.0.1'
   provided 'org.roboguice:roboblender:3.0.1'
-  compile 'com.google.android.gms:play-services:9.4.0'
+  compile 'com.google.android.gms:play-services-maps:9.4.0'
+  compile 'com.google.android.gms:play-services-location:9.4.0'
   compile 'com.github.deano2390:MaterialShowcaseView:1.0.5'
   compile 'com.michaelpardo:activeandroid:3.1.0-SNAPSHOT'
 
