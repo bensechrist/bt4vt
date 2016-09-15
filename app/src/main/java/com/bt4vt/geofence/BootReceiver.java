@@ -27,7 +27,7 @@ import com.bt4vt.repository.domain.StopFavorite;
 import com.bt4vt.repository.exception.TransitRepositoryException;
 import com.bt4vt.repository.model.StopModel;
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.inject.Inject;
 
 import java.util.List;
@@ -47,7 +47,8 @@ public class BootReceiver extends RoboBroadcastReceiver {
   @Override
   public void handleReceive(Context context, Intent intent) {
     Log.d(TAG, "Received boot");
-    if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(context) != ConnectionResult.SUCCESS) {
+    if (GoogleApiAvailability.getInstance()
+        .isGooglePlayServicesAvailable(context) != ConnectionResult.SUCCESS) {
       Log.e(TAG, context.getString(R.string.no_play_services));
     } else {
       List<StopFavorite> stopFavorites = new Select().from(StopFavorite.class)
