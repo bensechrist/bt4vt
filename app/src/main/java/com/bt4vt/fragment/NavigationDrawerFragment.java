@@ -19,7 +19,6 @@ package com.bt4vt.fragment;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
@@ -29,25 +28,19 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import com.bt4vt.R;
 import com.bt4vt.async.AsyncCallback;
-import com.bt4vt.async.FetchBitmapFromUrlTask;
 import com.bt4vt.async.RouteAsyncTask;
 import com.bt4vt.repository.TransitRepository;
 import com.bt4vt.repository.model.RouteModel;
 import com.bt4vt.repository.model.RouteModelFactory;
-import com.bt4vt.util.ViewUtils;
-import com.firebase.client.AuthData;
-import com.firebase.ui.auth.core.AuthProviderType;
 import com.google.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import de.hdodenhof.circleimageview.CircleImageView;
 import roboguice.fragment.RoboFragment;
 import roboguice.inject.InjectView;
 
@@ -58,8 +51,6 @@ import roboguice.inject.InjectView;
  */
 public class NavigationDrawerFragment extends RoboFragment implements View.OnClickListener,
     NavigationView.OnNavigationItemSelectedListener {
-
-  private static final int NAV_SIGNOUT_ID = ViewUtils.generateViewId();
 
   @Inject
   private TransitRepository transitRepository;
@@ -144,51 +135,6 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
     task.execute();
   }
 
-  public void onLoggedIn(AuthData authData) {
-    Menu menu = navView.getMenu();
-    if (menu.findItem(R.id.nav_signin) != null) {
-      View headerView = View.inflate(getActivity(), R.layout.drawer_header, null);
-      final CircleImageView profileImage = (CircleImageView) headerView.findViewById(R.id.profile_image);
-      TextView profileName = (TextView) headerView.findViewById(R.id.profile_name);
-      TextView profileEmail = (TextView) headerView.findViewById(R.id.profile_email);
-      new FetchBitmapFromUrlTask(new AsyncCallback<Bitmap>() {
-        @Override
-        public void onSuccess(Bitmap bitmap) {
-          profileImage.setImageBitmap(bitmap);
-        }
-
-        @Override
-        public void onException(Exception e) {
-          // Do nothing
-        }
-      }).execute(String.valueOf(authData.getProviderData().get("profileImageURL")));
-      if (authData.getProviderData().containsKey("displayName"))
-        profileName.setText(String.valueOf(authData.getProviderData().get("displayName")));
-      if (authData.getProviderData().containsKey("email"))
-        profileEmail.setText(String.valueOf(authData.getProviderData().get("email")));
-      if (authData.getProvider().equals(AuthProviderType.TWITTER.getName()))
-        profileEmail.setText(String.valueOf(authData.getProviderData().get("username")));
-      navHeader = headerView;
-      navView.addHeaderView(navHeader);
-
-      menu.removeItem(R.id.nav_signin);
-      menu.add(R.id.nav_other_group, NAV_SIGNOUT_ID, 50, R.string.nav_signout);
-    }
-  }
-
-  public void onLoggedOut() {
-    Menu menu = navView.getMenu();
-    if (menu.findItem(NAV_SIGNOUT_ID) != null) {
-      if (navHeader != null) {
-        navView.removeHeaderView(navHeader);
-        navHeader = null;
-      }
-
-      menu.removeItem(NAV_SIGNOUT_ID);
-      menu.add(R.id.nav_other_group, R.id.nav_signin, 50, R.string.nav_signin);
-    }
-  }
-
   private void setRouteNames(List<RouteModel> routes) {
     Collections.sort(routes);
     Menu menu = navView.getMenu();
@@ -230,11 +176,7 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
       activity.closeDrawer();
     } else {
       // Non-route item
-      if (menuItemId == R.id.nav_signin) {
-        activity.signIn();
-      } else if (menuItemId == NAV_SIGNOUT_ID) {
-        activity.signOut();
-      } else if (menuItemId == R.id.nav_feedback) {
+      if (menuItemId == R.id.nav_feedback) {
         activity.closeDrawer();
         showFeedbackDialog();
       }
@@ -282,16 +224,6 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
      * Show all bus stops.
      */
     void showAllStops();
-
-    /**
-     * Show sign in dialog.
-     */
-    void signIn();
-
-    /**
-     * Sign the user out.
-     */
-    void signOut();
   }
 
 }

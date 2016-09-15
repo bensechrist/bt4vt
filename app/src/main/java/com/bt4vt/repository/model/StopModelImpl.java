@@ -31,6 +31,7 @@ public class StopModelImpl implements StopModel {
   private double longitude;
   private String routePattern;
   private Integer routePatternColor;
+  private boolean isFavorited;
 
   public StopModelImpl(String name, int code) {
     this.name = name;
@@ -89,6 +90,16 @@ public class StopModelImpl implements StopModel {
 
   public void setRoutePatternColor(Integer routePatternColor) {
     this.routePatternColor = routePatternColor;
+  }
+
+  @Override
+  public boolean isFavorited() {
+    return isFavorited;
+  }
+
+  @Override
+  public void setFavorited(boolean favorited) {
+    isFavorited = favorited;
   }
 
   @Override

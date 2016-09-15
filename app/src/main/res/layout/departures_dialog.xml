@@ -43,8 +43,7 @@
       android:paddingRight="0dp"
       android:paddingTop="0dp"
       android:scaleType="centerCrop"
-      android:src="@drawable/ic_action_star_empty"
-      android:visibility="invisible"/>
+      android:src="@drawable/ic_action_star_empty"/>
 
   <TextView
       android:id="@+id/stop_text"

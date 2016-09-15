@@ -30,7 +30,7 @@ import android.view.View;
 
 import com.bt4vt.R;
 import com.bt4vt.async.AsyncCallback;
-import com.bt4vt.async.StopAsyncTask;
+import com.bt4vt.async.StopsAsyncTask;
 import com.bt4vt.repository.TransitRepository;
 import com.bt4vt.repository.listener.BusListener;
 import com.bt4vt.repository.model.BusModel;
@@ -183,7 +183,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
         fetchStops(route);
       }
     };
-    StopAsyncTask task = new StopAsyncTask(transitRepository, new AsyncCallback<List<StopModel>>() {
+    StopsAsyncTask task = new StopsAsyncTask(transitRepository, new AsyncCallback<List<StopModel>>() {
       @Override
       public void onSuccess(List<StopModel> stops) {
         if (isAdded()) {
@@ -216,7 +216,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
         fetchStop(stopString);
       }
     };
-    StopAsyncTask task = new StopAsyncTask(transitRepository, new AsyncCallback<List<StopModel>>() {
+    StopsAsyncTask task = new StopsAsyncTask(transitRepository, new AsyncCallback<List<StopModel>>() {
       @Override
       public void onSuccess(List<StopModel> stops) {
         if (!isAdded()) {
@@ -294,7 +294,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
   public void onInfoWindowClick(Marker marker) {
     if (currentStopMarkers.contains(marker)) {
       StopModel stop = stopModelFactory.createModel(marker);
-      ScheduledDeparturesDialogFragment.newInstance(stop, this.currentRoute)
+      ScheduledDeparturesDialogFragment.newInstance(stop.getCode(), this.currentRoute)
           .show(getFragmentManager(), DEPARTURES_DIALOG_TAG);
     }
   }

@@ -22,6 +22,7 @@ import org.junit.Test;
 
 import java.util.List;
 
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -44,5 +45,16 @@ public class StopFetcherTest {
   @Test
   public void testGetNotFound() throws Exception {
     assertEquals(fetcher.get("NOT ROUTE").size(), 0);
+  }
+
+  @Test
+  public void testGetSingle() throws Exception {
+    Stop result = fetcher.get(1609);
+    assertNotNull(result);
+  }
+
+  @Test
+  public void testGetSingleNotFound() throws Exception {
+    assertNull(fetcher.get(0));
   }
 }

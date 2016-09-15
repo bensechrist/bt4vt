@@ -37,6 +37,7 @@ public class BusModelFactory {
     model.setId(bus.getId());
     model.setLatLng(bus.getLatLng());
     model.setPassengers(bus.getPassengers());
+    model.setDirection(bus.getDirection());
     model.setRouteShortName(bus.getRouteShortName());
     model.setLastUpdated(bus.getTimestamp());
     return model;

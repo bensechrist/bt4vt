@@ -46,14 +46,9 @@
   <string name="stop_error">Error getting stop</string>
   <string name="stops_error">Error getting stops</string>
   <string name="no_stops">No stops available</string>
-  <string name="not_logged_in">You must log in to favorite stops</string>
-  <string name="login">Login</string>
-  <string name="departures_error">Error getting departures</string>
-  <string name="nav_signin">Sign In</string>
+  <string name="stop_dialog_error">Error getting stop information</string>
   <string name="nav_feedback">Feedback</string>
-  <string name="fetch_bitmap_error">Error getting profile image</string>
-  <string name="nav_signout">Sign Out</string>
-  <string name="nav_button_showcase_text">Open the navigation drawer to view routes and sign in. Signing in allows you to sync your favorites across devices.</string>
+  <string name="nav_button_showcase_text">Open the navigation drawer to view routes. You can favorite stops to have BT4VT send you a notification about when the next bus will arrive when you arrive at a favorited stop.</string>
   <string name="app_feedback">BT4VT Feedback</string>
   <string name="app_feedback_email">bensechrist@gmail.com</string>
   <string name="showcase_confirm">Got It</string>
@@ -62,6 +57,5 @@
   <string name="no_network_message">Network Failed/Check your internet connection</string>
   <string name="location_permission_rationale">Location permission is needed for the app to function properly</string>
   <string name="permission_grant">Grant</string>
-  <string name="login_error">Error Logging In</string>
   <string name="no_play_services">Google Play Services is not installed</string>
 </resources>

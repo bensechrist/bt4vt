@@ -17,7 +17,6 @@
 package com.bt4vt.repository.model;
 
 import com.bt4vt.repository.domain.Stop;
-import com.firebase.client.DataSnapshot;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.maps.model.Marker;
 import com.google.inject.Singleton;
@@ -41,6 +40,7 @@ public class StopModelFactory {
     model.setLongitude(stop.getLongitude());
     model.setRoutePattern(stop.getRoutePattern());
     model.setRoutePatternColor(stop.getRoutePatternColor());
+    model.setFavorited(stop.isFavorited());
     return model;
   }
 
@@ -62,14 +62,5 @@ public class StopModelFactory {
    */
   public StopModel createModel(Geofence geofence) {
     return StopModelImpl.valueOf(geofence.getRequestId());
-  }
-
-  /**
-   * Creates a {@link StopModel} from the given <code>dataSnapshot</code>.
-   * @param dataSnapshot the data snapshot
-   * @return the stop model
-   */
-  public StopModel createModel(DataSnapshot dataSnapshot) {
-    return dataSnapshot.getValue(StopModelImpl.class);
   }
 }

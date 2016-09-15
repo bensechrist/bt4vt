@@ -58,4 +58,18 @@ public interface StopModel {
    * @return the route color
    */
   Integer getRoutePatternColor();
+
+  /**
+   * Returns whether the stop is favorited.
+   * @return  true if favorited
+   *          false otherwise
+   */
+  boolean isFavorited();
+
+  /**
+   * Sets the favorited flag on the stop.
+   * @param favorited true if favorited
+   *                  false otherwise
+   */
+  void setFavorited(boolean favorited);
 }

@@ -18,6 +18,7 @@ package com.bt4vt.repository;
 
 import android.content.Context;
 
+import com.activeandroid.query.Select;
 import com.bt4vt.R;
 import com.bt4vt.repository.bt.BusFetcher;
 import com.bt4vt.repository.bt.DepartureFetcher;
@@ -27,6 +28,7 @@ import com.bt4vt.repository.domain.Bus;
 import com.bt4vt.repository.domain.Departure;
 import com.bt4vt.repository.domain.Route;
 import com.bt4vt.repository.domain.Stop;
+import com.bt4vt.repository.domain.StopFavorite;
 import com.bt4vt.repository.exception.FetchException;
 import com.bt4vt.repository.exception.TransitRepositoryException;
 import com.bt4vt.repository.listener.BusListener;
@@ -118,10 +120,15 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
   @Override
   public List<StopModel> getStops() throws TransitRepositoryException {
     try {
+      List<StopFavorite> stopFavorites = new Select().from(StopFavorite.class).execute();
       List<StopModel> models = new ArrayList<>();
       for (Route route : routeFetcher.getAll()) {
         List<Stop> stops = stopFetcher.get(route.getShortName());
         for (Stop stop : stops) {
+          if (stopFavorites.contains(stop)) {
+            StopFavorite stopFavorite = stopFavorites.get(stopFavorites.indexOf(stop));
+            stop.setFavorited(stopFavorite.isFavorited());
+          }
           models.add(stopModelFactory.createModel(stop));
         }
       }
@@ -134,15 +141,48 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
   @Override
   public List<StopModel> getStops(RouteModel route) throws TransitRepositoryException {
     try {
+      List<StopFavorite> stopFavorites = new Select().from(StopFavorite.class).execute();
       List<Stop> stops = stopFetcher.get(route.getShortName());
       List<StopModel> models = new ArrayList<>();
       for (Stop stop : stops) {
+        if (stopFavorites.contains(stop)) {
+          StopFavorite stopFavorite = stopFavorites.get(stopFavorites.indexOf(stop));
+          stop.setFavorited(stopFavorite.isFavorited());
+        }
         models.add(stopModelFactory.createModel(stop));
       }
       return models;
     } catch (FetchException e) {
       throw new TransitRepositoryException(e);
     }
+  }
+
+  @Override
+  public StopModel getStop(int stopCode) throws TransitRepositoryException {
+    try {
+      Stop stop = stopFetcher.get(stopCode);
+      if (stop == null)
+        return null;
+      StopFavorite stopFavorite = new Select().from(StopFavorite.class)
+          .where("code = ?", stopCode).executeSingle();
+      if (stopFavorite != null)
+        stop.setFavorited(stopFavorite.isFavorited());
+      return stopModelFactory.createModel(stop);
+    } catch (FetchException e) {
+      throw new TransitRepositoryException(e);
+    }
+  }
+
+  @Override
+  public void updateStop(StopModel stop) {
+    StopFavorite stopFavorite = new Select().from(StopFavorite.class)
+        .where("code = ?", stop.getCode()).executeSingle();
+    if (stopFavorite == null) {
+      stopFavorite = new StopFavorite();
+      stopFavorite.setCode(stop.getCode());
+    }
+    stopFavorite.setFavorited(stop.isFavorited());
+    stopFavorite.save();
   }
 
   @Override
