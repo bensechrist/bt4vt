@@ -44,6 +44,12 @@ public interface BusModel {
   int getPassengers();
 
   /**
+   * Returns the direction of the bus.
+   * @return the direction
+   */
+  int getDirection();
+
+  /**
    * Returns the route short name of the bus.
    * @return the route short name
    */

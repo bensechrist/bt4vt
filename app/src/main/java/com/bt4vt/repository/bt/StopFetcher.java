@@ -42,7 +42,8 @@ import java.util.List;
 @Singleton
 public class StopFetcher extends Fetcher {
 
-  private static final String BT_STOP_PATH = "http://bt4userver.newcitystaging.com/routes/";
+  private static final String BT_ROUTE_PATH = "http://bt4userver.newcitystaging.com/routes/";
+  private static final String BT_STOP_PATH = "http://bt4userver.newcitystaging.com/stops/";
   private static final LatLngBounds VALID_BOUNDS = new LatLngBounds(new LatLng(37, -81), new LatLng(37.5, -79.5));
 
   /**
@@ -54,7 +55,15 @@ public class StopFetcher extends Fetcher {
    */
   public List<Stop> get(String shortName) throws FetchException {
     try {
-      return readResponse(fetchResponse(new URL(BT_STOP_PATH + shortName)));
+      return readResponse(fetchResponse(new URL(BT_ROUTE_PATH + shortName)));
+    } catch (MalformedURLException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public Stop get(int code) throws FetchException {
+    try {
+      return readStopResponse(fetchResponse(new URL(BT_STOP_PATH + code)), code);
     } catch (MalformedURLException e) {
       throw new RuntimeException(e);
     }
@@ -87,6 +96,20 @@ public class StopFetcher extends Fetcher {
       return stops;
     } catch (JSONException e) {
       return stops;
+    }
+  }
+
+  private Stop readStopResponse(String response, int code) {
+    if (response.isEmpty()) return null;
+    try {
+      JSONObject jsonResponse = new JSONArray(response).getJSONObject(0);
+      String name = jsonResponse.getString("stopName");
+      Stop stop = new Stop(name, code);
+      stop.setLatitude(jsonResponse.getDouble("stopLatitude"));
+      stop.setLongitude(jsonResponse.getDouble("stopLongitude"));
+      return stop;
+    } catch (JSONException e) {
+      return null;
     }
   }
 

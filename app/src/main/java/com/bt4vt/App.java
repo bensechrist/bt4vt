@@ -16,8 +16,6 @@
 
 package com.bt4vt;
 
-import android.app.Application;
-
 import com.bt4vt.repository.module.TransitModule;
 
 import org.acra.ACRA;
@@ -40,7 +38,7 @@ import roboguice.RoboGuice;
     resDialogText = R.string.crash_dialog_text,
     resDialogCommentPrompt = R.string.crash_dialog_comment_prompt
 )
-public class App extends Application {
+public class App extends com.activeandroid.app.Application {
 
   @Override
   public void onCreate() {

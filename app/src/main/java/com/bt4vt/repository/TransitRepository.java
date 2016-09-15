@@ -60,6 +60,20 @@ public interface TransitRepository {
   List<StopModel> getStops(RouteModel route) throws TransitRepositoryException;
 
   /**
+   * Returns a stop for the given stop code.
+   * @param stopCode the stop code
+   * @return a stop
+   * @throws TransitRepositoryException
+   */
+  StopModel getStop(int stopCode) throws TransitRepositoryException;
+
+  /**
+   * Updates the information kept about the stop in the local DB.
+   * @param stop the stop to update
+   */
+  void updateStop(StopModel stop);
+
+  /**
    * Returns a list of the next departures for all routes at a stop.
    * @param stop the stop to get departures for
    * @return a list of departures

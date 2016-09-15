@@ -33,10 +33,6 @@
   <group
       android:id="@+id/nav_other_group">
     <item
-        android:id="@+id/nav_signin"
-        android:orderInCategory="50"
-        android:title="@string/nav_signin"/>
-    <item
         android:id="@+id/nav_feedback"
         android:orderInCategory="100"
         android:title="@string/nav_feedback"/>

@@ -31,6 +31,7 @@ public class BusModelImpl implements BusModel {
   private long id;
   private LatLng latLng;
   private int passengers;
+  private int direction;
   private String routeShortName;
   private Date lastUpdated;
 
@@ -59,6 +60,15 @@ public class BusModelImpl implements BusModel {
 
   public void setPassengers(int passengers) {
     this.passengers = passengers;
+  }
+
+  @Override
+  public int getDirection() {
+    return direction;
+  }
+
+  public void setDirection(int direction) {
+    this.direction = direction;
   }
 
   @Override

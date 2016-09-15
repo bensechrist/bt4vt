@@ -36,7 +36,6 @@
 -keep class com.google.inject.Binder
 -keep public class * extends com.google.inject.AnnotationDatabase
 -keep public class com.bt4vt.**
--keep class com.firebase.** { *; }
 -keep class org.apache.** { *; }
 -keepnames class com.fasterxml.jackson.** { *; }
 -keepnames class javax.servlet.** { *; }
@@ -95,8 +94,3 @@
 -keepclassmembers class * {
     @org.simpleframework.xml.* *;
 }
-
-# twitter4j
--dontwarn twitter4j.**
--keep  class twitter4j.conf.PropertyConfigurationFactory
--keep class twitter4j.** { *; }

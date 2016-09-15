@@ -16,11 +16,9 @@
 
 package com.bt4vt.fragment;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,21 +27,18 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.bt4vt.MainActivity;
 import com.bt4vt.R;
 import com.bt4vt.adapter.DepartureArrayAdapter;
 import com.bt4vt.async.AsyncCallback;
 import com.bt4vt.async.DepartureAsyncTask;
+import com.bt4vt.async.StopAsyncTask;
+import com.bt4vt.async.StopsAsyncTask;
+import com.bt4vt.geofence.BusStopGeofenceService;
 import com.bt4vt.repository.TransitRepository;
 import com.bt4vt.repository.model.DepartureModel;
 import com.bt4vt.repository.model.RouteModel;
 import com.bt4vt.repository.model.StopModel;
 import com.bt4vt.repository.model.StopModelFactory;
-import com.firebase.client.AuthData;
-import com.firebase.client.ChildEventListener;
-import com.firebase.client.DataSnapshot;
-import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
 import com.google.inject.Inject;
 
 import java.util.List;
@@ -57,8 +52,7 @@ import roboguice.inject.InjectView;
  * @author Ben Sechrist
  */
 public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
-    implements AsyncCallback<List<DepartureModel>>, View.OnClickListener,
-    Firebase.AuthStateListener, ChildEventListener {
+    implements AsyncCallback, View.OnClickListener {
 
   private static final String TAG = "DeparturesDialog";
   private static final String STOP_FORMAT = "Stop: %s";
@@ -69,7 +63,7 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   private TransitRepository transitRepository;
 
   @Inject
-  private StopModelFactory stopModelFactory;
+  private BusStopGeofenceService busStopGeofenceService;
 
   @InjectView(R.id.stop_text)
   private TextView stopTextView;
@@ -89,20 +83,16 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   @InjectView(R.id.button_favorite_stop)
   private ImageButton favoriteButton;
 
-  private Firebase firebaseRef;
-
+  private Integer stopCode;
   private StopModel stop;
   private RouteModel route;
 
-  private boolean isFavorited = false;
-  private boolean isAuthenticated = false;
-
-  public static ScheduledDeparturesDialogFragment newInstance(StopModel stop, RouteModel route) {
-    if (stop == null) {
+  public static ScheduledDeparturesDialogFragment newInstance(Integer stopCode, RouteModel route) {
+    if (stopCode == null) {
       throw new NullPointerException("Stop was null");
     }
     ScheduledDeparturesDialogFragment fragment = new ScheduledDeparturesDialogFragment();
-    fragment.stop = stop;
+    fragment.stopCode = stopCode;
     fragment.route = route;
     fragment.setRetainInstance(true);
     return fragment;
@@ -115,32 +105,11 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   }
 
   @Override
-  public void onStart() {
-    super.onStart();
-    Firebase.setAndroidContext(getActivity());
-    firebaseRef = new Firebase(MainActivity.FIREBASE_BASE_URL);
-    firebaseRef.addAuthStateListener(this);
-  }
-
-  @Override
-  public void onStop() {
-    super.onStop();
-    if (firebaseRef != null) {
-      firebaseRef.removeAuthStateListener(this);
-      if (firebaseRef.getAuth() != null && stop != null) {
-        firebaseRef.child("favorite-stops")
-            .child(String.valueOf(stop.getCode()))
-            .removeEventListener(this);
-      }
-    }
-  }
-
-  @Override
   public void onViewCreated(View view, Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
 
     // If we get here and the stop is null then we should exit the departures dialog
-    if (stop == null) {
+    if (stopCode == null) {
       getDialog().dismiss();
       return;
     }
@@ -149,7 +118,8 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
 
     favoriteButton.setOnClickListener(this);
 
-    stopTextView.setText(String.format(STOP_FORMAT, stop.toString()));
+    new StopAsyncTask(transitRepository, stopCode, this).execute();
+
     String routeText;
     if (route != null) {
       routeText = route.toString();
@@ -158,21 +128,27 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
     }
     routeTextView.setText(String.format(ROUTE_FORMAT, routeText));
 
-    new DepartureAsyncTask(transitRepository, stop, route, this, getActivity()).execute();
-
     emptyDeparturesView.findViewById(R.id.refresh_departures_button).setOnClickListener(this);
   }
 
   @Override
-  public void onSuccess(List<DepartureModel> departures) {
+  public void onSuccess(Object o) {
     if (isAdded()) {
-      final int MAX_DEPARTURES = getResources().getInteger(R.integer.max_departures_shown);
-      if (departures.size() > MAX_DEPARTURES) {
-        departures = departures.subList(0, MAX_DEPARTURES);
+      if (o instanceof List) {
+        List<DepartureModel> departures = (List<DepartureModel>) o;
+        final int MAX_DEPARTURES = getResources().getInteger(R.integer.max_departures_shown);
+        if (departures.size() > MAX_DEPARTURES) {
+          departures = departures.subList(0, MAX_DEPARTURES);
+        }
+        listView.setAdapter(new DepartureArrayAdapter(getActivity(), departures));
+        listView.setEmptyView(emptyDeparturesView);
+        loadingView.setVisibility(View.INVISIBLE);
+      } else if (o instanceof StopModel) {
+        stop = (StopModel) o;
+        stopTextView.setText(String.format(STOP_FORMAT, stop.toString()));
+        setFavButton();
+        new DepartureAsyncTask(transitRepository, stop, route, this, getActivity()).execute();
       }
-      listView.setAdapter(new DepartureArrayAdapter(getActivity(), departures));
-      listView.setEmptyView(emptyDeparturesView);
-      loadingView.setVisibility(View.INVISIBLE);
     }
   }
 
@@ -184,7 +160,7 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
       loadingView.setVisibility(View.INVISIBLE);
       View view = getView();
       if (view != null) {
-        Snackbar.make(view, R.string.departures_error, Snackbar.LENGTH_LONG)
+        Snackbar.make(view, R.string.stop_dialog_error, Snackbar.LENGTH_LONG)
             .setAction(R.string.retry, this)
             .show();
       }
@@ -198,85 +174,33 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
         onFavClick();
         break;
       case R.id.refresh_departures_button:
-      default:
         listView.setEmptyView(null);
         loadingView.setVisibility(View.VISIBLE);
         new DepartureAsyncTask(transitRepository, stop, route, this, getActivity()).execute();
         break;
-    }
-  }
-
-  @Override
-  public void onAuthStateChanged(AuthData authData) {
-    if (stop == null) return;
-    isAuthenticated = authData != null;
-    if (isAuthenticated) {
-      Log.i(TAG, "User is authenticated");
-      if (firebaseRef.getParent() == null) {
-        firebaseRef = firebaseRef.child(authData.getUid());
-      }
-      firebaseRef.child("favorite-stops")
-          .child(String.valueOf(stop.getCode()))
-          .addChildEventListener(this);
-      favoriteButton.setVisibility(View.VISIBLE);
-    } else {
-      Log.i(TAG, "User is not authenticated");
-      firebaseRef.child("favorite-stops")
-          .child(String.valueOf(stop.getCode()))
-          .removeEventListener(this);
-      favoriteButton.setVisibility(View.INVISIBLE);
+      default:
+        listView.setEmptyView(null);
+        loadingView.setVisibility(View.VISIBLE);
+        new StopAsyncTask(transitRepository, stopCode, this).execute();
+        break;
     }
   }
 
   private void onFavClick() {
-    if (isAuthenticated) {
-      if (isFavorited) {
-        Log.i(TAG, "Removing favorite");
-        firebaseRef.child("favorite-stops").child(String.valueOf(stop.getCode())).removeValue();
-      } else {
-        Log.i(TAG, "Adding favorite");
-        firebaseRef.child("favorite-stops").child(String.valueOf(stop.getCode())).setValue(stop);
-      }
-    } else {
-      View view = getView();
-      if (view != null) {
-        Snackbar.make(view, R.string.not_logged_in, Snackbar.LENGTH_LONG).show();
-      }
-    }
+    stop.setFavorited(!stop.isFavorited());
+    transitRepository.updateStop(stop);
+    setFavButton();
   }
 
-  @Override
-  public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-    Log.i(TAG, "Stop added to favorites");
-    isFavorited = true;
-    Context context = getActivity();
-    if (context != null)
-      favoriteButton.setImageDrawable(ContextCompat.getDrawable(context,
+  private void setFavButton() {
+    if (stop.isFavorited()) {
+      favoriteButton.setImageDrawable(ContextCompat.getDrawable(getActivity(),
           R.drawable.ic_action_star_full));
-  }
-
-  @Override
-  public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-    stop = stopModelFactory.createModel(dataSnapshot);
-  }
-
-  @Override
-  public void onChildRemoved(DataSnapshot dataSnapshot) {
-    Log.i(TAG, "Stop removed from favorites");
-    isFavorited = false;
-    Context context = getActivity();
-    if (context != null)
+      busStopGeofenceService.registerGeofence(stop);
+    } else {
       favoriteButton.setImageDrawable(ContextCompat.getDrawable(getActivity(),
           R.drawable.ic_action_star_empty));
-  }
-
-  @Override
-  public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-    // We don't care about this for now
-  }
-
-  @Override
-  public void onCancelled(FirebaseError firebaseError) {
-    // We don't care about this for now
+      busStopGeofenceService.unregisterGeofence(stop);
+    }
   }
 }

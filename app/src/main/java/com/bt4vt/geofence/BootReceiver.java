@@ -16,26 +16,55 @@
 
 package com.bt4vt.geofence;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+import com.activeandroid.query.Select;
 import com.bt4vt.R;
+import com.bt4vt.repository.TransitRepository;
+import com.bt4vt.repository.domain.StopFavorite;
+import com.bt4vt.repository.exception.TransitRepositoryException;
+import com.bt4vt.repository.model.StopModel;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.inject.Inject;
 
-public class BootReceiver extends BroadcastReceiver {
+import java.util.List;
+
+import roboguice.receiver.RoboBroadcastReceiver;
+
+public class BootReceiver extends RoboBroadcastReceiver {
 
   private static final String TAG = "BootReceiver";
 
+  @Inject
+  private TransitRepository transitRepository;
+
+  @Inject
+  private BusStopGeofenceService busStopGeofenceService;
+
   @Override
-  public void onReceive(Context context, Intent intent) {
+  public void handleReceive(Context context, Intent intent) {
+    Log.d(TAG, "Received boot");
     if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(context) != ConnectionResult.SUCCESS) {
       Log.e(TAG, context.getString(R.string.no_play_services));
     } else {
-      Intent syncGeofenceIntent = new Intent(context, SyncGeofenceService.class);
-      context.startService(syncGeofenceIntent);
+      List<StopFavorite> stopFavorites = new Select().from(StopFavorite.class)
+          .where("isFavorited = ?", true).execute();
+      Log.d(TAG, "Adding geofences for favorited stops");
+      Log.d(TAG, stopFavorites.toString());
+      for (StopFavorite stopFavorite : stopFavorites) {
+        try {
+          StopModel stopModel = transitRepository.getStop(stopFavorite.getCode());
+          if (stopModel != null)
+            busStopGeofenceService.registerGeofence(stopModel);
+          else
+            Log.e(TAG, "Could not find stop - " + stopFavorite.getCode());
+        } catch (TransitRepositoryException e) {
+          Log.e(TAG, e.getLocalizedMessage());
+        }
+      }
     }
   }
 }

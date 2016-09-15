@@ -35,6 +35,8 @@ public class Stop {
 
   private Integer routePatternColor;
 
+  private boolean isFavorited;
+
   public Stop(String name, Integer code) {
     this.name = name;
     this.code = code;
@@ -81,6 +83,14 @@ public class Stop {
 
   public void setRoutePatternColor(Integer routePatternColor) {
     this.routePatternColor = routePatternColor;
+  }
+
+  public boolean isFavorited() {
+    return isFavorited;
+  }
+
+  public void setFavorited(boolean favorited) {
+    isFavorited = favorited;
   }
 
   @Override
