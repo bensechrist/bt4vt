@@ -22,9 +22,10 @@ import android.util.Log;
 
 import com.activeandroid.query.Select;
 import com.bt4vt.R;
+import com.bt4vt.async.AsyncCallback;
+import com.bt4vt.async.StopAsyncTask;
 import com.bt4vt.repository.TransitRepository;
 import com.bt4vt.repository.domain.StopFavorite;
-import com.bt4vt.repository.exception.TransitRepositoryException;
 import com.bt4vt.repository.model.StopModel;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
@@ -34,7 +35,7 @@ import java.util.List;
 
 import roboguice.receiver.RoboBroadcastReceiver;
 
-public class BootReceiver extends RoboBroadcastReceiver {
+public class BootReceiver extends RoboBroadcastReceiver implements AsyncCallback<StopModel> {
 
   private static final String TAG = "BootReceiver";
 
@@ -56,16 +57,20 @@ public class BootReceiver extends RoboBroadcastReceiver {
       Log.d(TAG, "Adding geofences for favorited stops");
       Log.d(TAG, stopFavorites.toString());
       for (StopFavorite stopFavorite : stopFavorites) {
-        try {
-          StopModel stopModel = transitRepository.getStop(stopFavorite.getCode());
-          if (stopModel != null)
-            busStopGeofenceService.registerGeofence(stopModel);
-          else
-            Log.e(TAG, "Could not find stop - " + stopFavorite.getCode());
-        } catch (TransitRepositoryException e) {
-          Log.e(TAG, e.getLocalizedMessage());
-        }
+        new StopAsyncTask(transitRepository, stopFavorite.getCode(), this).execute();
       }
     }
+  }
+
+  @Override
+  public void onSuccess(StopModel stopModel) {
+    if (stopModel != null) {
+      busStopGeofenceService.registerGeofence(stopModel);
+    }
+  }
+
+  @Override
+  public void onException(Exception e) {
+    Log.e(TAG, e.getLocalizedMessage());
   }
 }
