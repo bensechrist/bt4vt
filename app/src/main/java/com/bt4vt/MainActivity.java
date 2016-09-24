@@ -17,18 +17,23 @@
 package com.bt4vt;
 
 import android.Manifest;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.view.View;
 import android.widget.ImageButton;
 
+import com.android.vending.billing.IInAppBillingService;
 import com.bt4vt.fragment.NavigationDrawerFragment;
 import com.bt4vt.fragment.RetainedMapFragment;
 import com.bt4vt.repository.model.RouteModel;
@@ -52,7 +57,7 @@ import uk.co.deanwild.materialshowcaseview.MaterialShowcaseView;
 @ContentView(R.layout.activity_main)
 public class MainActivity extends RoboFragmentActivity implements
     RetainedMapFragment.TalkToActivity, NavigationDrawerFragment.TalkToActivity,
-    View.OnClickListener {
+    View.OnClickListener, ServiceConnection {
 
   public static final String EXTRA_STOP = "com.bt4vt.extra.stop";
   private static final String FIRST_TIME_OPEN_KEY = "first_time_open_app";
@@ -77,6 +82,8 @@ public class MainActivity extends RoboFragmentActivity implements
 
   private NavigationDrawerFragment navFragment;
 
+  private IInAppBillingService inAppBillingService;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -93,6 +100,19 @@ public class MainActivity extends RoboFragmentActivity implements
     }
 
     initData();
+
+    Intent serviceIntent =
+        new Intent("com.android.vending.billing.InAppBillingService.BIND");
+    serviceIntent.setPackage("com.android.vending");
+    bindService(serviceIntent, this, Context.BIND_AUTO_CREATE);
+  }
+
+  @Override
+  protected void onDestroy() {
+    super.onDestroy();
+    if (inAppBillingService != null) {
+      unbindService(this);
+    }
   }
 
   @Override
@@ -157,6 +177,11 @@ public class MainActivity extends RoboFragmentActivity implements
     mapFragment.setCurrentRoute(null);
     mapFragment.clearMap();
     mapFragment.fetchStops(null);
+  }
+
+  @Override
+  public IInAppBillingService getBillingService() {
+    return inAppBillingService;
   }
 
   @Override
@@ -229,5 +254,15 @@ public class MainActivity extends RoboFragmentActivity implements
   private boolean isNetworkAvailable() {
     NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
     return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+  }
+
+  @Override
+  public void onServiceConnected(ComponentName name, IBinder service) {
+    inAppBillingService = IInAppBillingService.Stub.asInterface(service);
+  }
+
+  @Override
+  public void onServiceDisconnected(ComponentName name) {
+    inAppBillingService = null;
   }
 }
