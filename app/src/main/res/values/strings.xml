@@ -48,7 +48,7 @@
   <string name="no_stops">No stops available</string>
   <string name="stop_dialog_error">Error getting stop information</string>
   <string name="nav_feedback">Feedback</string>
-  <string name="nav_button_showcase_text">Open the navigation drawer to view routes. You can favorite stops to have BT4VT send you a notification about when the next bus will arrive when you arrive at a favorited stop.</string>
+  <string name="nav_button_showcase_text">Open the navigation drawer to view routes. You can favorite stops to have BT4VT send you a notification about when the next bus will arrive when you arrive at a favorited stop. Also if you enjoy this app consider making a donation by selecting the "Donate" option in the navigation drawer.</string>
   <string name="app_feedback">BT4VT Feedback</string>
   <string name="app_feedback_email">bensechrist@gmail.com</string>
   <string name="showcase_confirm">Got It</string>
@@ -58,4 +58,9 @@
   <string name="location_permission_rationale">Location permission is needed for the app to function properly</string>
   <string name="permission_grant">Grant</string>
   <string name="no_play_services">Google Play Services is not installed</string>
+  <string name="nav_donation">Donate</string>
+  <string name="donation_dialog_title">Select a donation amount</string>
+  <string name="cancel">Cancel</string>
+  <string name="donation_thanks">Thank you for donating! Your help makes this app possible!</string>
+  <string name="get_donations_error">Error getting donation values</string>
 </resources>
