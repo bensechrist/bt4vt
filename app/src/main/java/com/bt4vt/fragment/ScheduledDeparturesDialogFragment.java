@@ -185,9 +185,11 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   }
 
   private void onFavClick() {
-    stop.setFavorited(!stop.isFavorited());
-    transitRepository.updateStop(stop);
-    setFavButton();
+    if (stop != null) {
+      stop.setFavorited(!stop.isFavorited());
+      transitRepository.updateStop(stop);
+      setFavButton();
+    }
   }
 
   private void setFavButton() {
