@@ -16,6 +16,7 @@
 
 package com.bt4vt.repository.domain;
 
+import org.simpleframework.xml.Element;
 import org.simpleframework.xml.ElementList;
 import org.simpleframework.xml.Root;
 
@@ -41,4 +42,7 @@ public class DocumentElement {
 
   @ElementList(name = "LatestInfoTable", inline = true, required = false)
   public List<Bus> buses = new ArrayList<>();
+
+  @Element(name = "lang", required = false)
+  public String lang;
 }
