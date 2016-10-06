@@ -19,6 +19,7 @@ package com.bt4vt;
 import android.Manifest;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -30,10 +31,13 @@ import android.os.IBinder;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 
 import com.android.vending.billing.IInAppBillingService;
+import com.bt4vt.async.DonationOptionAsyncTask;
 import com.bt4vt.fragment.NavigationDrawerFragment;
 import com.bt4vt.fragment.RetainedMapFragment;
 import com.bt4vt.repository.model.RouteModel;
@@ -42,6 +46,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.inject.Inject;
 
+import java.util.Calendar;
 import java.util.List;
 
 import roboguice.activity.RoboFragmentActivity;
@@ -59,8 +64,12 @@ public class MainActivity extends RoboFragmentActivity implements
     RetainedMapFragment.TalkToActivity, NavigationDrawerFragment.TalkToActivity,
     View.OnClickListener, ServiceConnection {
 
+  private static final String TAG = "MainActivity";
+
   public static final String EXTRA_STOP = "com.bt4vt.extra.stop";
   private static final String FIRST_TIME_OPEN_KEY = "first_time_open_app";
+  private static final String TIMES_OPENED_KEY = "number_times_opened_app";
+  private static final String LAST_PROMPT_KEY = "last_prompt_date_millis";
   private static final String SHOWCASE_ID = "com.bt4vt.nav_showcase";
 
   @Inject
@@ -259,6 +268,39 @@ public class MainActivity extends RoboFragmentActivity implements
   @Override
   public void onServiceConnected(ComponentName name, IBinder service) {
     inAppBillingService = IInAppBillingService.Stub.asInterface(service);
+
+    int timesOpened = preferences.getInt(TIMES_OPENED_KEY, 0) + 1;
+    preferences.edit()
+        .putInt(TIMES_OPENED_KEY, timesOpened)
+        .apply();
+    Calendar now = Calendar.getInstance();
+    Calendar lastPrompt = Calendar.getInstance();
+    lastPrompt.setTimeInMillis(preferences.getLong(LAST_PROMPT_KEY, 0));
+    boolean sameDay = now.get(Calendar.YEAR) == lastPrompt.get(Calendar.YEAR) &&
+        now.get(Calendar.DAY_OF_YEAR) == lastPrompt.get(Calendar.DAY_OF_YEAR);
+    Log.d(TAG, String.format("Opened %d times", timesOpened));
+    Log.d(TAG, String.format("Last prompted %s", lastPrompt.getTime().toString()));
+    if ((timesOpened % 12 == 0) && !sameDay) {
+      preferences.edit()
+          .putLong(LAST_PROMPT_KEY, now.getTimeInMillis())
+          .apply();
+      new AlertDialog.Builder(this)
+          .setMessage(R.string.donation_prompt_message)
+          .setPositiveButton(R.string.donation_prompt_yes, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+              dialog.dismiss();
+              new DonationOptionAsyncTask(inAppBillingService, getPackageName(), navFragment).execute();
+            }
+          })
+          .setNegativeButton(R.string.donation_prompt_no, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+              dialog.dismiss();
+            }
+          })
+          .show();
+    }
   }
 
   @Override
