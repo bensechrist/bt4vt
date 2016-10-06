@@ -63,4 +63,7 @@
   <string name="cancel">Cancel</string>
   <string name="donation_thanks">Thank you for donating! Your help makes this app possible!</string>
   <string name="get_donations_error">Error getting donation values</string>
+  <string name="donation_prompt_message">If you use this app in your daily commute, consider donating to the developer. Donations are how this app can stay free and continue to improve.</string>
+  <string name="donation_prompt_yes">Sure</string>
+  <string name="donation_prompt_no">Nah</string>
 </resources>
