@@ -70,7 +70,7 @@ public class BusStopGeofenceService implements ResultCallback<Status> {
   public void registerGeofence(StopModel stop) {
     if (!googleApiClient.isConnected()) {
       if (googleApiClient.isConnecting()) {
-        throw new IllegalStateException("Google Location API already connecting");
+        while (googleApiClient.isConnecting());
       } else {
         googleApiClient.blockingConnect();
       }
@@ -89,7 +89,7 @@ public class BusStopGeofenceService implements ResultCallback<Status> {
   public void unregisterGeofence(StopModel stop) {
     if (!googleApiClient.isConnected()) {
       if (googleApiClient.isConnecting()) {
-        throw new IllegalStateException("Google Location API already connecting");
+        while (googleApiClient.isConnecting());
       } else {
         googleApiClient.blockingConnect();
       }
