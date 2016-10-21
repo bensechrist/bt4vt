@@ -167,6 +167,18 @@ public class HttpBlacksburgTransitRepositoryTest {
   }
 
   @Test
+  public void testGetFavoritedStopsSuccessfully() throws Exception {
+    doReturn(Collections.singletonList(route)).when(routeFetcher).getAll();
+    doReturn("ROUTE").when(routeModel).getShortName();
+    doReturn(Collections.singletonList(stop)).when(stopFetcher).get(anyString());
+    doReturn(stopModel).when(stopModelFactory).createModel(stop);
+
+    List<StopModel> results = repository.getFavoritedStops();
+    assertNotNull(results);
+    assertEquals(results.get(0), stopModel);
+  }
+
+  @Test
   public void testGetAllDeparturesForStopSuccessfully() throws Exception {
     doReturn(Collections.singletonList(route)).when(routeFetcher).getAll();
     doReturn("ROUTE").when(route).getShortName();
