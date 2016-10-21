@@ -70,6 +70,7 @@ public class MainActivity extends RoboFragmentActivity implements
   private static final String FIRST_TIME_OPEN_KEY = "first_time_open_app";
   private static final String TIMES_OPENED_KEY = "number_times_opened_app";
   private static final String LAST_PROMPT_KEY = "last_prompt_date_millis";
+  public static final String LAST_DONATION_KEY = "last_donation_date_millis";
   private static final String SHOWCASE_ID = "com.bt4vt.nav_showcase";
 
   @Inject
@@ -274,13 +275,18 @@ public class MainActivity extends RoboFragmentActivity implements
         .putInt(TIMES_OPENED_KEY, timesOpened)
         .apply();
     Calendar now = Calendar.getInstance();
+    Calendar threshold = Calendar.getInstance();
     Calendar lastPrompt = Calendar.getInstance();
+    Calendar lastDonation = Calendar.getInstance();
+    threshold.add(Calendar.DAY_OF_YEAR, -60);
     lastPrompt.setTimeInMillis(preferences.getLong(LAST_PROMPT_KEY, 0));
+    lastDonation.setTimeInMillis(preferences.getLong(LAST_DONATION_KEY, 0));
     boolean sameDay = now.get(Calendar.YEAR) == lastPrompt.get(Calendar.YEAR) &&
         now.get(Calendar.DAY_OF_YEAR) == lastPrompt.get(Calendar.DAY_OF_YEAR);
     Log.d(TAG, String.format("Opened %d times", timesOpened));
     Log.d(TAG, String.format("Last prompted %s", lastPrompt.getTime().toString()));
-    if ((timesOpened % 12 == 0) && !sameDay) {
+    Log.d(TAG, String.format("Last donation %s", lastDonation.getTime().toString()));
+    if ((timesOpened % 12 == 0) && !sameDay && lastDonation.before(threshold)) {
       preferences.edit()
           .putLong(LAST_PROMPT_KEY, now.getTimeInMillis())
           .apply();

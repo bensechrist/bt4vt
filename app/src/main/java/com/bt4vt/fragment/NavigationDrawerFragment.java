@@ -37,6 +37,7 @@ import android.view.ViewGroup;
 
 import com.android.vending.billing.IInAppBillingService;
 import com.bt4vt.BuildConfig;
+import com.bt4vt.MainActivity;
 import com.bt4vt.R;
 import com.bt4vt.async.AsyncCallback;
 import com.bt4vt.async.DonationConsumeAsyncTask;
@@ -53,6 +54,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 
 import roboguice.fragment.RoboFragment;
@@ -281,6 +283,7 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
     if (requestCode == 1001) {
       if (resultCode == RESULT_OK) {
+        preferences.edit().putLong(MainActivity.LAST_DONATION_KEY, new Date().getTime()).apply();
         try {
           JSONObject purchaseData = new JSONObject(data.getStringExtra("INAPP_PURCHASE_DATA"));
           new DonationConsumeAsyncTask(activity.getBillingService(), getActivity().getPackageName(),
