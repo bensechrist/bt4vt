@@ -63,4 +63,13 @@ public class StopModelFactory {
   public StopModel createModel(Geofence geofence) {
     return StopModelImpl.valueOf(geofence.getRequestId());
   }
+
+  /**
+   * Creates a {@link StopModel} from the given <code>str</code>.
+   * @param str the string value of stop
+   * @return the stop model
+   */
+  public StopModel createModel(String str) {
+    return StopModelImpl.valueOf(str);
+  }
 }
