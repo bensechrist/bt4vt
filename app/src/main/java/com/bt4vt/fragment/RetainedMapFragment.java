@@ -30,6 +30,7 @@ import android.view.View;
 
 import com.bt4vt.R;
 import com.bt4vt.async.AsyncCallback;
+import com.bt4vt.async.StopAsyncTask;
 import com.bt4vt.async.StopsAsyncTask;
 import com.bt4vt.repository.TransitRepository;
 import com.bt4vt.repository.listener.BusListener;
@@ -216,19 +217,14 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
         fetchStop(stopString);
       }
     };
-    StopsAsyncTask task = new StopsAsyncTask(transitRepository, new AsyncCallback<List<StopModel>>() {
+    StopModel stopModel = stopModelFactory.createModel(stopString);
+    StopAsyncTask task = new StopAsyncTask(transitRepository, stopModel.getCode(), new AsyncCallback<StopModel>() {
       @Override
-      public void onSuccess(List<StopModel> stops) {
+      public void onSuccess(StopModel stop) {
         if (!isAdded()) {
           return;
         }
-        for (StopModel stop : stops) {
-          if (stop.toString().equals(stopString)) {
-            activity.onStopsReady(Collections.singletonList(stop));
-            return;
-          }
-        }
-        activity.onStopsReady(Collections.<StopModel>emptyList());
+        activity.onStopsReady(Collections.singletonList(stop));
       }
 
       @Override
@@ -245,7 +241,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
         }
       }
     });
-    task.execute(null, null);
+    task.execute();
   }
 
   /**
@@ -466,7 +462,8 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
   }
 
   private boolean areFromSameRoute(List<StopModel> stops) {
-    return stops.get(0).getRoutePattern().equals(stops.get(stops.size()-1).getRoutePattern());
+    return stops.get(0).getRoutePattern() != null &&
+        stops.get(0).getRoutePattern().equals(stops.get(stops.size()-1).getRoutePattern());
   }
 
   /**
