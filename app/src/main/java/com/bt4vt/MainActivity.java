@@ -17,6 +17,7 @@
 package com.bt4vt;
 
 import android.Manifest;
+import android.annotation.TargetApi;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -24,8 +25,12 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.pm.ShortcutInfo;
+import android.content.pm.ShortcutManager;
+import android.graphics.drawable.Icon;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.design.widget.Snackbar;
@@ -37,15 +42,19 @@ import android.view.View;
 import android.widget.ImageButton;
 
 import com.android.vending.billing.IInAppBillingService;
+import com.bt4vt.async.AsyncCallback;
 import com.bt4vt.async.DonationOptionAsyncTask;
+import com.bt4vt.async.FavoritedStopsAsyncTask;
 import com.bt4vt.fragment.NavigationDrawerFragment;
 import com.bt4vt.fragment.RetainedMapFragment;
+import com.bt4vt.repository.TransitRepository;
 import com.bt4vt.repository.model.RouteModel;
 import com.bt4vt.repository.model.StopModel;
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.inject.Inject;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
@@ -78,6 +87,9 @@ public class MainActivity extends RoboFragmentActivity implements
 
   @Inject
   private ConnectivityManager connectivityManager;
+
+  @Inject
+  private TransitRepository transitRepository;
 
   @InjectView(R.id.drawer_layout)
   private DrawerLayout mDrawerLayout;
@@ -143,7 +155,9 @@ public class MainActivity extends RoboFragmentActivity implements
 
     checkNetwork();
 
-    if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(this) != ConnectionResult.SUCCESS) {
+    setShortcuts();
+
+    if (GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(this) != ConnectionResult.SUCCESS) {
       View view = mapFragment.getView();
       if (view != null) {
         Snackbar.make(view, R.string.no_play_services, Snackbar.LENGTH_LONG).show();
@@ -221,6 +235,44 @@ public class MainActivity extends RoboFragmentActivity implements
             .setAction(R.string.retry, this)
             .show();
       }
+    }
+  }
+
+  private void setShortcuts() {
+    if (Build.VERSION.SDK_INT >= 25) {
+      new FavoritedStopsAsyncTask(transitRepository, new AsyncCallback<List<StopModel>>() {
+        @TargetApi(25)
+        @Override
+        public void onSuccess(List<StopModel> stopModels) {
+          Log.d(TAG, "models " + stopModels.toString());
+          ShortcutManager shortcutManager = getSystemService(ShortcutManager.class);
+
+          List<ShortcutInfo> shortcuts = new ArrayList<>();
+
+          for (StopModel stopModel : stopModels) {
+            Intent intent = new Intent(MainActivity.this, MainActivity.class);
+            intent.setAction(Intent.ACTION_MAIN);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            intent.putExtra(MainActivity.EXTRA_STOP, stopModel.toString());
+            ShortcutInfo shortcut = new ShortcutInfo.Builder(MainActivity.this, String.valueOf(stopModel.getCode()))
+                .setShortLabel(stopModel.getName())
+                .setLongLabel(stopModel.getName())
+                .setIcon(Icon.createWithResource(MainActivity.this, R.drawable.bus_stop_icon))
+                .setIntent(intent)
+                .build();
+            shortcuts.add(shortcut);
+          }
+
+          shortcutManager.setDynamicShortcuts(shortcuts);
+
+          Log.d(TAG, "shortcuts " + shortcutManager.getDynamicShortcuts());
+        }
+
+        @Override
+        public void onException(Exception e) {
+
+        }
+      }).execute();
     }
   }
 

@@ -158,6 +158,16 @@ public class HttpBlacksburgTransitRepository implements TransitRepository {
   }
 
   @Override
+  public List<StopModel> getFavoritedStops() throws TransitRepositoryException {
+    List<StopFavorite> stopFavorites = new Select().from(StopFavorite.class).execute();
+    List<StopModel> favoritedStops = new ArrayList<>();
+    for (StopFavorite favorite : stopFavorites) {
+      favoritedStops.add(getStop(favorite.getCode()));
+    }
+    return favoritedStops;
+  }
+
+  @Override
   public StopModel getStop(int stopCode) throws TransitRepositoryException {
     try {
       Stop stop = stopFetcher.get(stopCode);

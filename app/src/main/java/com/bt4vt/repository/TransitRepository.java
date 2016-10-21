@@ -60,6 +60,13 @@ public interface TransitRepository {
   List<StopModel> getStops(RouteModel route) throws TransitRepositoryException;
 
   /**
+   * Returns a list of favorited stops.
+   * @return a list of stops
+   * @throws TransitRepositoryException
+   */
+  List<StopModel> getFavoritedStops() throws TransitRepositoryException;
+
+  /**
    * Returns a stop for the given stop code.
    * @param stopCode the stop code
    * @return a stop
