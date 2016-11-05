@@ -98,7 +98,9 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-    getDialog().getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+    Window window = getDialog().getWindow();
+    if (window != null)
+      window.requestFeature(Window.FEATURE_NO_TITLE);
     return inflater.inflate(R.layout.departures_dialog, container);
   }
 
@@ -174,7 +176,8 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
       case R.id.refresh_departures_button:
         listView.setEmptyView(null);
         loadingView.setVisibility(View.VISIBLE);
-        new DepartureAsyncTask(transitRepository, stop, route, this, getActivity()).execute();
+        if (transitRepository != null && stop != null)
+          new DepartureAsyncTask(transitRepository, stop, route, this, getActivity()).execute();
         break;
       default:
         listView.setEmptyView(null);
