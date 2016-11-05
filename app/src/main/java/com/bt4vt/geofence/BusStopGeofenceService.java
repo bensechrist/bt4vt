@@ -21,6 +21,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
@@ -70,7 +71,7 @@ public class BusStopGeofenceService implements ResultCallback<Status> {
   public void registerGeofence(StopModel stop) {
     if (!googleApiClient.isConnected()) {
       if (googleApiClient.isConnecting()) {
-        while (googleApiClient.isConnecting());
+        waitForApiConnection();
       } else {
         googleApiClient.blockingConnect();
       }
@@ -89,7 +90,7 @@ public class BusStopGeofenceService implements ResultCallback<Status> {
   public void unregisterGeofence(StopModel stop) {
     if (!googleApiClient.isConnected()) {
       if (googleApiClient.isConnecting()) {
-        while (googleApiClient.isConnecting());
+        waitForApiConnection();
       } else {
         googleApiClient.blockingConnect();
       }
@@ -111,7 +112,7 @@ public class BusStopGeofenceService implements ResultCallback<Status> {
   }
 
   @Override
-  public void onResult(Status status) {
+  public void onResult(@NonNull Status status) {
     Log.i(TAG, "Register geofence result: " + status.toString());
     int statusCode = status.getStatusCode();
     if (statusCode == GeofenceStatusCodes.GEOFENCE_TOO_MANY_GEOFENCES) {
@@ -153,5 +154,14 @@ public class BusStopGeofenceService implements ResultCallback<Status> {
     geofencePendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.
         FLAG_UPDATE_CURRENT);
     return geofencePendingIntent;
+  }
+
+  private void waitForApiConnection() {
+    try {
+      while (googleApiClient.isConnecting())
+        Thread.sleep(100);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
   }
 }
