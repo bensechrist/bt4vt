@@ -397,11 +397,15 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
    * This should only be called once and when we are sure that {@link #mMap} is not null.
    */
   public void setUpMap() {
+    if (!checkLocationPermission()) {
+      return;
+    }
     mMap.setMyLocationEnabled(true);
     mMap.getUiSettings().setCompassEnabled(false);
     mMap.getUiSettings().setRotateGesturesEnabled(false);
     mMap.getUiSettings().setTiltGesturesEnabled(false);
     mMap.setOnInfoWindowClickListener(this);
+    mMap.setMaxZoomPreference(17);
 
     CameraUpdate cu = CameraUpdateFactory.newLatLngZoom(new LatLng(BBURG_LAT, BBURG_LNG), BBURG_ZOOM);
     mMap.animateCamera(cu);
