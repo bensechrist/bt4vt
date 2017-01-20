@@ -166,6 +166,10 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
     }
   }
 
+  public RouteModel getCurrentRoute() {
+    return currentRoute;
+  }
+
   public void setCurrentRoute(RouteModel currentRoute) {
     this.currentRoute = currentRoute;
   }

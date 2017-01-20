@@ -33,6 +33,7 @@ import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -97,6 +98,9 @@ public class MainActivity extends RoboFragmentActivity implements
   @InjectView(R.id.button_nav_drawer)
   private ImageButton navButton;
 
+  @InjectView(R.id.refresh_route_button)
+  private FloatingActionButton refreshRouteButton;
+
   @InjectView(R.id.main_loading_view)
   private View mainLoadingView;
 
@@ -111,6 +115,7 @@ public class MainActivity extends RoboFragmentActivity implements
     super.onCreate(savedInstanceState);
 
     navButton.setOnClickListener(this);
+    refreshRouteButton.setOnClickListener(this);
 
     if (navFragment == null) {
       navFragment = (NavigationDrawerFragment) getSupportFragmentManager()
@@ -189,6 +194,7 @@ public class MainActivity extends RoboFragmentActivity implements
   @Override
   public void onRouteSelected(RouteModel route) {
     mainLoadingView.setVisibility(View.VISIBLE);
+    refreshRouteButton.setVisibility(View.VISIBLE);
     mapFragment.setCurrentRoute(route);
     mapFragment.clearMap();
     mapFragment.fetchStops(route);
@@ -221,6 +227,8 @@ public class MainActivity extends RoboFragmentActivity implements
           }
         }
       }
+    } else if (v.getId() == refreshRouteButton.getId()) {
+      onRouteSelected(mapFragment.getCurrentRoute());
     } else {
       initData();
       checkNetwork();
