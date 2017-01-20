@@ -15,50 +15,64 @@
   -->
 
 <android.support.v4.widget.DrawerLayout
-  android:id="@+id/drawer_layout"
-  xmlns:android="http://schemas.android.com/apk/res/android"
-  xmlns:tools="http://schemas.android.com/tools"
-  android:layout_width="match_parent"
-  android:layout_height="match_parent"
-  tools:context="com.bt4vt.MainActivity">
+    android:id="@+id/drawer_layout"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.bt4vt.MainActivity">
 
   <RelativeLayout
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+      android:layout_width="match_parent"
+      android:layout_height="match_parent">
 
     <fragment
-      android:id="@+id/map"
-      android:name="com.bt4vt.fragment.RetainedMapFragment"
-      android:layout_width="match_parent"
-      android:layout_height="match_parent"/>
+        android:id="@+id/map"
+        android:name="com.bt4vt.fragment.RetainedMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 
     <ImageButton
-      android:id="@+id/button_nav_drawer"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:layout_alignParentLeft="true"
-      android:layout_alignParentStart="true"
-      android:layout_alignParentTop="true"
-      android:layout_margin="@dimen/menu_margin"
-      android:background="@android:color/transparent"
-      android:contentDescription="@string/nav_drawer_button_content_desc"
-      android:scaleType="fitXY"
-      android:src="@drawable/ic_action_menu"/>
+        android:id="@+id/button_nav_drawer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_margin="@dimen/menu_margin"
+        android:background="@android:color/transparent"
+        android:contentDescription="@string/nav_drawer_button_content_desc"
+        android:scaleType="fitXY"
+        android:src="@drawable/ic_action_menu"/>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/refresh_route_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_margin="16dp"
+        android:src="@drawable/ic_refresh"
+        android:visibility="invisible"
+        app:elevation="6dp"
+        app:fabSize="normal"/>
 
   </RelativeLayout>
 
   <!-- Loading View -->
   <include
-    android:id="@+id/main_loading_view"
-    layout="@layout/loading_icon"
-    android:visibility="invisible"/>
+      android:id="@+id/main_loading_view"
+      layout="@layout/loading_icon"
+      android:visibility="invisible"/>
 
   <!-- The navigation drawer -->
   <fragment
-    android:id="@+id/left_drawer"
-    android:name="com.bt4vt.fragment.NavigationDrawerFragment"
-    android:layout_width="@dimen/navigation_drawer_width"
-    android:layout_height="match_parent"
-    android:layout_gravity="start"/>
+      android:id="@+id/left_drawer"
+      android:name="com.bt4vt.fragment.NavigationDrawerFragment"
+      android:layout_width="@dimen/navigation_drawer_width"
+      android:layout_height="match_parent"
+      android:layout_gravity="start"/>
 
 </android.support.v4.widget.DrawerLayout>
