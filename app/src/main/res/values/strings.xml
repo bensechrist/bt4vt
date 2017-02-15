@@ -50,7 +50,7 @@
   <string name="nav_feedback">Feedback</string>
   <string name="nav_button_showcase_text">Open the navigation drawer to view routes. You can favorite stops to have BT4VT send you a notification about when the next bus will arrive when you arrive at a favorited stop. Also if you enjoy this app consider making a donation by selecting the "Donate" option in the navigation drawer.</string>
   <string name="app_feedback">BT4VT Feedback</string>
-  <string name="app_feedback_email">bensechrist@gmail.com</string>
+  <string name="app_feedback_email">bt4vtapp@gmail.com</string>
   <string name="showcase_confirm">Got It</string>
   <string name="no_routes">No routes</string>
   <string name="routes_loading_title">Loading Routes…</string>

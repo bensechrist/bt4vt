@@ -30,7 +30,7 @@ import roboguice.RoboGuice;
  * @author Ben Sechrist
  */
 @ReportsCrashes(
-    mailTo = "bensechrist@gmail.com",
+    mailTo = "bt4vtapp@gmail.com",
     mode = ReportingInteractionMode.DIALOG,
     resToastText = R.string.crash_toast_text,
     resDialogIcon = R.drawable.bus,
