@@ -269,6 +269,9 @@ public class MainActivity extends RoboFragmentActivity implements
                 .setIntent(intent)
                 .build();
             shortcuts.add(shortcut);
+            // Once we reach the max stop adding shortcuts
+            if (shortcuts.size() >= shortcutManager.getMaxShortcutCountPerActivity())
+              break;
           }
 
           shortcutManager.setDynamicShortcuts(shortcuts);
