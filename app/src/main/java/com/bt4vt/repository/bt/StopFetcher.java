@@ -42,8 +42,8 @@ import java.util.List;
 @Singleton
 public class StopFetcher extends Fetcher {
 
-  private static final String BT_ROUTE_PATH = "http://bt4userver.newcitystaging.com/routes/";
-  private static final String BT_STOP_PATH = "http://bt4userver.newcitystaging.com/stops/";
+  private static final String BT_ROUTE_PATH = "http://bt4userver.aciwebs.com/routes/";
+  private static final String BT_STOP_PATH = "http://bt4userver.aciwebs.com/stops/";
   private static final LatLngBounds VALID_BOUNDS = new LatLngBounds(new LatLng(37, -81), new LatLng(37.5, -79.5));
 
   /**
