@@ -37,7 +37,7 @@ import java.util.List;
 @Singleton
 public class BusFetcher extends Fetcher {
 
-  private static final String BT_BUS_PATH = "http://bt4userver.aciwebs.com/livemap";
+  private static final String BT_BUS_PATH = "https://commonlayer.bt4u.org/livemap";
 
   /**
    * Returns a list of all buses.
