@@ -8,7 +8,7 @@ import org.json.JSONObject;
 import java.util.Date;
 
 /**
- * BT4U bus information.
+ * BT4U bus information
  *
  * @author Ben Sechrist
  */

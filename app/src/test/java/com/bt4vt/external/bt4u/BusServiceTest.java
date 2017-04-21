@@ -23,7 +23,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 /**
- * Tests the {@link BusService}.
+ * Tests the {@link BusService}
  *
  * @author Ben Sechrist
  */
