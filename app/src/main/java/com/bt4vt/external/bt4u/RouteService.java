@@ -55,7 +55,7 @@ public class RouteService {
         try {
           int statusCode = response.code();
           if (statusCode == 200) {
-            String stringBody = response.body().string();
+          String stringBody = response.body().string();
             String routeListString = new JSONArray(stringBody).getJSONObject(0).getString("routeListHtml");
             Document document = Jsoup.parse(routeListString);
             Elements elements = document.getElementsByClass("list-group-item");
@@ -64,6 +64,8 @@ public class RouteService {
               routes.add(Route.valueOf(el));
             }
             callback.onResult(routes);
+          } else {
+            callback.onFail(statusCode, stringBody);
           }
         } catch (JSONException e) {
           callback.onException(e);
