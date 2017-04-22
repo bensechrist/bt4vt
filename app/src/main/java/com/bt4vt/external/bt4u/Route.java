@@ -2,6 +2,10 @@ package com.bt4vt.external.bt4u;
 
 import android.graphics.Color;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 /**
@@ -14,6 +18,8 @@ class Route {
   private String shortName;
 
   private String fullName;
+
+  private String plot;
 
   private Integer color;
 
@@ -35,6 +41,14 @@ class Route {
 
   public void setFullName(String fullName) {
     this.fullName = fullName;
+  }
+
+  public String getPlot() {
+    return plot;
+  }
+
+  public void setPlot(String plot) {
+    this.plot = plot;
   }
 
   public Integer getColor() {
@@ -70,6 +84,18 @@ class Route {
     Route route = new Route(splits[0]);
     route.setFullName(splits[1]);
     route.setColor(Color.parseColor(String.format("#%s", splits[2])));
+    return route;
+  }
+
+  public static Route valueOf(JSONObject json) throws JSONException {
+    Document document = Jsoup.parse(json.getString("routeDetailsHtml"));
+    Element header = document.getElementsByClass("headerBordered").first();
+    Element fullNameEl = header.child(0);
+    Element shortNameEl = header.child(1);
+    Route route = new Route(shortNameEl.text());
+    route.setFullName(fullNameEl.text());
+    route.setPlot(json.getString("routePlot"));
+    route.setColor(Color.parseColor(String.format("#%s", json.getString("routePlotColor"))));
     return route;
   }
 }

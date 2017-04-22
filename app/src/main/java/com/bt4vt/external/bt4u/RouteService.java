@@ -6,6 +6,7 @@ import com.google.inject.Singleton;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -54,8 +55,8 @@ public class RouteService {
       public void onResponse(Call call, Response response) throws IOException {
         try {
           int statusCode = response.code();
-          if (statusCode == 200) {
           String stringBody = response.body().string();
+          if (statusCode == 200) {
             String routeListString = new JSONArray(stringBody).getJSONObject(0).getString("routeListHtml");
             Document document = Jsoup.parse(routeListString);
             Elements elements = document.getElementsByClass("list-group-item");
@@ -64,6 +65,35 @@ public class RouteService {
               routes.add(Route.valueOf(el));
             }
             callback.onResult(routes);
+          } else {
+            callback.onFail(statusCode, stringBody);
+          }
+        } catch (JSONException e) {
+          callback.onException(e);
+        }
+      }
+    });
+  }
+
+  public void get(String shortName, final Callback<Route> callback) {
+    Request request = requestBuilder
+        .url(BT4U_ROUTE_URL + '/' + shortName)
+        .build();
+
+    client.newCall(request).enqueue(new okhttp3.Callback() {
+      @Override
+      public void onFailure(Call call, IOException e) {
+        callback.onException(e);
+      }
+
+      @Override
+      public void onResponse(Call call, Response response) throws IOException {
+        try {
+          int statusCode = response.code();
+          String stringBody = response.body().string();
+          if (statusCode == 200) {
+            JSONObject jsonRoute = new JSONArray(stringBody).getJSONObject(0);
+            callback.onResult(Route.valueOf(jsonRoute));
           } else {
             callback.onFail(statusCode, stringBody);
           }

@@ -57,4 +57,20 @@ public class RouteServiceTest {
     verify(httpClient, times(1)).newCall(request);
     verify(call, times(1)).enqueue(any(okhttp3.Callback.class));
   }
+
+  @Test
+  public void testGet() throws Exception {
+    doReturn(requestBuilder).when(requestBuilder).url(any(String.class));
+    doReturn(request).when(requestBuilder).build();
+    doReturn(call).when(httpClient).newCall(request);
+
+    String shortName = "test";
+
+    routeService.get(shortName, null);
+
+    verify(requestBuilder, times(1)).url(ROUTE_URL + '/' + shortName);
+    verify(requestBuilder, times(1)).build();
+    verify(httpClient, times(1)).newCall(request);
+    verify(call, times(1)).enqueue(any(okhttp3.Callback.class));
+  }
 }
