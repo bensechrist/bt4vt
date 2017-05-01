@@ -35,20 +35,25 @@ import java.util.List;
 @Singleton
 public class BusFactory {
 
-  public List<Bus> buses(JSONArray jsonArray) throws JSONException {
-    JSONArray jsonBuses = jsonArray.getJSONObject(0).getJSONArray("buses");
+  public List<Bus> buses(JSONArray jsonBuses) throws JSONException {
     List<Bus> buses = new ArrayList<>();
-    for (int i=0; i<jsonBuses.length(); i++) {
+    for (int i = 0; i < jsonBuses.length(); i++) {
       JSONObject jsonBus = jsonBuses.getJSONObject(i);
-      Bus bus = new Bus(jsonBus.getString("busId"));
+      Bus bus = new Bus(jsonBus.getString("id"));
+      JSONObject jsonRoute = jsonBus.getJSONObject("route");
+      Route route = new Route(jsonRoute.getString("shortName"));
+      route.setFullName(jsonRoute.getString("fullName"));
+      bus.setRoute(route);
+      bus.setLatLng(new LatLng(jsonBus.getDouble("latitude"), jsonBus.getDouble("longitude")));
       bus.setDirection(jsonBus.getInt("direction"));
       bus.setTripper(jsonBus.getBoolean("isTripper"));
-      bus.setLastStopCode(jsonBus.getString("lastStopCode"));
-      bus.setLastStopName(jsonBus.getString("lastStopName"));
-      bus.setLatLng(new LatLng(jsonBus.getDouble("latitude"), jsonBus.getDouble("longitude")));
       bus.setPassengers(jsonBus.getInt("passengers"));
-      bus.setFullRouteName(jsonBus.getString("pattern"));
-      bus.setShortRouteName(jsonBus.getString("route"));
+      if (jsonBus.has("lastStopCode")) {
+        bus.setLastStopCode(jsonBus.getString("lastStopCode"));
+      }
+      if (jsonBus.has("lastStopName")) {
+        bus.setLastStopName(jsonBus.getString("lastStopName"));
+      }
       bus.setTimestamp(new Date(jsonBus.getLong("timestamp")));
       buses.add(bus);
     }

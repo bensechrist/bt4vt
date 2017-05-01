@@ -18,27 +18,28 @@
 
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
   <group
-      android:id="@+id/nav_routes_group">
+    android:id="@+id/nav_routes_group">
     <item
-        android:id="@+id/nav_loading"
-        android:orderInCategory="0"
-        android:title="@string/routes_loading_title"
-        android:visible="false"/>
+      android:id="@+id/nav_loading"
+      android:orderInCategory="0"
+      android:title="@string/routes_loading_title"
+      android:visible="true"/>
     <item
-        android:id="@+id/nav_view_all_stops"
-        android:checkable="true"
-        android:orderInCategory="2"
-        android:title="@string/nav_item_view_all_stops"/>
+      android:id="@+id/nav_view_all_stops"
+      android:checkable="true"
+      android:orderInCategory="2"
+      android:title="@string/nav_item_view_all_stops"
+      android:visible="false"/>
   </group>
   <group
-      android:id="@+id/nav_other_group">
+    android:id="@+id/nav_other_group">
     <item
-        android:id="@+id/nav_feedback"
-        android:orderInCategory="100"
-        android:title="@string/nav_feedback"/>
+      android:id="@+id/nav_feedback"
+      android:orderInCategory="100"
+      android:title="@string/nav_feedback"/>
     <item
-        android:id="@+id/nav_donation"
-        android:orderInCategory="101"
-        android:title="@string/nav_donation"/>
+      android:id="@+id/nav_donation"
+      android:orderInCategory="101"
+      android:title="@string/nav_donation"/>
   </group>
 </menu>

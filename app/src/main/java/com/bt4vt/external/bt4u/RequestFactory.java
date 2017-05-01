@@ -16,17 +16,22 @@
 
 package com.bt4vt.external.bt4u;
 
-import com.android.volley.NetworkResponse;
-import com.android.volley.Request;
+import com.android.volley.AuthFailureError;
 import com.android.volley.Response;
 import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.bt4vt.R;
 import com.google.inject.Singleton;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.List;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.util.HashMap;
+import java.util.Map;
 
 import roboguice.inject.InjectResource;
 
@@ -38,46 +43,101 @@ import roboguice.inject.InjectResource;
 @Singleton
 class RequestFactory {
 
-  @InjectResource(com.bt4vt.R.string.bt4u_base_url)
+  @InjectResource(R.string.bt4u_base_url)
   String BT4U_BASE_URL;
 
-  private final String BT4U_ROUTE_URI = "/routes/%s";
+  @InjectResource(R.string.bt4u_api_header_key)
+  private String API_HEADER_KEY;
 
-  private final String BT4U_BUS_URI = "/livemap";
+  @InjectResource(R.string.bt4u_api_key)
+  private String API_KEY;
 
-  private URL getUrl(String uri) throws MalformedURLException {
-    return new URL(new URL(BT4U_BASE_URL), uri);
+  private final String BT4U_BUS_URI = "buses?route=%s";
+
+  private final String BT4U_DEPARTURE_URI = "departures?route=%s&stopCode=%s";
+
+  private final String BT4U_ROUTE_URI = "routes/%s";
+
+  private final String BT4U_STOP_URI = "stops/%s";
+
+  private URI getUrl(String uri) throws URISyntaxException {
+    return new URI(BT4U_BASE_URL).resolve(uri);
   }
 
-  public Request<List<Route>> routes(Response.Listener<List<Route>> listener,
+  private Map<String, String> getBT4VTHeaders() {
+    Map<String, String> headers = new HashMap<>();
+    headers.put(API_HEADER_KEY, API_KEY);
+    return headers;
+  }
+
+  private class BT4VTArrayRequest extends JsonArrayRequest {
+    BT4VTArrayRequest(String url, Response.Listener<JSONArray> listener,
+                      Response.ErrorListener errorListener) {
+      super(url, listener, errorListener);
+    }
+
+    @Override
+    public Map<String, String> getHeaders() throws AuthFailureError {
+      return getBT4VTHeaders();
+    }
+  }
+
+  private class BT4VTRequest extends JsonObjectRequest {
+    BT4VTRequest(String url, JSONObject jsonRequest, Response.Listener<JSONObject> listener,
+                 Response.ErrorListener errorListener) {
+      super(url, jsonRequest, listener, errorListener);
+    }
+
+    @Override
+    public Map<String, String> getHeaders() throws AuthFailureError {
+      return getBT4VTHeaders();
+    }
+  }
+
+  public JsonArrayRequest buses(String route, Response.Listener<JSONArray> listener,
+                                Response.ErrorListener errorListener) throws URISyntaxException {
+    try {
+      URI url = getUrl(String.format(BT4U_BUS_URI, URLEncoder.encode(route, "UTF-8")));
+      return new BT4VTArrayRequest(url.toString(), listener, errorListener);
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public JsonArrayRequest departures(String route, String stopCode,
+                                     Response.Listener<JSONArray> listener,
                                      Response.ErrorListener errorListener)
-      throws MalformedURLException {
-    URL url = getUrl(String.format(BT4U_ROUTE_URI, ""));
-    return (new Request<List<Route>>(Request.Method.GET, url.toExternalForm(), null, listener,
-        errorListener) {
-      @Override
-      protected Response<List<Route>> parseNetworkResponse(NetworkResponse response) {
-        return null;
-      }
-
-      @Override
-      protected void deliverResponse(List<Route> response) {
-
-      }
-    });
+      throws URISyntaxException {
+    try {
+      URI url = getUrl(String.format(BT4U_DEPARTURE_URI, URLEncoder.encode(route, "UTF-8"),
+          URLEncoder.encode(stopCode, "UTF-8")));
+      return new BT4VTArrayRequest(url.toString(), listener, errorListener);
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(e);
+    }
   }
 
-  public JsonArrayRequest route(String shortName, Response.Listener<JSONArray> listener,
-                                Response.ErrorListener errorListener) throws MalformedURLException {
-    URL url = getUrl(String.format(BT4U_ROUTE_URI, shortName));
-    return (new JsonArrayRequest(Request.Method.GET, url.toExternalForm(), null, listener,
-        errorListener));
+  public JsonArrayRequest routes(Response.Listener<JSONArray> listener,
+                                 Response.ErrorListener errorListener) throws URISyntaxException {
+    URI url = getUrl(String.format(BT4U_ROUTE_URI, ""));
+    return new BT4VTArrayRequest(url.toString(), listener, errorListener);
   }
 
-  public JsonArrayRequest buses(Response.Listener<JSONArray> listener,
-                                Response.ErrorListener errorListener) throws MalformedURLException {
-    URL url = getUrl(BT4U_BUS_URI);
-    return (new JsonArrayRequest(Request.Method.GET, url.toExternalForm(), null, listener,
-        errorListener));
+  public JsonObjectRequest route(String shortName, Response.Listener<JSONObject> listener,
+                                 Response.ErrorListener errorListener) throws URISyntaxException {
+    URI url = getUrl(String.format(BT4U_ROUTE_URI, shortName));
+    return new BT4VTRequest(url.toString(), null, listener, errorListener);
+  }
+
+  public JsonArrayRequest stops(Response.Listener<JSONArray> listener,
+                                Response.ErrorListener errorListener) throws URISyntaxException {
+    URI url = getUrl(String.format(BT4U_STOP_URI, ""));
+    return new BT4VTArrayRequest(url.toString(), listener, errorListener);
+  }
+
+  public JsonObjectRequest stop(String stopCode, Response.Listener<JSONObject> listener,
+                                Response.ErrorListener errorListener) throws URISyntaxException {
+    URI url = getUrl(String.format(BT4U_STOP_URI, stopCode));
+    return new BT4VTRequest(url.toString(), null, listener, errorListener);
   }
 }

@@ -16,8 +16,6 @@
 
 package com.bt4vt;
 
-import com.bt4vt.repository.module.TransitModule;
-
 import org.acra.ACRA;
 import org.acra.ReportingInteractionMode;
 import org.acra.annotation.ReportsCrashes;
@@ -45,10 +43,6 @@ public class App extends com.activeandroid.app.Application {
     super.onCreate();
 
     RoboGuice.setUseAnnotationDatabases(false);
-    // Setup RoboGuice modules
-    RoboGuice.getOrCreateBaseApplicationInjector(this,
-        RoboGuice.DEFAULT_STAGE,
-        RoboGuice.newDefaultRoboModule(this), new TransitModule());
 
     // Setup ACRA
     ACRA.init(this);

@@ -16,6 +16,10 @@
 
 package com.bt4vt.external.bt4u;
 
+import com.android.volley.Response;
+import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,70 +27,74 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import okhttp3.Call;
-import okhttp3.Request;
-
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 /**
- * Tests the {@link RouteService}
+ * Tests the {@link RouteService}.
  *
  * @author Ben Sechrist
  */
 @RunWith(MockitoJUnitRunner.class)
 public class RouteServiceTest {
 
-  private static final String ROUTE_URL = "route-url";
+  private static final String BASE_URL = "http://base-url";
 
   @Mock
-  private HttpClient httpClient;
+  private RequestService requestService;
 
   @Mock
-  private Request.Builder requestBuilder;
+  private RouteFactory routeFactory;
 
   @Mock
-  private Call call;
+  private RequestFactory requestFactory;
+
+  @Mock
+  private JsonArrayRequest jsonArrayRequest;
+
+  @Mock
+  private JsonObjectRequest jsonObjectRequest;
+
+  @Mock
+  private com.bt4vt.external.bt4u.Response.Listener listener;
+
+  @Mock
+  private com.bt4vt.external.bt4u.Response.ExceptionListener exceptionListener;
 
   @InjectMocks
   private RouteService routeService;
 
-  private Request request;
-
   @Before
   public void injectBaseUrl() {
-    routeService.BT4U_ROUTE_URL = ROUTE_URL;
+    requestFactory.BT4U_BASE_URL = BASE_URL;
   }
 
   @Test
   public void testGetAll() throws Exception {
-    doReturn(requestBuilder).when(requestBuilder).url(ROUTE_URL);
-    doReturn(request).when(requestBuilder).build();
-    doReturn(call).when(httpClient).newCall(request);
+    doReturn(jsonArrayRequest).when(requestFactory).routes(any(Response.Listener.class),
+        any(Response.ErrorListener.class));
 
-    routeService.getAll(null);
+    routeService.getAll(listener, exceptionListener);
 
-    verify(requestBuilder, times(1)).url(ROUTE_URL);
-    verify(requestBuilder, times(1)).build();
-    verify(httpClient, times(1)).newCall(request);
-    verify(call, times(1)).enqueue(any(okhttp3.Callback.class));
+    verify(requestFactory, times(1)).routes(any(Response.Listener.class),
+        any(Response.ErrorListener.class));
+    verify(requestService, times(1)).addToRequestQueue(jsonArrayRequest);
   }
 
   @Test
   public void testGet() throws Exception {
-    doReturn(requestBuilder).when(requestBuilder).url(any(String.class));
-    doReturn(request).when(requestBuilder).build();
-    doReturn(call).when(httpClient).newCall(request);
+    final String shortCode = "test";
 
-    String shortName = "test";
+    doReturn(jsonObjectRequest).when(requestFactory).route(eq(shortCode), any(Response.Listener.class),
+        any(Response.ErrorListener.class));
 
-    routeService.get(shortName, null);
+    routeService.get(shortCode, listener, exceptionListener);
 
-    verify(requestBuilder, times(1)).url(ROUTE_URL + '/' + shortName);
-    verify(requestBuilder, times(1)).build();
-    verify(httpClient, times(1)).newCall(request);
-    verify(call, times(1)).enqueue(any(okhttp3.Callback.class));
+    verify(requestFactory, times(1)).route(eq(shortCode), any(Response.Listener.class),
+        any(Response.ErrorListener.class));
+    verify(requestService, times(1)).addToRequestQueue(jsonObjectRequest);
   }
 }

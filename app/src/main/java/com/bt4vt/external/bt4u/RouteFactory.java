@@ -18,15 +18,12 @@ package com.bt4vt.external.bt4u;
 
 import android.graphics.Color;
 
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,37 +36,40 @@ import java.util.List;
 @Singleton
 public class RouteFactory {
 
+  @Inject
+  private StopFactory stopFactory;
+
   public List<Route> routes(JSONArray jsonArray) throws JSONException {
-    String routeListString = jsonArray.getJSONObject(0).getString("routeListHtml");
-    Document routeListDocument = Jsoup.parse(routeListString);
-    Elements routeElements = routeListDocument.getElementsByClass("list-group-item");
     List<Route> routes = new ArrayList<>();
-    for (Element el : routeElements) {
-      String attrValue = el.attr("data-routes");
-      String[] splits = attrValue.split("\\|");
-      if (splits.length != 3) {
-        System.err.println("Unexpected 'data-routes' attribute value " + attrValue);
-        continue;
-      }
-      Route route = new Route(splits[0]);
-      route.setFullName(splits[1]);
-      route.setColor(Color.parseColor(String.format("#%s", splits[2])));
+    for (int i = 0; i < jsonArray.length(); i++) {
+      JSONObject jsonRoute = jsonArray.getJSONObject(i);
+      Route route = route(jsonRoute);
       routes.add(route);
     }
     return routes;
   }
 
-  public Route route(JSONArray jsonArray) throws JSONException {
-    JSONObject json = jsonArray.getJSONObject(0);
-    String routeDetailsString = json.getString("routeDetailsHtml");
-    Document routeDetailsDocument = Jsoup.parse(routeDetailsString);
-    Element header = routeDetailsDocument.getElementsByClass("headerBordered").first();
-    Element fullNameEl = header.child(0);
-    Element shortNameEl = header.child(1);
-    Route route = new Route(shortNameEl.text());
-    route.setFullName(fullNameEl.text());
-    route.setPlot(json.getString("routePlot"));
-    route.setColor(Color.parseColor(String.format("#%s", json.getString("routePlotColor"))));
+  public Route route(JSONObject jsonRoute) throws JSONException {
+    Route route = new Route(jsonRoute.getString("shortName"));
+    if (jsonRoute.has("fullName")) {
+      route.setFullName(jsonRoute.getString("fullName"));
+    }
+    if (jsonRoute.has("plot")) {
+      route.setPlot(jsonRoute.getString("plot"));
+    }
+    if (jsonRoute.has("plotColor")) {
+      route.setColor(Color.parseColor(String.format("#%s", jsonRoute.getString("plotColor"))));
+    }
+    if (jsonRoute.has("stops")) {
+      List<Stop> stops = new ArrayList<>();
+      JSONArray jsonStops = jsonRoute.getJSONArray("stops");
+      for (int j = 0; j < jsonStops.length(); j++) {
+        JSONObject jsonStop = jsonStops.getJSONObject(j);
+        Stop stop = stopFactory.stop(jsonStop);
+        stops.add(stop);
+      }
+      route.setStops(stops);
+    }
     return route;
   }
 }

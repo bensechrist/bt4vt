@@ -25,6 +25,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.RemoteException;
+import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
@@ -39,19 +40,13 @@ import com.android.vending.billing.IInAppBillingService;
 import com.bt4vt.BuildConfig;
 import com.bt4vt.MainActivity;
 import com.bt4vt.R;
-import com.bt4vt.async.AsyncCallback;
 import com.bt4vt.async.DonationConsumeAsyncTask;
-import com.bt4vt.async.DonationOptionAsyncTask;
-import com.bt4vt.async.RouteAsyncTask;
-import com.bt4vt.repository.TransitRepository;
-import com.bt4vt.repository.model.RouteModel;
-import com.bt4vt.repository.model.RouteModelFactory;
+import com.bt4vt.external.bt4u.Route;
 import com.google.inject.Inject;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -67,26 +62,18 @@ import static android.app.Activity.RESULT_OK;
  *
  * @author Ben Sechrist
  */
-public class NavigationDrawerFragment extends RoboFragment implements View.OnClickListener,
-    NavigationView.OnNavigationItemSelectedListener, AsyncCallback<List<String>> {
+public class NavigationDrawerFragment extends RoboFragment implements
+    NavigationView.OnNavigationItemSelectedListener {
 
   private static final String TAG = "NavigationDrawer";
 
   @Inject
-  private TransitRepository transitRepository;
-
-  @Inject
   private SharedPreferences preferences;
-
-  @Inject
-  private RouteModelFactory routeModelFactory;
 
   @InjectView(R.id.nav_view)
   private NavigationView navView;
 
   private TalkToActivity activity;
-
-  private View navHeader;
 
   private MenuItem lastMenuItem;
 
@@ -119,55 +106,19 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
     navView.setNavigationItemSelectedListener(this);
   }
 
-  @Override
-  public void onClick(View v) {
-    fetchRoutes();
-  }
-
-  public void fetchRoutes() {
-    navView.getMenu().findItem(R.id.nav_loading).setVisible(true);
-    RouteAsyncTask task = new RouteAsyncTask(transitRepository, new AsyncCallback<List<RouteModel>>() {
-      @Override
-      public void onSuccess(List<RouteModel> routes) {
-        setRouteNames(routes);
-        if (routes.isEmpty()) {
-          View view = getView();
-          if (view != null) {
-            Snackbar.make(view, R.string.no_routes, Snackbar.LENGTH_LONG)
-                .setAction(R.string.retry, NavigationDrawerFragment.this)
-                .show();
-          }
-        }
-      }
-
-      @Override
-      public void onException(Exception e) {
-        setRouteNames(new ArrayList<RouteModel>());
-        e.printStackTrace();
-        View view = getView();
-        if (view != null) {
-          Snackbar.make(view, R.string.routes_error, Snackbar.LENGTH_INDEFINITE)
-              .setAction(R.string.retry, NavigationDrawerFragment.this)
-              .show();
-        }
-      }
-    });
-    task.execute();
-  }
-
-  private void setRouteNames(List<RouteModel> routes) {
-    Collections.sort(routes);
+  public void setRouteNames(List<Route> routes) {
     Menu menu = navView.getMenu();
     menu.findItem(R.id.nav_loading).setVisible(false);
-    for (RouteModel route : routes) {
-      MenuItem item = menu.add(R.id.nav_routes_group, Menu.NONE, 1, route.getName());
+    menu.findItem(R.id.nav_view_all_stops).setVisible(true);
+    for (Route route : routes) {
+      MenuItem item = menu.add(R.id.nav_routes_group, Menu.NONE, 1, route.getFullName());
       item.setTitleCondensed(route.getShortName());
       item.setCheckable(true);
     }
   }
 
   @Override
-  public boolean onNavigationItemSelected(MenuItem menuItem) {
+  public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
     if (activity.isLoadingContent()) {
       Snackbar.make(navView, R.string.content_loading, Snackbar.LENGTH_LONG)
           .show();
@@ -191,7 +142,9 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
       if (menuItemId == R.id.nav_view_all_stops) {
         activity.showAllStops();
       } else {
-        activity.onRouteSelected(routeModelFactory.createModel(menuItem));
+        Route route = new Route(menuItem.getTitleCondensed().toString());
+        route.setFullName(menuItem.getTitle().toString());
+        activity.onRouteSelected(route);
       }
       activity.closeDrawer();
     } else {
@@ -203,7 +156,8 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
         IInAppBillingService billingService = activity.getBillingService();
         if (billingService != null) {
           activity.closeDrawer();
-          new DonationOptionAsyncTask(billingService, getActivity().getPackageName(), this).execute();
+          // TODO: implement donation service
+//          new DonationOptionAsyncTask(billingService, getActivity().getPackageName(), this).execute();
         }
       }
     }
@@ -300,29 +254,30 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
     }
   }
 
-  @Override
-  public void onSuccess(List<String> strings) {
-    Log.d(TAG, "Result " + strings.toString());
-    try {
-      List<JSONObject> products = new ArrayList<>();
-      for (String str : strings) {
-        products.add(new JSONObject(str));
-      }
-      showDonationDialog(products);
-    } catch (JSONException e) {
-      onException(e);
-    }
-  }
-
-  @Override
-  public void onException(Exception e) {
-    Log.e(TAG, e.getLocalizedMessage());
-    View view = getView();
-    if (view != null) {
-      Snackbar.make(view, R.string.get_donations_error, Snackbar.LENGTH_LONG)
-          .show();
-    }
-  }
+// This will be handled with a callback from the donation service above
+//  @Override
+//  public void onSuccess(List<String> strings) {
+//    Log.d(TAG, "Result " + strings.toString());
+//    try {
+//      List<JSONObject> products = new ArrayList<>();
+//      for (String str : strings) {
+//        products.add(new JSONObject(str));
+//      }
+//      showDonationDialog(products);
+//    } catch (JSONException e) {
+//      onException(e);
+//    }
+//  }
+//
+//  @Override
+//  public void onException(Exception e) {
+//    Log.e(TAG, e.getLocalizedMessage());
+//    View view = getView();
+//    if (view != null) {
+//      Snackbar.make(view, R.string.get_donations_error, Snackbar.LENGTH_LONG)
+//          .show();
+//    }
+//  }
 
   /**
    * Used to communicate with the main activity from a fragment.
@@ -336,7 +291,7 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
      *
      * @param routeName name of the route
      */
-    void onRouteSelected(RouteModel routeName);
+    void onRouteSelected(Route routeName);
 
     /**
      * Closes the drawer.
@@ -357,6 +312,7 @@ public class NavigationDrawerFragment extends RoboFragment implements View.OnCli
 
     /**
      * Retrieves the {@link IInAppBillingService} object.
+     *
      * @return the InAppBillingService
      */
     IInAppBillingService getBillingService();

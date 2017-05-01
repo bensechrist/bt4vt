@@ -16,7 +16,6 @@
 
 package com.bt4vt.external.bt4u;
 
-import com.google.android.gms.maps.model.LatLng;
 import com.google.inject.Singleton;
 
 import org.json.JSONArray;
@@ -27,27 +26,26 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Creates {@link Stop} objects.
+ * Creates {@link Departure} objects.
  *
  * @author Ben Sechrist
  */
 @Singleton
-class StopFactory {
+public class DepartureFactory {
 
-  public List<Stop> stops(JSONArray jsonStops) throws JSONException {
-    List<Stop> stops = new ArrayList<>();
-    for (int i = 0; i < jsonStops.length(); i++) {
-      JSONObject jsonStop = jsonStops.getJSONObject(i);
-      Stop stop = stop(jsonStop);
-      stops.add(stop);
+  public List<Departure> departures(JSONArray jsonDepartures) throws JSONException {
+    List<Departure> departures = new ArrayList<>();
+    for (int i = 0; i < jsonDepartures.length(); i++) {
+      JSONObject jsonDeparture = jsonDepartures.getJSONObject(i);
+      Departure departure = new Departure(jsonDeparture.getString("routeName"));
+      List<String> departureStrings = new ArrayList<>();
+      JSONArray jsonDepartureStrings = jsonDeparture.getJSONArray("departures");
+      for (int j = 0; j < jsonDepartureStrings.length(); j++) {
+        departureStrings.add(jsonDepartureStrings.getString(j));
+      }
+      departure.setDepartures(departureStrings);
+      departures.add(departure);
     }
-    return stops;
-  }
-
-  public Stop stop(JSONObject jsonStop) throws JSONException {
-    Stop stop = new Stop(jsonStop.getString("code"));
-    stop.setName(jsonStop.getString("name"));
-    stop.setLatLng(new LatLng(jsonStop.getDouble("latitude"), jsonStop.getDouble("longitude")));
-    return stop;
+    return departures;
   }
 }

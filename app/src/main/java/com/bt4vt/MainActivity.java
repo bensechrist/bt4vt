@@ -17,7 +17,6 @@
 package com.bt4vt;
 
 import android.Manifest;
-import android.annotation.TargetApi;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -25,9 +24,6 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.content.pm.ShortcutInfo;
-import android.content.pm.ShortcutManager;
-import android.graphics.drawable.Icon;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
@@ -43,20 +39,22 @@ import android.view.View;
 import android.widget.ImageButton;
 
 import com.android.vending.billing.IInAppBillingService;
-import com.bt4vt.async.AsyncCallback;
-import com.bt4vt.async.DonationOptionAsyncTask;
-import com.bt4vt.async.FavoritedStopsAsyncTask;
+import com.bt4vt.external.bt4u.Bus;
+import com.bt4vt.external.bt4u.BusService;
+import com.bt4vt.external.bt4u.Response;
+import com.bt4vt.external.bt4u.Route;
+import com.bt4vt.external.bt4u.RouteService;
+import com.bt4vt.external.bt4u.Stop;
+import com.bt4vt.external.bt4u.StopService;
 import com.bt4vt.fragment.NavigationDrawerFragment;
 import com.bt4vt.fragment.RetainedMapFragment;
-import com.bt4vt.repository.TransitRepository;
-import com.bt4vt.repository.model.RouteModel;
-import com.bt4vt.repository.model.StopModel;
+import com.bt4vt.fragment.ScheduledDeparturesDialogFragment;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.inject.Inject;
 
-import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
 
 import roboguice.activity.RoboFragmentActivity;
@@ -76,6 +74,8 @@ public class MainActivity extends RoboFragmentActivity implements
 
   private static final String TAG = "MainActivity";
 
+  private static final String DEPARTURES_DIALOG_TAG = "scheduled_departures_dialog_tag";
+
   public static final String EXTRA_STOP = "com.bt4vt.extra.stop";
   private static final String FIRST_TIME_OPEN_KEY = "first_time_open_app";
   private static final String TIMES_OPENED_KEY = "number_times_opened_app";
@@ -90,7 +90,13 @@ public class MainActivity extends RoboFragmentActivity implements
   private ConnectivityManager connectivityManager;
 
   @Inject
-  private TransitRepository transitRepository;
+  private BusService busService;
+
+  @Inject
+  private RouteService routeService;
+
+  @Inject
+  private StopService stopService;
 
   @InjectView(R.id.drawer_layout)
   private DrawerLayout mDrawerLayout;
@@ -109,6 +115,8 @@ public class MainActivity extends RoboFragmentActivity implements
   private NavigationDrawerFragment navFragment;
 
   private IInAppBillingService inAppBillingService;
+
+  private Route currentRoute;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -137,6 +145,14 @@ public class MainActivity extends RoboFragmentActivity implements
   @Override
   protected void onDestroy() {
     super.onDestroy();
+    if (inAppBillingService != null) {
+      unbindService(this);
+    }
+  }
+
+  @Override
+  protected void onStop() {
+    super.onStop();
     if (inAppBillingService != null) {
       unbindService(this);
     }
@@ -187,26 +203,49 @@ public class MainActivity extends RoboFragmentActivity implements
   }
 
   @Override
-  public void onStopsReady(List<StopModel> stops) {
-    mapFragment.showStops(stops);
-  }
-
-  @Override
-  public void onRouteSelected(RouteModel route) {
+  public void onRouteSelected(Route route) {
     mainLoadingView.setVisibility(View.VISIBLE);
     refreshRouteButton.setVisibility(View.VISIBLE);
-    mapFragment.setCurrentRoute(route);
+    currentRoute = route;
     mapFragment.clearMap();
-    mapFragment.fetchStops(route);
-    mapFragment.showBuses(route);
+    routeService.get(route.getShortName(), new Response.Listener<Route>() {
+      @Override
+      public void onResult(Route route) {
+        List<Stop> stops = route.getStops();
+        if (stops.isEmpty()) {
+          View view = mapFragment.getView();
+          if (view != null) {
+            Snackbar.make(view, R.string.no_stops, Snackbar.LENGTH_LONG)
+                .show();
+          }
+          hideLoadingIcon();
+          return;
+        }
+        mapFragment.showRoutePlot(route.getPlot(), route.getColor());
+        mapFragment.showStops(route.getStops());
+      }
+    }, new ExceptionHandler(getString(R.string.stops_error), mapFragment.getView(), Snackbar.LENGTH_LONG));
+    busService.get(route.getShortName(), new Response.Listener<List<Bus>>() {
+      @Override
+      public void onResult(List<Bus> buses) {
+        mapFragment.showBuses(buses);
+      }
+    }, new ExceptionHandler(getString(R.string.bus_error), mapFragment.getView(),
+        Snackbar.LENGTH_SHORT));
   }
 
   @Override
   public void showAllStops() {
     mainLoadingView.setVisibility(View.VISIBLE);
-    mapFragment.setCurrentRoute(null);
+    currentRoute = null;
     mapFragment.clearMap();
-    mapFragment.fetchStops(null);
+    stopService.getAll(new Response.Listener<List<Stop>>() {
+      @Override
+      public void onResult(List<Stop> stops) {
+        mapFragment.showStops(stops);
+      }
+    }, new ExceptionHandler(getString(R.string.stops_error), mapFragment.getView(),
+        Snackbar.LENGTH_LONG));
   }
 
   @Override
@@ -228,7 +267,7 @@ public class MainActivity extends RoboFragmentActivity implements
         }
       }
     } else if (v.getId() == refreshRouteButton.getId()) {
-      onRouteSelected(mapFragment.getCurrentRoute());
+      onRouteSelected(currentRoute);
     } else {
       initData();
       checkNetwork();
@@ -248,42 +287,42 @@ public class MainActivity extends RoboFragmentActivity implements
 
   private void setShortcuts() {
     if (Build.VERSION.SDK_INT >= 25) {
-      new FavoritedStopsAsyncTask(transitRepository, new AsyncCallback<List<StopModel>>() {
-        @TargetApi(25)
-        @Override
-        public void onSuccess(List<StopModel> stopModels) {
-          Log.d(TAG, "models " + stopModels.toString());
-          ShortcutManager shortcutManager = getSystemService(ShortcutManager.class);
-
-          List<ShortcutInfo> shortcuts = new ArrayList<>();
-
-          for (StopModel stopModel : stopModels) {
-            Intent intent = new Intent(MainActivity.this, MainActivity.class);
-            intent.setAction(Intent.ACTION_MAIN);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            intent.putExtra(MainActivity.EXTRA_STOP, stopModel.toString());
-            ShortcutInfo shortcut = new ShortcutInfo.Builder(MainActivity.this, String.valueOf(stopModel.getCode()))
-                .setShortLabel(stopModel.getName())
-                .setLongLabel(stopModel.getName())
-                .setIcon(Icon.createWithResource(MainActivity.this, R.drawable.bus_stop_icon))
-                .setIntent(intent)
-                .build();
-            shortcuts.add(shortcut);
-            // Once we reach the max stop adding shortcuts
-            if (shortcuts.size() >= shortcutManager.getMaxShortcutCountPerActivity())
-              break;
-          }
-
-          shortcutManager.setDynamicShortcuts(shortcuts);
-
-          Log.d(TAG, "shortcuts " + shortcutManager.getDynamicShortcuts());
-        }
-
-        @Override
-        public void onException(Exception e) {
-
-        }
-      }).execute();
+//      new FavoritedStopsAsyncTask(transitRepository, new AsyncCallback<List<StopModel>>() {
+//        @TargetApi(25)
+//        @Override
+//        public void onSuccess(List<StopModel> stopModels) {
+//          Log.d(TAG, "models " + stopModels.toString());
+//          ShortcutManager shortcutManager = getSystemService(ShortcutManager.class);
+//
+//          List<ShortcutInfo> shortcuts = new ArrayList<>();
+//
+//          for (StopModel stopModel : stopModels) {
+//            Intent intent = new Intent(MainActivity.this, MainActivity.class);
+//            intent.setAction(Intent.ACTION_MAIN);
+//            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+//            intent.putExtra(MainActivity.EXTRA_STOP, stopModel.toString());
+//            ShortcutInfo shortcut = new ShortcutInfo.Builder(MainActivity.this, String.valueOf(stopModel.getCode()))
+//                .setShortLabel(stopModel.getName())
+//                .setLongLabel(stopModel.getName())
+//                .setIcon(Icon.createWithResource(MainActivity.this, R.drawable.bus_stop_icon))
+//                .setIntent(intent)
+//                .build();
+//            shortcuts.add(shortcut);
+//            // Once we reach the max stop adding shortcuts
+//            if (shortcuts.size() >= shortcutManager.getMaxShortcutCountPerActivity())
+//              break;
+//          }
+//
+//          shortcutManager.setDynamicShortcuts(shortcuts);
+//
+//          Log.d(TAG, "shortcuts " + shortcutManager.getDynamicShortcuts());
+//        }
+//
+//        @Override
+//        public void onException(Exception e) {
+//
+//        }
+//      }).execute();
     }
   }
 
@@ -293,9 +332,22 @@ public class MainActivity extends RoboFragmentActivity implements
       String stopString = intent.getStringExtra(EXTRA_STOP);
       if (stopString != null) {
         mainLoadingView.setVisibility(View.VISIBLE);
-        mapFragment.fetchStop(stopString);
+        stopService.get(stopString, new Response.Listener<Stop>() {
+          @Override
+          public void onResult(Stop result) {
+            mapFragment.showStops(Collections.singletonList(result));
+          }
+        }, new ExceptionHandler(getString(R.string.stop_error), mapFragment.getView(),
+            Snackbar.LENGTH_LONG));
       }
-      navFragment.fetchRoutes();
+      routeService.getAll(new Response.Listener<List<Route>>() {
+        @Override
+        public void onResult(List<Route> result) {
+          Collections.sort(result);
+          navFragment.setRouteNames(result);
+        }
+      }, new ExceptionHandler(getString(R.string.routes_error), mapFragment.getView(),
+          Snackbar.LENGTH_INDEFINITE));
     }
   }
 
@@ -322,6 +374,17 @@ public class MainActivity extends RoboFragmentActivity implements
   @Override
   public void showLoadingIcon() {
     mainLoadingView.setVisibility(View.VISIBLE);
+  }
+
+  @Override
+  public void showDeparturesDialog(Stop stop, Route route) {
+    ScheduledDeparturesDialogFragment.newInstance(stop, route)
+        .show(getSupportFragmentManager(), DEPARTURES_DIALOG_TAG);
+  }
+
+  @Override
+  public Route getCurrentRoute() {
+    return currentRoute;
   }
 
   private boolean isNetworkAvailable() {
@@ -359,7 +422,8 @@ public class MainActivity extends RoboFragmentActivity implements
             @Override
             public void onClick(DialogInterface dialog, int which) {
               dialog.dismiss();
-              new DonationOptionAsyncTask(inAppBillingService, getPackageName(), navFragment).execute();
+              // TODO: handle with donation service
+//              new DonationOptionAsyncTask(inAppBillingService, getPackageName(), navFragment).execute();
             }
           })
           .setNegativeButton(R.string.donation_prompt_no, new DialogInterface.OnClickListener() {
@@ -375,5 +439,27 @@ public class MainActivity extends RoboFragmentActivity implements
   @Override
   public void onServiceDisconnected(ComponentName name) {
     inAppBillingService = null;
+  }
+
+  private class ExceptionHandler implements Response.ExceptionListener {
+
+    private String message;
+    private View view;
+    private int displayLength;
+
+    ExceptionHandler(String message, View view, int displayLength) {
+      this.message = message;
+      this.view = view;
+      this.displayLength = displayLength;
+    }
+
+    @Override
+    public void onException(Exception e) {
+      e.printStackTrace();
+      if (view != null) {
+        Snackbar.make(view, message, displayLength)
+            .show();
+      }
+    }
   }
 }

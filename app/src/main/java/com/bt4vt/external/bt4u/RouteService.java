@@ -16,107 +16,79 @@
 
 package com.bt4vt.external.bt4u;
 
-import com.bt4vt.R;
+import com.android.volley.VolleyError;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
-import java.io.IOException;
-import java.util.ArrayList;
+import java.net.URISyntaxException;
 import java.util.List;
 
-import okhttp3.Call;
-import okhttp3.Request;
-import okhttp3.Response;
-import roboguice.inject.InjectResource;
-
 /**
- * Service to get current route information
+ * Service to get current route information.
  *
  * @author Ben Sechrist
  */
 @Singleton
 public class RouteService {
 
-  @InjectResource(R.string.bt4u_base_url)
-  private String BT4U_BASE_URL;
-
-  String BT4U_ROUTE_URL = BT4U_BASE_URL + "routes";
+  @Inject
+  private RequestService requestService;
 
   @Inject
-  private HttpClient client;
+  private RequestFactory requestFactory;
 
   @Inject
-  private Request.Builder requestBuilder;
+  private RouteFactory routeFactory;
 
-  public void getAll(final Callback<List<Route>> callback) {
-    Request request = requestBuilder
-        .url(BT4U_ROUTE_URL)
-        .build();
-
-    client.newCall(request).enqueue(new okhttp3.Callback() {
-      @Override
-      public void onFailure(Call call, IOException e) {
-        callback.onException(e);
-      }
-
-      @Override
-      public void onResponse(Call call, Response response) throws IOException {
-        try {
-          int statusCode = response.code();
-          String stringBody = response.body().string();
-          if (statusCode == 200) {
-            String routeListString = new JSONArray(stringBody).getJSONObject(0).getString("routeListHtml");
-            Document document = Jsoup.parse(routeListString);
-            Elements elements = document.getElementsByClass("list-group-item");
-            List<Route> routes = new ArrayList<>();
-            for (Element el : elements) {
-              routes.add(Route.valueOf(el));
+  public void getAll(final Response.Listener<List<Route>> listener,
+                     final Response.ExceptionListener exceptionListener) {
+    try {
+      requestService.addToRequestQueue(requestFactory.routes(
+          new com.android.volley.Response.Listener<JSONArray>() {
+            @Override
+            public void onResponse(JSONArray response) {
+              try {
+                listener.onResult(routeFactory.routes(response));
+              } catch (JSONException e) {
+                exceptionListener.onException(e);
+              }
             }
-            callback.onResult(routes);
-          } else {
-            callback.onFail(statusCode, stringBody);
-          }
-        } catch (JSONException e) {
-          callback.onException(e);
-        }
-      }
-    });
+          }, new com.android.volley.Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+              exceptionListener.onException(error);
+            }
+          }));
+    } catch (URISyntaxException e) {
+      exceptionListener.onException(e);
+    }
   }
 
-  public void get(String shortName, final Callback<Route> callback) {
-    Request request = requestBuilder
-        .url(BT4U_ROUTE_URL + '/' + shortName)
-        .build();
-
-    client.newCall(request).enqueue(new okhttp3.Callback() {
-      @Override
-      public void onFailure(Call call, IOException e) {
-        callback.onException(e);
-      }
-
-      @Override
-      public void onResponse(Call call, Response response) throws IOException {
-        try {
-          int statusCode = response.code();
-          String stringBody = response.body().string();
-          if (statusCode == 200) {
-            JSONObject jsonRoute = new JSONArray(stringBody).getJSONObject(0);
-            callback.onResult(Route.valueOf(jsonRoute));
-          } else {
-            callback.onFail(statusCode, stringBody);
-          }
-        } catch (JSONException e) {
-          callback.onException(e);
-        }
-      }
-    });
+  public void get(String shortName, final Response.Listener<Route> listener,
+                  final Response.ExceptionListener exceptionListener) {
+    try {
+      requestService.addToRequestQueue(requestFactory.route(shortName,
+          new com.android.volley.Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+              try {
+                listener.onResult(routeFactory.route(response));
+              } catch (JSONException e) {
+                exceptionListener.onException(e);
+              }
+            }
+          }, new com.android.volley.Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+              exceptionListener.onException(error);
+            }
+          }));
+    } catch (URISyntaxException e) {
+      exceptionListener.onException(e);
+    }
   }
 }

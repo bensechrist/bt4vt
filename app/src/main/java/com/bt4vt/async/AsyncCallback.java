@@ -25,12 +25,14 @@ public interface AsyncCallback<T> {
 
   /**
    * The async task was completed successfully.
+   *
    * @param t the result of the async task
    */
   void onSuccess(T t);
 
   /**
    * The async task threw an exception.
+   *
    * @param e the exception
    */
   void onException(Exception e);

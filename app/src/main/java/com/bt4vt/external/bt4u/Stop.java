@@ -16,7 +16,6 @@
 
 package com.bt4vt.external.bt4u;
 
-import com.bt4vt.repository.model.StopModelImpl;
 import com.google.android.gms.maps.model.LatLng;
 
 /**
@@ -78,14 +77,6 @@ public class Stop {
 
   @Override
   public String toString() {
-    return String.format("%s (#%d)", getName(), getCode());
-  }
-
-  public static StopModelImpl valueOf(String string) {
-    String[] split = string.split(" \\(#");
-    if (split.length != 2) {
-      throw new IllegalArgumentException("String improperly formatted: " + string);
-    }
-    return new StopModelImpl(split[0], Integer.valueOf(split[1].substring(0, split[1].length()-1)));
+    return String.format("%s (#%s)", getName(), getCode());
   }
 }

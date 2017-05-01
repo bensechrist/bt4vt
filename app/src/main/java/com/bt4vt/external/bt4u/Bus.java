@@ -18,13 +18,10 @@ package com.bt4vt.external.bt4u;
 
 import com.google.android.gms.maps.model.LatLng;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.Date;
 
 /**
- * BT4U bus information
+ * BT4U bus information.
  *
  * @author Ben Sechrist
  */
@@ -32,21 +29,19 @@ public class Bus {
 
   private String id;
 
+  private Route route;
+
+  private LatLng latLng;
+
   private int direction;
 
   private boolean isTripper;
 
+  private int passengers;
+
   private String lastStopCode;
 
   private String lastStopName;
-
-  private LatLng latLng;
-
-  private int passengers;
-
-  private String fullRouteName;
-
-  private String shortRouteName;
 
   private Date timestamp;
 
@@ -60,6 +55,22 @@ public class Bus {
 
   public void setId(String id) {
     this.id = id;
+  }
+
+  public Route getRoute() {
+    return route;
+  }
+
+  public void setRoute(Route route) {
+    this.route = route;
+  }
+
+  public LatLng getLatLng() {
+    return latLng;
+  }
+
+  public void setLatLng(LatLng latLng) {
+    this.latLng = latLng;
   }
 
   public int getDirection() {
@@ -78,6 +89,14 @@ public class Bus {
     isTripper = tripper;
   }
 
+  public int getPassengers() {
+    return passengers;
+  }
+
+  public void setPassengers(int passengers) {
+    this.passengers = passengers;
+  }
+
   public String getLastStopCode() {
     return lastStopCode;
   }
@@ -92,38 +111,6 @@ public class Bus {
 
   public void setLastStopName(String lastStopName) {
     this.lastStopName = lastStopName;
-  }
-
-  public LatLng getLatLng() {
-    return latLng;
-  }
-
-  public void setLatLng(LatLng latLng) {
-    this.latLng = latLng;
-  }
-
-  public int getPassengers() {
-    return passengers;
-  }
-
-  public void setPassengers(int passengers) {
-    this.passengers = passengers;
-  }
-
-  public String getFullRouteName() {
-    return fullRouteName;
-  }
-
-  public void setFullRouteName(String fullRouteName) {
-    this.fullRouteName = fullRouteName;
-  }
-
-  public String getShortRouteName() {
-    return shortRouteName;
-  }
-
-  public void setShortRouteName(String shortRouteName) {
-    this.shortRouteName = shortRouteName;
   }
 
   public Date getTimestamp() {
@@ -148,19 +135,5 @@ public class Bus {
   @Override
   public int hashCode() {
     return id.hashCode();
-  }
-
-  public static Bus valueOf(JSONObject jsonObject) throws JSONException {
-    Bus bus = new Bus(jsonObject.getString("busId"));
-    bus.setDirection(jsonObject.getInt("direction"));
-    bus.setTripper(jsonObject.getBoolean("isTripper"));
-    bus.setLastStopCode(jsonObject.getString("lastStopCode"));
-    bus.setLastStopName(jsonObject.getString("lastStopName"));
-    bus.setLatLng(new LatLng(jsonObject.getDouble("latitude"), jsonObject.getDouble("longitude")));
-    bus.setPassengers(jsonObject.getInt("passengers"));
-    bus.setFullRouteName(jsonObject.getString("pattern"));
-    bus.setShortRouteName(jsonObject.getString("route"));
-    bus.setTimestamp(new Date(jsonObject.getLong("timestamp")));
-    return bus;
   }
 }

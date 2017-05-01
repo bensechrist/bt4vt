@@ -18,7 +18,7 @@
 
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
   <!-- This is used when the Navigation Item is checked -->
-  <item android:color="@color/AccentColor" android:state_checked="true" />
+  <item android:color="@color/AccentColor" android:state_checked="true"/>
   <!-- This is the default text color -->
-  <item android:color="@android:color/primary_text_light" />
+  <item android:color="@android:color/primary_text_light"/>
 </selector>

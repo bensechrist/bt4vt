@@ -29,6 +29,10 @@ public class Departure {
 
   private List<String> departures;
 
+  public Departure(String routeName) {
+    this.routeName = routeName;
+  }
+
   public String getRouteName() {
     return routeName;
   }

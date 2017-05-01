@@ -32,7 +32,7 @@ import java.util.List;
  * @author Ben Sechrist
  */
 @Singleton
-public class BusService {
+public class DepartureService {
 
   @Inject
   private RequestService requestService;
@@ -41,45 +41,18 @@ public class BusService {
   private RequestFactory requestFactory;
 
   @Inject
-  private BusFactory busFactory;
+  private DepartureFactory departureFactory;
 
-  /**
-   * Queries BT4U for information on all current buses.
-   */
-  public void getAll(final Response.Listener<List<Bus>> listener,
+  public void getAll(String route, String stopCode,
+                     final Response.Listener<List<Departure>> listener,
                      final Response.ExceptionListener exceptionListener) {
     try {
-      requestService.addToRequestQueue(requestFactory.buses(null,
+      requestService.addToRequestQueue(requestFactory.departures(route, stopCode,
           new com.android.volley.Response.Listener<JSONArray>() {
             @Override
             public void onResponse(JSONArray response) {
               try {
-                listener.onResult(busFactory.buses(response));
-              } catch (JSONException e) {
-                exceptionListener.onException(e);
-              }
-            }
-          }, new com.android.volley.Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-              exceptionListener.onException(error);
-            }
-          }
-      ));
-    } catch (URISyntaxException e) {
-      exceptionListener.onException(e);
-    }
-  }
-
-  public void get(String route, final Response.Listener<List<Bus>> listener,
-                  final Response.ExceptionListener exceptionListener) {
-    try {
-      requestService.addToRequestQueue(requestFactory.buses(route,
-          new com.android.volley.Response.Listener<JSONArray>() {
-            @Override
-            public void onResponse(JSONArray response) {
-              try {
-                listener.onResult(busFactory.buses(response));
+                listener.onResult(departureFactory.departures(response));
               } catch (JSONException e) {
                 exceptionListener.onException(e);
               }

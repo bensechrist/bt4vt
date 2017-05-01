@@ -25,7 +25,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
-import com.bt4vt.repository.model.StopModel;
+import com.bt4vt.external.bt4u.Stop;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
@@ -40,7 +40,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Manages geofences for {@link com.bt4vt.repository.domain.Stop} objects.
+ * Manages geofences for {@link Stop} objects.
  *
  * @author Ben Sechrist
  */
@@ -68,7 +68,7 @@ public class BusStopGeofenceService implements ResultCallback<Status> {
     googleApiClient.connect();
   }
 
-  public void registerGeofence(StopModel stop) {
+  public void registerGeofence(Stop stop) {
     if (!googleApiClient.isConnected()) {
       if (googleApiClient.isConnecting()) {
         waitForApiConnection();
@@ -77,7 +77,7 @@ public class BusStopGeofenceService implements ResultCallback<Status> {
       }
     }
     if (ContextCompat.checkSelfPermission(this.context,
-          Manifest.permission.ACCESS_FINE_LOCATION)
+        Manifest.permission.ACCESS_FINE_LOCATION)
         != PackageManager.PERMISSION_GRANTED) {
       return;
     }
@@ -87,7 +87,7 @@ public class BusStopGeofenceService implements ResultCallback<Status> {
         getGeofencePendingIntent()).setResultCallback(this);
   }
 
-  public void unregisterGeofence(StopModel stop) {
+  public void unregisterGeofence(Stop stop) {
     if (!googleApiClient.isConnected()) {
       if (googleApiClient.isConnecting()) {
         waitForApiConnection();
@@ -127,13 +127,13 @@ public class BusStopGeofenceService implements ResultCallback<Status> {
     return builder.build();
   }
 
-  private Geofence generateGeofence(StopModel stop) {
+  private Geofence generateGeofence(Stop stop) {
     return new Geofence.Builder()
         // Must be to string to use valueOf when the geofence is triggered
         .setRequestId(stop.toString())
         .setCircularRegion(
-            stop.getLatitude(),
-            stop.getLongitude(),
+            stop.getLatLng().latitude,
+            stop.getLatLng().longitude,
             GEOFENCE_RADIUS_IN_METERS
         )
         .setExpirationDuration(GEOFENCE_EXPIRATION_IN_MILLISECONDS)

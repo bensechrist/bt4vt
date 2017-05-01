@@ -16,20 +16,16 @@
 
 package com.bt4vt.external.bt4u;
 
-import com.android.volley.Request;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonArrayRequest;
-import com.bt4vt.R;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-
-import roboguice.inject.InjectResource;
+import java.net.URISyntaxException;
+import java.util.List;
 
 /**
  * Service to get current stop information.
@@ -39,40 +35,59 @@ import roboguice.inject.InjectResource;
 @Singleton
 public class StopService {
 
-  @InjectResource(R.string.bt4u_base_url)
-  String BT4U_BASE_URL;
-
-  private final String BT4U_STOP_URI = "/stops/%s";
-
   @Inject
   private RequestService requestService;
 
   @Inject
+  private RequestFactory requestFactory;
+
+  @Inject
   private StopFactory stopFactory;
+
+  public void getAll(final Response.Listener<List<Stop>> listener,
+                     final Response.ExceptionListener exceptionListener) {
+    try {
+      requestService.addToRequestQueue(requestFactory.stops(
+          new com.android.volley.Response.Listener<JSONArray>() {
+            @Override
+            public void onResponse(JSONArray response) {
+              try {
+                listener.onResult(stopFactory.stops(response));
+              } catch (JSONException e) {
+                exceptionListener.onException(e);
+              }
+            }
+          }, new com.android.volley.Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+              exceptionListener.onException(error);
+            }
+          }));
+    } catch (URISyntaxException e) {
+      exceptionListener.onException(e);
+    }
+  }
 
   public void get(String stopCode, final Response.Listener<Stop> listener,
                   final Response.ExceptionListener exceptionListener) {
     try {
-      URL baseUrl = new URL(BT4U_BASE_URL);
-      URL url = new URL(baseUrl, String.format(BT4U_STOP_URI, stopCode));
-      JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, url.toExternalForm(),
-          null, new com.android.volley.Response.Listener<JSONArray>() {
-        @Override
-        public void onResponse(JSONArray response) {
-          try {
-            listener.onResult(stopFactory.stop(response));
-          } catch (JSONException e) {
-            exceptionListener.onException(e);
-          }
-        }
-      }, new com.android.volley.Response.ErrorListener() {
-        @Override
-        public void onErrorResponse(VolleyError error) {
-          exceptionListener.onException(error);
-        }
-      });
-      requestService.addToRequestQueue(request);
-    } catch (MalformedURLException e) {
+      requestService.addToRequestQueue(requestFactory.stop(stopCode,
+          new com.android.volley.Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+              try {
+                listener.onResult(stopFactory.stop(response));
+              } catch (JSONException e) {
+                exceptionListener.onException(e);
+              }
+            }
+          }, new com.android.volley.Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+              exceptionListener.onException(error);
+            }
+          }));
+    } catch (URISyntaxException e) {
       exceptionListener.onException(e);
     }
   }

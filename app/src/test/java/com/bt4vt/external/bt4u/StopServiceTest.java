@@ -26,19 +26,18 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 /**
- * Tests the {@link BusService}.
+ * Tests the {@link StopService}.
  *
  * @author Ben Sechrist
  */
 @RunWith(MockitoJUnitRunner.class)
-public class BusServiceTest {
+public class StopServiceTest {
 
   private static final String BASE_URL = "http://base-url";
 
@@ -46,7 +45,7 @@ public class BusServiceTest {
   private RequestService requestService;
 
   @Mock
-  private BusFactory busFactory;
+  private StopFactory stopFactory;
 
   @Mock
   private RequestFactory requestFactory;
@@ -61,7 +60,7 @@ public class BusServiceTest {
   private com.bt4vt.external.bt4u.Response.ExceptionListener exceptionListener;
 
   @InjectMocks
-  private BusService busService;
+  private StopService stopService;
 
   @Before
   public void injectBaseUrl() {
@@ -70,12 +69,12 @@ public class BusServiceTest {
 
   @Test
   public void testGetAll() throws Exception {
-    doReturn(jsonArrayRequest).when(requestFactory).buses((String) eq(null),
-        any(Response.Listener.class), any(Response.ErrorListener.class));
+    doReturn(jsonArrayRequest).when(requestFactory).stops(any(Response.Listener.class),
+        any(Response.ErrorListener.class));
 
-    busService.getAll(listener, exceptionListener);
+    stopService.getAll(listener, exceptionListener);
 
-    verify(requestFactory, times(1)).buses((String) eq(null), any(Response.Listener.class),
+    verify(requestFactory, times(1)).stops(any(Response.Listener.class),
         any(Response.ErrorListener.class));
     verify(requestService, times(1)).addToRequestQueue(jsonArrayRequest);
   }

@@ -16,20 +16,17 @@
 
 package com.bt4vt.external.bt4u;
 
-import android.graphics.Color;
+import android.support.annotation.NonNull;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * BT4U route information
+ * BT4U route information.
  *
  * @author Ben Sechrist
  */
-class Route {
+public class Route implements Comparable<Route> {
 
   private String shortName;
 
@@ -38,6 +35,8 @@ class Route {
   private String plot;
 
   private Integer color;
+
+  private List<Stop> stops = new ArrayList<>();
 
   public Route(String shortName) {
     this.shortName = shortName;
@@ -75,6 +74,14 @@ class Route {
     this.color = color;
   }
 
+  public List<Stop> getStops() {
+    return stops;
+  }
+
+  public void setStops(List<Stop> stops) {
+    this.stops = stops;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -91,27 +98,13 @@ class Route {
     return shortName.hashCode();
   }
 
-  public static Route valueOf(Element element) {
-    String attrValue = element.attr("data-routes");
-    String[] splits = attrValue.split("|");
-    if (splits.length != 3) {
-      throw new IllegalArgumentException("Unexpected 'data-routes' attribute value " + attrValue);
-    }
-    Route route = new Route(splits[0]);
-    route.setFullName(splits[1]);
-    route.setColor(Color.parseColor(String.format("#%s", splits[2])));
-    return route;
+  @Override
+  public int compareTo(@NonNull Route another) {
+    return this.getFullName().compareTo(another.getFullName());
   }
 
-  public static Route valueOf(JSONObject json) throws JSONException {
-    Document document = Jsoup.parse(json.getString("routeDetailsHtml"));
-    Element header = document.getElementsByClass("headerBordered").first();
-    Element fullNameEl = header.child(0);
-    Element shortNameEl = header.child(1);
-    Route route = new Route(shortNameEl.text());
-    route.setFullName(fullNameEl.text());
-    route.setPlot(json.getString("routePlot"));
-    route.setColor(Color.parseColor(String.format("#%s", json.getString("routePlotColor"))));
-    return route;
+  @Override
+  public String toString() {
+    return String.format("%s - %s", shortName, fullName);
   }
 }

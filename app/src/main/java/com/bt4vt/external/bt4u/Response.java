@@ -14,33 +14,34 @@
  * limitations under the License.
  */
 
-package com.bt4vt.repository.bt;
-
-import com.bt4vt.repository.domain.Route;
-
-import org.junit.Test;
-
-import java.util.List;
-
-import static org.junit.Assert.assertNotNull;
+package com.bt4vt.external.bt4u;
 
 /**
- * Tests the {@link RouteFetcher}.
+ * Callback for asynchronous requests to BT4U server.
  *
  * @author Ben Sechrist
  */
-public class RouteFetcherTest {
+public class Response<T> {
 
-  private final RouteFetcher fetcher = new RouteFetcher();
+  private T result;
+  private Exception exception;
 
-  @Test
-  public void testGetAll() throws Exception {
-    List<Route> routes = fetcher.getAll();
-    assertNotNull(routes);
+  public interface Listener<T> {
+    /**
+     * Called when any response is returned from the originating request.
+     *
+     * @param result the result
+     */
+    void onResult(T result);
   }
 
-  @Test
-  public void testGetByStop() throws Exception {
-    assertNotNull(fetcher.get(1609));
+  public interface ExceptionListener {
+    /**
+     * Called when an HTTP request throws an exception (i.e. Timeout)
+     * or it returns an unexpected status code.
+     *
+     * @param e the exception that occurred
+     */
+    void onException(Exception e);
   }
 }

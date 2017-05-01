@@ -34,7 +34,7 @@
   <string name="fav_button_content_desc">Favorite Button</string>
   <string name="nav_drawer_button_content_desc">Toggle Navigation Drawer</string>
   <string name="refresh_departures_button_content_desc">Refresh Departures</string>
-  <string name="bus_marker_title_format">%1$s - %2$d</string>
+  <string name="bus_marker_title_format">%1$s - %2$s</string>
   <string name="bus_marker_snippet_format">%1$d passengers — Last Updated: %2$s</string>
   <string name="xml_parse_error_format">Error parsing xml %1$s: %2$s</string>
   <string name="nav_routes_subheader">Routes</string>
@@ -66,5 +66,5 @@
   <string name="donation_prompt_message">If you use this app in your daily commute, consider donating to the developer. Donations are how this app can stay free and continue to improve.</string>
   <string name="donation_prompt_yes">Sure</string>
   <string name="donation_prompt_no">Nah</string>
-  <string name="bt4u_base_url">https://commonlayer.bt4u.org/</string>
+  <string name="bus_error">Error getting buses</string>
 </resources>

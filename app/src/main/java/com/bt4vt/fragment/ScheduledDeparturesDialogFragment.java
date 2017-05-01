@@ -18,7 +18,6 @@ package com.bt4vt.fragment;
 
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
-import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,14 +28,11 @@ import android.widget.TextView;
 
 import com.bt4vt.R;
 import com.bt4vt.adapter.DepartureArrayAdapter;
-import com.bt4vt.async.AsyncCallback;
-import com.bt4vt.async.DepartureAsyncTask;
-import com.bt4vt.async.StopAsyncTask;
-import com.bt4vt.geofence.BusStopGeofenceService;
-import com.bt4vt.repository.TransitRepository;
-import com.bt4vt.repository.model.DepartureModel;
-import com.bt4vt.repository.model.RouteModel;
-import com.bt4vt.repository.model.StopModel;
+import com.bt4vt.external.bt4u.Departure;
+import com.bt4vt.external.bt4u.DepartureService;
+import com.bt4vt.external.bt4u.Response;
+import com.bt4vt.external.bt4u.Route;
+import com.bt4vt.external.bt4u.Stop;
 import com.google.inject.Inject;
 
 import java.util.List;
@@ -50,24 +46,15 @@ import roboguice.inject.InjectView;
  * @author Ben Sechrist
  */
 public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
-    implements AsyncCallback, View.OnClickListener {
+    implements View.OnClickListener, Response.Listener<List<Departure>>, Response.ExceptionListener {
 
-  private static final String TAG = "DeparturesDialog";
   private static final String STOP_FORMAT = "Stop: %s";
-  private static final String ROUTE_FORMAT = "Route: %s";
-  private static final String ALL_ROUTES = "ALL";
 
   @Inject
-  private TransitRepository transitRepository;
-
-  @Inject
-  private BusStopGeofenceService busStopGeofenceService;
+  private DepartureService departureService;
 
   @InjectView(R.id.stop_text)
   private TextView stopTextView;
-
-  @InjectView(R.id.route_text)
-  private TextView routeTextView;
 
   @InjectView(R.id.list_view)
   private ListView listView;
@@ -81,16 +68,15 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   @InjectView(R.id.button_favorite_stop)
   private ImageButton favoriteButton;
 
-  private Integer stopCode;
-  private StopModel stop;
-  private RouteModel route;
+  private Stop stop;
+  private Route route;
 
-  public static ScheduledDeparturesDialogFragment newInstance(Integer stopCode, RouteModel route) {
-    if (stopCode == null) {
+  public static ScheduledDeparturesDialogFragment newInstance(Stop stop, Route route) {
+    if (stop == null) {
       throw new NullPointerException("Stop was null");
     }
     ScheduledDeparturesDialogFragment fragment = new ScheduledDeparturesDialogFragment();
-    fragment.stopCode = stopCode;
+    fragment.stop = stop;
     fragment.route = route;
     fragment.setRetainInstance(true);
     return fragment;
@@ -109,7 +95,7 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
     super.onViewCreated(view, savedInstanceState);
 
     // If we get here and the stop is null then we should exit the departures dialog
-    if (stopCode == null) {
+    if (stop == null) {
       getDialog().dismiss();
       return;
     }
@@ -118,37 +104,20 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
 
     favoriteButton.setOnClickListener(this);
 
-    new StopAsyncTask(transitRepository, stopCode, this).execute();
-
-    String routeText;
-    if (route != null) {
-      routeText = route.toString();
-    } else {
-      routeText = ALL_ROUTES;
-    }
-    routeTextView.setText(String.format(ROUTE_FORMAT, routeText));
+    stopTextView.setText(String.format(STOP_FORMAT, stop.toString()));
 
     emptyDeparturesView.findViewById(R.id.refresh_departures_button).setOnClickListener(this);
+
+    departureService.getAll((route == null ? "" : route.getFullName()), stop.getCode(), this,
+        this);
   }
 
   @Override
-  public void onSuccess(Object o) {
+  public void onResult(List<Departure> departures) {
     if (isAdded()) {
-      if (o instanceof List) {
-        List<DepartureModel> departures = (List<DepartureModel>) o;
-        final int MAX_DEPARTURES = getResources().getInteger(R.integer.max_departures_shown);
-        if (departures.size() > MAX_DEPARTURES) {
-          departures = departures.subList(0, MAX_DEPARTURES);
-        }
-        listView.setAdapter(new DepartureArrayAdapter(getActivity(), departures));
-        listView.setEmptyView(emptyDeparturesView);
-        loadingView.setVisibility(View.INVISIBLE);
-      } else if (o instanceof StopModel) {
-        stop = (StopModel) o;
-        stopTextView.setText(String.format(STOP_FORMAT, stop.toString()));
-        setFavButton();
-        new DepartureAsyncTask(transitRepository, stop, route, this, getActivity()).execute();
-      }
+      listView.setAdapter(new DepartureArrayAdapter(getActivity(), departures));
+      listView.setEmptyView(emptyDeparturesView);
+      loadingView.setVisibility(View.INVISIBLE);
     }
   }
 
@@ -176,34 +145,31 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
       case R.id.refresh_departures_button:
         listView.setEmptyView(null);
         loadingView.setVisibility(View.VISIBLE);
-        if (transitRepository != null && stop != null)
-          new DepartureAsyncTask(transitRepository, stop, route, this, getActivity()).execute();
-        break;
-      default:
-        listView.setEmptyView(null);
-        loadingView.setVisibility(View.VISIBLE);
-        new StopAsyncTask(transitRepository, stopCode, this).execute();
+        if (departureService != null && stop != null) {
+          departureService.getAll((route == null ? null : route.getFullName()), stop.getCode(),
+              this, this);
+        }
         break;
     }
   }
 
   private void onFavClick() {
     if (stop != null) {
-      stop.setFavorited(!stop.isFavorited());
-      transitRepository.updateStop(stop);
+      // TODO: implement favorite logic
       setFavButton();
     }
   }
 
   private void setFavButton() {
-    if (stop.isFavorited()) {
-      favoriteButton.setImageDrawable(ContextCompat.getDrawable(getActivity(),
-          R.drawable.ic_action_star_full));
-      busStopGeofenceService.registerGeofence(stop);
-    } else {
-      favoriteButton.setImageDrawable(ContextCompat.getDrawable(getActivity(),
-          R.drawable.ic_action_star_empty));
-      busStopGeofenceService.unregisterGeofence(stop);
-    }
+    // TODO: implement favorite logic
+//    if (stop.isFavorited()) {
+//      favoriteButton.setImageDrawable(ContextCompat.getDrawable(getActivity(),
+//          R.drawable.ic_action_star_full));
+//      busStopGeofenceService.registerGeofence(stop);
+//    } else {
+//      favoriteButton.setImageDrawable(ContextCompat.getDrawable(getActivity(),
+//          R.drawable.ic_action_star_empty));
+//      busStopGeofenceService.unregisterGeofence(stop);
+//    }
   }
 }
