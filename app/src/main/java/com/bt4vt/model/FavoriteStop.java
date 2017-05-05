@@ -14,28 +14,25 @@
  * limitations under the License.
  */
 
-package com.bt4vt.external.bt4u;
+package com.bt4vt.model;
 
-import com.google.android.gms.maps.model.LatLng;
+import com.activeandroid.Model;
+import com.activeandroid.annotation.Column;
+import com.activeandroid.annotation.Table;
 
 /**
- * BT4U stop information.
+ * Active Android favorite stop model.
  *
  * @author Ben Sechrist
  */
-public class Stop {
+@Table(name = "StopFavorites")
+public class FavoriteStop extends Model {
 
+  @Column(notNull = true, unique = true)
   private String code;
 
-  private String name;
-
-  private LatLng latLng;
-
-  private boolean isFavorited;
-
-  public Stop(String code) {
-    this.code = code;
-  }
+  @Column(notNull = true)
+  private boolean isFavorited = false;
 
   public String getCode() {
     return code;
@@ -45,48 +42,11 @@ public class Stop {
     this.code = code;
   }
 
-  public String getName() {
-    return name;
-  }
-
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  public LatLng getLatLng() {
-    return latLng;
-  }
-
-  public void setLatLng(LatLng latLng) {
-    this.latLng = latLng;
-  }
-
   public boolean isFavorited() {
     return isFavorited;
   }
 
   public void setFavorited(boolean favorited) {
     isFavorited = favorited;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    Stop stop = (Stop) o;
-
-    return code.equals(stop.code);
-
-  }
-
-  @Override
-  public int hashCode() {
-    return code.hashCode();
-  }
-
-  @Override
-  public String toString() {
-    return String.format("%s (#%s)", getName(), getCode());
   }
 }

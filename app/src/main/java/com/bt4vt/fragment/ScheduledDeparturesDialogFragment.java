@@ -18,6 +18,7 @@ package com.bt4vt.fragment;
 
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,6 +34,7 @@ import com.bt4vt.external.bt4u.DepartureService;
 import com.bt4vt.external.bt4u.Response;
 import com.bt4vt.external.bt4u.Route;
 import com.bt4vt.external.bt4u.Stop;
+import com.bt4vt.service.FavoriteStopService;
 import com.google.inject.Inject;
 
 import java.util.List;
@@ -52,6 +54,9 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
 
   @Inject
   private DepartureService departureService;
+
+  @Inject
+  private FavoriteStopService favoriteStopService;
 
   @InjectView(R.id.stop_text)
   private TextView stopTextView;
@@ -104,6 +109,8 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
 
     favoriteButton.setOnClickListener(this);
 
+    setFavButton();
+
     stopTextView.setText(String.format(STOP_FORMAT, stop.toString()));
 
     emptyDeparturesView.findViewById(R.id.refresh_departures_button).setOnClickListener(this);
@@ -155,21 +162,21 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
 
   private void onFavClick() {
     if (stop != null) {
-      // TODO: implement favorite logic
+      stop.setFavorited(!stop.isFavorited());
+      favoriteStopService.upsert(stop);
       setFavButton();
     }
   }
 
   private void setFavButton() {
-    // TODO: implement favorite logic
-//    if (stop.isFavorited()) {
-//      favoriteButton.setImageDrawable(ContextCompat.getDrawable(getActivity(),
-//          R.drawable.ic_action_star_full));
+    if (stop.isFavorited()) {
+      favoriteButton.setImageDrawable(ContextCompat.getDrawable(getActivity(),
+          R.drawable.ic_action_star_full));
 //      busStopGeofenceService.registerGeofence(stop);
-//    } else {
-//      favoriteButton.setImageDrawable(ContextCompat.getDrawable(getActivity(),
-//          R.drawable.ic_action_star_empty));
+    } else {
+      favoriteButton.setImageDrawable(ContextCompat.getDrawable(getActivity(),
+          R.drawable.ic_action_star_empty));
 //      busStopGeofenceService.unregisterGeofence(stop);
-//    }
+    }
   }
 }

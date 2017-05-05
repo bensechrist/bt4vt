@@ -17,6 +17,7 @@
 package com.bt4vt;
 
 import android.Manifest;
+import android.annotation.TargetApi;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -24,6 +25,9 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.pm.ShortcutInfo;
+import android.content.pm.ShortcutManager;
+import android.graphics.drawable.Icon;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
@@ -38,6 +42,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 
+import com.activeandroid.query.Select;
 import com.android.vending.billing.IInAppBillingService;
 import com.bt4vt.external.bt4u.Bus;
 import com.bt4vt.external.bt4u.BusService;
@@ -49,10 +54,12 @@ import com.bt4vt.external.bt4u.StopService;
 import com.bt4vt.fragment.NavigationDrawerFragment;
 import com.bt4vt.fragment.RetainedMapFragment;
 import com.bt4vt.fragment.ScheduledDeparturesDialogFragment;
+import com.bt4vt.model.FavoriteStop;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.inject.Inject;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
@@ -76,7 +83,7 @@ public class MainActivity extends RoboFragmentActivity implements
 
   private static final String DEPARTURES_DIALOG_TAG = "scheduled_departures_dialog_tag";
 
-  public static final String EXTRA_STOP = "com.bt4vt.extra.stop";
+  public static final String EXTRA_STOP_CODE = "com.bt4vt.extra.stop";
   private static final String FIRST_TIME_OPEN_KEY = "first_time_open_app";
   private static final String TIMES_OPENED_KEY = "number_times_opened_app";
   private static final String LAST_PROMPT_KEY = "last_prompt_date_millis";
@@ -140,14 +147,6 @@ public class MainActivity extends RoboFragmentActivity implements
         new Intent("com.android.vending.billing.InAppBillingService.BIND");
     serviceIntent.setPackage("com.android.vending");
     bindService(serviceIntent, this, Context.BIND_AUTO_CREATE);
-  }
-
-  @Override
-  protected void onDestroy() {
-    super.onDestroy();
-    if (inAppBillingService != null) {
-      unbindService(this);
-    }
   }
 
   @Override
@@ -287,52 +286,65 @@ public class MainActivity extends RoboFragmentActivity implements
 
   private void setShortcuts() {
     if (Build.VERSION.SDK_INT >= 25) {
-//      new FavoritedStopsAsyncTask(transitRepository, new AsyncCallback<List<StopModel>>() {
-//        @TargetApi(25)
-//        @Override
-//        public void onSuccess(List<StopModel> stopModels) {
-//          Log.d(TAG, "models " + stopModels.toString());
-//          ShortcutManager shortcutManager = getSystemService(ShortcutManager.class);
-//
-//          List<ShortcutInfo> shortcuts = new ArrayList<>();
-//
-//          for (StopModel stopModel : stopModels) {
-//            Intent intent = new Intent(MainActivity.this, MainActivity.class);
-//            intent.setAction(Intent.ACTION_MAIN);
-//            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-//            intent.putExtra(MainActivity.EXTRA_STOP, stopModel.toString());
-//            ShortcutInfo shortcut = new ShortcutInfo.Builder(MainActivity.this, String.valueOf(stopModel.getCode()))
-//                .setShortLabel(stopModel.getName())
-//                .setLongLabel(stopModel.getName())
-//                .setIcon(Icon.createWithResource(MainActivity.this, R.drawable.bus_stop_icon))
-//                .setIntent(intent)
-//                .build();
-//            shortcuts.add(shortcut);
-//            // Once we reach the max stop adding shortcuts
-//            if (shortcuts.size() >= shortcutManager.getMaxShortcutCountPerActivity())
-//              break;
-//          }
-//
-//          shortcutManager.setDynamicShortcuts(shortcuts);
-//
-//          Log.d(TAG, "shortcuts " + shortcutManager.getDynamicShortcuts());
-//        }
-//
-//        @Override
-//        public void onException(Exception e) {
-//
-//        }
-//      }).execute();
+      stopService.getAll(new Response.Listener<List<Stop>>() {
+        @TargetApi(Build.VERSION_CODES.N_MR1)
+        @Override
+        public void onResult(List<Stop> result) {
+          List<FavoriteStop> favoriteStops = new Select()
+              .from(FavoriteStop.class)
+              .where("isFavorited = ?", true)
+              .execute();
+          ShortcutManager shortcutManager = getSystemService(ShortcutManager.class);
+
+          int maxShortcutCountPerActivity = shortcutManager.getMaxShortcutCountPerActivity();
+          List<ShortcutInfo> shortcuts = new ArrayList<>();
+
+          for (FavoriteStop favoriteStop : favoriteStops) {
+            Stop stopInfo = null;
+            for (Stop stop : result) {
+              if (stop.getCode().equals(favoriteStop.getCode())) {
+                stopInfo = stop;
+                break;
+              }
+            }
+            if (stopInfo == null) {
+              continue;
+            }
+            Intent intent = new Intent(MainActivity.this, MainActivity.class);
+            intent.setAction(Intent.ACTION_MAIN);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            intent.putExtra(MainActivity.EXTRA_STOP_CODE, stopInfo.getCode());
+            ShortcutInfo shortcut = new ShortcutInfo.Builder(MainActivity.this, stopInfo.getCode())
+                .setShortLabel(stopInfo.getName())
+                .setLongLabel(stopInfo.getName())
+                .setIcon(Icon.createWithResource(MainActivity.this, R.drawable.bus_stop_icon))
+                .setIntent(intent)
+                .build();
+            shortcuts.add(shortcut);
+            // Once we reach the max stop adding shortcuts
+            if (shortcuts.size() >= maxShortcutCountPerActivity)
+              break;
+          }
+
+          shortcutManager.setDynamicShortcuts(shortcuts);
+        }
+      }, new Response.ExceptionListener() {
+        @Override
+        public void onException(Exception e) {
+          e.printStackTrace();
+        }
+      });
     }
   }
 
   private void initData() {
     if (isNetworkAvailable()) {
       Intent intent = getIntent();
-      String stopString = intent.getStringExtra(EXTRA_STOP);
-      if (stopString != null) {
+      String stopCode = intent.getStringExtra(EXTRA_STOP_CODE);
+      if (stopCode != null) {
+        Log.i(TAG, String.format("Stop code: %s", stopCode));
         mainLoadingView.setVisibility(View.VISIBLE);
-        stopService.get(stopString, new Response.Listener<Stop>() {
+        stopService.get(stopCode, new Response.Listener<Stop>() {
           @Override
           public void onResult(Stop result) {
             mapFragment.showStops(Collections.singletonList(result));
@@ -456,6 +468,7 @@ public class MainActivity extends RoboFragmentActivity implements
     @Override
     public void onException(Exception e) {
       e.printStackTrace();
+      hideLoadingIcon();
       if (view != null) {
         Snackbar.make(view, message, displayLength)
             .show();

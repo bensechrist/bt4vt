@@ -16,6 +16,8 @@
 
 package com.bt4vt.external.bt4u;
 
+import com.activeandroid.query.Select;
+import com.bt4vt.model.FavoriteStop;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.inject.Singleton;
 
@@ -48,6 +50,13 @@ class StopFactory {
     Stop stop = new Stop(jsonStop.getString("code"));
     stop.setName(jsonStop.getString("name"));
     stop.setLatLng(new LatLng(jsonStop.getDouble("latitude"), jsonStop.getDouble("longitude")));
+    FavoriteStop favoriteStop = new Select()
+        .from(FavoriteStop.class)
+        .where("code = ?", stop.getCode())
+        .executeSingle();
+    if (favoriteStop != null) {
+      stop.setFavorited(favoriteStop.isFavorited());
+    }
     return stop;
   }
 }
