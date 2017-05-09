@@ -149,9 +149,16 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
    *
    * @param stops the stops
    */
-  public void showStops(List<Stop> stops) {
+  public void showStops(final List<Stop> stops) {
     if (mMap == null) {
-      activity.hideLoadingIcon();
+      final RetainedMapFragment that = this;
+      getMapAsync(new OnMapReadyCallback() {
+        @Override
+        public void onMapReady(GoogleMap googleMap) {
+          that.onMapReady(googleMap);
+          showStops(stops);
+        }
+      });
       return;
     }
 
