@@ -56,6 +56,8 @@ class RequestFactory {
 
   private final String BT4U_DEPARTURE_URI = "departures?route=%s&stopCode=%s";
 
+  private static final String BT4U_DEPARTURE_URI_NO_ROUTE = "departures?stopCode=%s";
+
   private final String BT4U_ROUTE_URI = "routes/%s";
 
   private final String BT4U_STOP_URI = "stops/%s";
@@ -109,7 +111,20 @@ class RequestFactory {
                                      Response.ErrorListener errorListener)
       throws URISyntaxException {
     try {
-      URI url = getUrl(String.format(BT4U_DEPARTURE_URI, URLEncoder.encode(route, "UTF-8"),
+      URI url = getUrl(String.format(BT4U_DEPARTURE_URI,
+          URLEncoder.encode(route, "UTF-8"),
+          URLEncoder.encode(stopCode, "UTF-8")));
+      return new BT4VTArrayRequest(url.toString(), listener, errorListener);
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public JsonArrayRequest departures(String stopCode, Response.Listener<JSONArray> listener,
+                                     Response.ErrorListener errorListener)
+      throws URISyntaxException {
+    try {
+      URI url = getUrl(String.format(BT4U_DEPARTURE_URI_NO_ROUTE,
           URLEncoder.encode(stopCode, "UTF-8")));
       return new BT4VTArrayRequest(url.toString(), listener, errorListener);
     } catch (UnsupportedEncodingException e) {

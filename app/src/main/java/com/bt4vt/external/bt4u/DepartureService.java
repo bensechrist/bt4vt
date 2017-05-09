@@ -16,6 +16,7 @@
 
 package com.bt4vt.external.bt4u;
 
+import com.android.volley.Request;
 import com.android.volley.VolleyError;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -47,23 +48,29 @@ public class DepartureService {
                      final Response.Listener<List<Departure>> listener,
                      final Response.ExceptionListener exceptionListener) {
     try {
-      requestService.addToRequestQueue(requestFactory.departures(route, stopCode,
-          new com.android.volley.Response.Listener<JSONArray>() {
-            @Override
-            public void onResponse(JSONArray response) {
-              try {
-                listener.onResult(departureFactory.departures(response));
-              } catch (JSONException e) {
-                exceptionListener.onException(e);
-              }
-            }
-          }, new com.android.volley.Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-              exceptionListener.onException(error);
-            }
+      com.android.volley.Response.Listener<JSONArray> requestListener = new com.android.volley.Response.Listener<JSONArray>() {
+        @Override
+        public void onResponse(JSONArray response) {
+          try {
+            listener.onResult(departureFactory.departures(response));
+          } catch (JSONException e) {
+            exceptionListener.onException(e);
           }
-      ));
+        }
+      };
+      com.android.volley.Response.ErrorListener errorListener = new com.android.volley.Response.ErrorListener() {
+        @Override
+        public void onErrorResponse(VolleyError error) {
+          exceptionListener.onException(error);
+        }
+      };
+      Request request;
+      if (route == null) {
+        request = requestFactory.departures(stopCode, requestListener, errorListener);
+      } else {
+        request = requestFactory.departures(route, stopCode, requestListener, errorListener);
+      }
+      requestService.addToRequestQueue(request);
     } catch (URISyntaxException e) {
       exceptionListener.onException(e);
     }
