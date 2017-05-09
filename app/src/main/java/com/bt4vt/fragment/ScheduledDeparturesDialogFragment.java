@@ -34,6 +34,7 @@ import com.bt4vt.external.bt4u.DepartureService;
 import com.bt4vt.external.bt4u.Response;
 import com.bt4vt.external.bt4u.Route;
 import com.bt4vt.external.bt4u.Stop;
+import com.bt4vt.geofence.BusStopGeofenceService;
 import com.bt4vt.service.FavoriteStopService;
 import com.google.inject.Inject;
 
@@ -58,6 +59,8 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   @Inject
   private FavoriteStopService favoriteStopService;
 
+  private BusStopGeofenceService busStopGeofenceService;
+
   @InjectView(R.id.stop_text)
   private TextView stopTextView;
 
@@ -76,13 +79,14 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
   private Stop stop;
   private Route route;
 
-  public static ScheduledDeparturesDialogFragment newInstance(Stop stop, Route route) {
+  public static ScheduledDeparturesDialogFragment newInstance(Stop stop, Route route, BusStopGeofenceService busStopGeofenceService) {
     if (stop == null) {
       throw new NullPointerException("Stop was null");
     }
     ScheduledDeparturesDialogFragment fragment = new ScheduledDeparturesDialogFragment();
     fragment.stop = stop;
     fragment.route = route;
+    fragment.busStopGeofenceService = busStopGeofenceService;
     fragment.setRetainInstance(true);
     return fragment;
   }
@@ -172,11 +176,11 @@ public class ScheduledDeparturesDialogFragment extends RoboDialogFragment
     if (stop.isFavorited()) {
       favoriteButton.setImageDrawable(ContextCompat.getDrawable(getActivity(),
           R.drawable.ic_action_star_full));
-//      busStopGeofenceService.registerGeofence(stop);
+      busStopGeofenceService.registerGeofence(stop);
     } else {
       favoriteButton.setImageDrawable(ContextCompat.getDrawable(getActivity(),
           R.drawable.ic_action_star_empty));
-//      busStopGeofenceService.unregisterGeofence(stop);
+      busStopGeofenceService.unregisterGeofence(stop);
     }
   }
 }

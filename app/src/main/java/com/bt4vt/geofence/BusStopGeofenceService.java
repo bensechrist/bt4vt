@@ -22,10 +22,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import com.bt4vt.external.bt4u.Stop;
+import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
@@ -36,6 +38,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -45,7 +48,8 @@ import java.util.List;
  * @author Ben Sechrist
  */
 @Singleton
-public class BusStopGeofenceService implements ResultCallback<Status> {
+public class BusStopGeofenceService implements ResultCallback<Status>,
+    GoogleApiClient.OnConnectionFailedListener {
 
   private static final String TAG = "BusStopGeofenceService";
   private static final float GEOFENCE_RADIUS_IN_METERS = 25;
@@ -64,30 +68,56 @@ public class BusStopGeofenceService implements ResultCallback<Status> {
 
     googleApiClient = new GoogleApiClient.Builder(context)
         .addApi(LocationServices.API)
+        .addOnConnectionFailedListener(this)
         .build();
     googleApiClient.connect();
+    Log.d(TAG, "Connecting to Google API");
+  }
+
+  public BusStopGeofenceService(FragmentActivity activity) {
+    this.context = activity;
+
+    googleApiClient = new GoogleApiClient.Builder(context)
+        .enableAutoManage(activity, this)
+        .addApi(LocationServices.API)
+        .build();
+  }
+
+  @Override
+  public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+    Log.e(TAG, String.format("Google API connection failed\n%s", connectionResult.toString()));
   }
 
   public void registerGeofence(Stop stop) {
+    registerGeofences(Collections.singletonList(stop));
+  }
+
+  public void registerGeofences(final List<Stop> stops) {
+    Log.d(TAG, "Registering geofence");
     if (!googleApiClient.isConnected()) {
+      Log.d(TAG, "Google API not connected");
       if (googleApiClient.isConnecting()) {
         waitForApiConnection();
       } else {
+        Log.d(TAG, "Google API blocking connect");
         googleApiClient.blockingConnect();
       }
     }
-    if (ContextCompat.checkSelfPermission(this.context,
+    if (ContextCompat.checkSelfPermission(context,
         Manifest.permission.ACCESS_FINE_LOCATION)
         != PackageManager.PERMISSION_GRANTED) {
-      return;
+      throw new RuntimeException("Location permission not granted");
     }
-    Geofence geofence = generateGeofence(stop);
+    List<Geofence> geofences = new ArrayList<>();
+    for (Stop stop : stops) {
+      geofences.add(generateGeofence(stop));
+    }
     LocationServices.GeofencingApi.addGeofences(googleApiClient,
-        getGeofencingRequest(Collections.singletonList(geofence)),
-        getGeofencePendingIntent()).setResultCallback(this);
+        getGeofencingRequest(geofences),
+        getGeofencePendingIntent()).setResultCallback(BusStopGeofenceService.this);
   }
 
-  public void unregisterGeofence(Stop stop) {
+  public void unregisterGeofence(final Stop stop) {
     if (!googleApiClient.isConnected()) {
       if (googleApiClient.isConnecting()) {
         waitForApiConnection();
@@ -96,7 +126,7 @@ public class BusStopGeofenceService implements ResultCallback<Status> {
       }
     }
     LocationServices.GeofencingApi.removeGeofences(googleApiClient,
-        Collections.singletonList(stop.toString()));
+        Collections.singletonList(stop.getCode()));
   }
 
   public void unregisterAllGeofences() {
@@ -129,8 +159,8 @@ public class BusStopGeofenceService implements ResultCallback<Status> {
 
   private Geofence generateGeofence(Stop stop) {
     return new Geofence.Builder()
-        // Must be to string to use valueOf when the geofence is triggered
-        .setRequestId(stop.toString())
+        // Must be stop code to retrieve the stop when the geofence is triggered
+        .setRequestId(stop.getCode())
         .setCircularRegion(
             stop.getLatLng().latitude,
             stop.getLatLng().longitude,
@@ -158,8 +188,16 @@ public class BusStopGeofenceService implements ResultCallback<Status> {
 
   private void waitForApiConnection() {
     try {
-      while (googleApiClient.isConnecting())
+      int waitTime = 0;
+      int maxWaitTime = 5000;
+      while (googleApiClient.isConnecting()) {
+        Log.d(TAG, "Waiting for Google API to connect");
         Thread.sleep(100);
+        waitTime += 100;
+        if (waitTime >= maxWaitTime) {
+          break;
+        }
+      }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }

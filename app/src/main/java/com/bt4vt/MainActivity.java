@@ -54,6 +54,7 @@ import com.bt4vt.external.bt4u.StopService;
 import com.bt4vt.fragment.NavigationDrawerFragment;
 import com.bt4vt.fragment.RetainedMapFragment;
 import com.bt4vt.fragment.ScheduledDeparturesDialogFragment;
+import com.bt4vt.geofence.BusStopGeofenceService;
 import com.bt4vt.model.FavoriteStop;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
@@ -105,6 +106,8 @@ public class MainActivity extends RoboFragmentActivity implements
   @Inject
   private StopService stopService;
 
+  private BusStopGeofenceService busStopGeofenceService;
+
   @InjectView(R.id.drawer_layout)
   private DrawerLayout mDrawerLayout;
 
@@ -147,6 +150,8 @@ public class MainActivity extends RoboFragmentActivity implements
         new Intent("com.android.vending.billing.InAppBillingService.BIND");
     serviceIntent.setPackage("com.android.vending");
     bindService(serviceIntent, this, Context.BIND_AUTO_CREATE);
+
+    busStopGeofenceService = new BusStopGeofenceService(this);
   }
 
   @Override
@@ -390,7 +395,7 @@ public class MainActivity extends RoboFragmentActivity implements
 
   @Override
   public void showDeparturesDialog(Stop stop, Route route) {
-    ScheduledDeparturesDialogFragment.newInstance(stop, route)
+    ScheduledDeparturesDialogFragment.newInstance(stop, route, busStopGeofenceService)
         .show(getSupportFragmentManager(), DEPARTURES_DIALOG_TAG);
   }
 
