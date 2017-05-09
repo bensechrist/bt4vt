@@ -43,6 +43,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.PolyUtil;
 
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -212,7 +213,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
         marker.setTitle(getString(R.string.bus_marker_title_format, bus.getRoute().getFullName(),
             bus.getId()));
         marker.setSnippet(getString(R.string.bus_marker_snippet_format, bus.getPassengers(),
-            bus.getTimestamp()));
+            SimpleDateFormat.getTimeInstance().format(bus.getTimestamp())));
         marker.setRotation(bus.getDirection());
       }
     }
@@ -360,7 +361,7 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
         .zIndex(10)
         .title(getString(R.string.bus_marker_title_format, bus.getRoute().getFullName(), bus.getId()))
         .snippet(getString(R.string.bus_marker_snippet_format, bus.getPassengers(),
-            bus.getTimestamp()))
+            SimpleDateFormat.getTimeInstance().format(bus.getTimestamp())))
         .icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory.decodeResource(getResources(),
             R.drawable.bus_arrow)));
   }
