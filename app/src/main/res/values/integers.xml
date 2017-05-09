@@ -16,7 +16,6 @@
   -->
 
 <resources>
-  <integer name="max_departures_shown">15</integer>
-  <integer name="max_departure_lookahead_mins">180</integer>
+  <integer name="max_departures_shown">5</integer>
   <integer name="bus_listener_interval_ms">5000</integer>
 </resources>

@@ -19,7 +19,7 @@
 
   <!-- Geofencing -->
   <string name="geofence_transition_invalid_type">Invalid Geofence Transition Type: %1$d</string>
-  <string name="notification_departures_format">%1$s - %2$s</string>
+  <string name="notification_departures_format">%1$s\n%2$s</string>
 
   <string name="navigation_drawer_open">Open navigation drawer</string>
   <string name="navigation_drawer_close">Close navigation drawer</string>
