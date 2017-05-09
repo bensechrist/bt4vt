@@ -47,7 +47,6 @@ import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Timer;
 
 import roboguice.RoboGuice;
 import roboguice.inject.InjectResource;
@@ -77,22 +76,12 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
 
   private TalkToActivity activity;
 
-  private Timer busRefreshTimer;
-
   @Override
   public void onCreate(Bundle savedInstanceState) {
     RoboGuice.getInjector(getActivity()).injectMembers(this);
 
     super.onCreate(savedInstanceState);
     setRetainInstance(true);
-  }
-
-  @Override
-  public void onPause() {
-    super.onPause();
-    if (busRefreshTimer != null) {
-      busRefreshTimer.cancel();
-    }
   }
 
   @Override
@@ -105,9 +94,6 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
   public void onDetach() {
     super.onDetach();
     this.activity = null;
-    if (busRefreshTimer != null) {
-      busRefreshTimer.cancel();
-    }
   }
 
   @Override
@@ -323,9 +309,6 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
    * Removes all bus markers from the map.
    */
   private void clearBuses() {
-    if (busRefreshTimer != null) {
-      busRefreshTimer.cancel();
-    }
     currentBusMarkers.clear();
   }
 

@@ -17,5 +17,5 @@
 
 <resources>
   <integer name="max_departures_shown">5</integer>
-  <integer name="bus_listener_interval_ms">5000</integer>
+  <integer name="bus_refresh_rate_ms">5000</integer>
 </resources>

@@ -42,7 +42,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 
-import com.activeandroid.query.Select;
 import com.android.vending.billing.IInAppBillingService;
 import com.bt4vt.external.bt4u.Bus;
 import com.bt4vt.external.bt4u.BusService;
@@ -65,6 +64,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import roboguice.activity.RoboFragmentActivity;
 import roboguice.inject.ContentView;
@@ -132,6 +133,8 @@ public class MainActivity extends RoboFragmentActivity implements
 
   private Route currentRoute;
 
+  private Timer busRefreshTimer;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -167,6 +170,14 @@ public class MainActivity extends RoboFragmentActivity implements
   }
 
   @Override
+  protected void onPause() {
+    super.onPause();
+    if (busRefreshTimer != null) {
+      busRefreshTimer.cancel();
+    }
+  }
+
+  @Override
   protected void onResume() {
     super.onResume();
     mapFragment.setUpMapIfNeeded();
@@ -192,6 +203,10 @@ public class MainActivity extends RoboFragmentActivity implements
         Snackbar.make(view, R.string.no_play_services, Snackbar.LENGTH_LONG).show();
       }
     }
+
+    if (currentRoute != null) {
+      startBusRefreshTask(currentRoute);
+    }
   }
 
   @Override
@@ -211,7 +226,7 @@ public class MainActivity extends RoboFragmentActivity implements
   }
 
   @Override
-  public void onRouteSelected(Route route) {
+  public void onRouteSelected(final Route route) {
     mainLoadingView.setVisibility(View.VISIBLE);
     refreshRouteButton.setVisibility(View.VISIBLE);
     currentRoute = route;
@@ -233,13 +248,7 @@ public class MainActivity extends RoboFragmentActivity implements
         mapFragment.showStops(route.getStops());
       }
     }, new ExceptionHandler(getString(R.string.stops_error), mapFragment.getView(), Snackbar.LENGTH_LONG));
-    busService.get(route.getShortName(), new Response.Listener<List<Bus>>() {
-      @Override
-      public void onResult(List<Bus> buses) {
-        mapFragment.showBuses(buses);
-      }
-    }, new ExceptionHandler(getString(R.string.bus_error), mapFragment.getView(),
-        Snackbar.LENGTH_SHORT));
+    startBusRefreshTask(route);
   }
 
   @Override
@@ -291,6 +300,26 @@ public class MainActivity extends RoboFragmentActivity implements
             .show();
       }
     }
+  }
+
+  private void startBusRefreshTask(final Route route) {
+    if (busRefreshTimer != null) {
+      busRefreshTimer.cancel();
+    }
+    busRefreshTimer = new Timer();
+    busRefreshTimer.scheduleAtFixedRate(new TimerTask() {
+      @Override
+      public void run() {
+        Log.d(TAG, "Refreshing buses for route " + route.getShortName());
+        busService.get(route.getShortName(), new Response.Listener<List<Bus>>() {
+          @Override
+          public void onResult(List<Bus> buses) {
+            mapFragment.showBuses(buses);
+          }
+        }, new ExceptionHandler(getString(R.string.bus_error), mapFragment.getView(),
+            Snackbar.LENGTH_SHORT));
+      }
+    }, 0, getResources().getInteger(R.integer.bus_refresh_rate_ms));
   }
 
   private void setShortcuts() {
