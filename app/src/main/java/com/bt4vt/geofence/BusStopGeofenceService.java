@@ -114,7 +114,7 @@ public class BusStopGeofenceService implements ResultCallback<Status>,
     }
     LocationServices.GeofencingApi.addGeofences(googleApiClient,
         getGeofencingRequest(geofences),
-        getGeofencePendingIntent()).setResultCallback(BusStopGeofenceService.this);
+        getGeofencePendingIntent()).setResultCallback(this);
   }
 
   public void unregisterGeofence(final Stop stop) {
@@ -144,6 +144,7 @@ public class BusStopGeofenceService implements ResultCallback<Status>,
   @Override
   public void onResult(@NonNull Status status) {
     Log.i(TAG, "Register geofence result: " + status.toString());
+    Log.i(TAG, status.isSuccess() ? "Geofence added" : "Geofence failed to add");
     int statusCode = status.getStatusCode();
     if (statusCode == GeofenceStatusCodes.GEOFENCE_TOO_MANY_GEOFENCES) {
       throw new IllegalStateException(GeofenceStatusCodes.getStatusCodeString(statusCode));
