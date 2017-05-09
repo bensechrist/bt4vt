@@ -37,9 +37,5 @@
       android:id="@+id/nav_feedback"
       android:orderInCategory="100"
       android:title="@string/nav_feedback"/>
-    <item
-      android:id="@+id/nav_donation"
-      android:orderInCategory="101"
-      android:title="@string/nav_donation"/>
   </group>
 </menu>

@@ -16,46 +16,28 @@
 
 package com.bt4vt.fragment;
 
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
-import android.support.v7.app.AlertDialog;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.android.vending.billing.IInAppBillingService;
-import com.bt4vt.BuildConfig;
-import com.bt4vt.MainActivity;
 import com.bt4vt.R;
-import com.bt4vt.async.DonationConsumeAsyncTask;
 import com.bt4vt.external.bt4u.Route;
 import com.google.inject.Inject;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 
 import roboguice.fragment.RoboFragment;
 import roboguice.inject.InjectView;
-
-import static android.app.Activity.RESULT_OK;
 
 /**
  * Represents the navigation drawer for layout {@link com.bt4vt.R.layout#navigation_drawer}.
@@ -152,13 +134,6 @@ public class NavigationDrawerFragment extends RoboFragment implements
       if (menuItemId == R.id.nav_feedback) {
         activity.closeDrawer();
         showFeedbackDialog();
-      } else if (menuItemId == R.id.nav_donation) {
-        IInAppBillingService billingService = activity.getBillingService();
-        if (billingService != null) {
-          activity.closeDrawer();
-          // TODO: implement donation service
-//          new DonationOptionAsyncTask(billingService, getActivity().getPackageName(), this).execute();
-        }
       }
     }
     return true;
@@ -173,111 +148,6 @@ public class NavigationDrawerFragment extends RoboFragment implements
       startActivity(sendIntent);
     }
   }
-
-  private void showDonationDialog(final List<JSONObject> products) throws JSONException {
-    final int[] selected = {-1};
-    Collections.sort(products, new Comparator<JSONObject>() {
-      @Override
-      public int compare(JSONObject o1, JSONObject o2) {
-        try {
-          return o1.getInt("price_amount_micros") - o2.getInt("price_amount_micros");
-        } catch (JSONException e) {
-          Log.e(TAG, e.getLocalizedMessage());
-          return 0;
-        }
-      }
-    });
-    String[] prices = new String[products.size()];
-    for (JSONObject product : products) {
-      prices[products.indexOf(product)] = product.getString("title").replace(" (BT4VT)", "");
-    }
-
-    AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-    builder.setTitle(R.string.donation_dialog_title)
-        .setSingleChoiceItems(prices, -1, new DialogInterface.OnClickListener() {
-          public void onClick(DialogInterface dialog, int which) {
-            selected[0] = which;
-          }
-        })
-        .setPositiveButton(R.string.nav_donation, new DialogInterface.OnClickListener() {
-          @Override
-          public void onClick(DialogInterface dialog, int which) {
-            if (selected[0] > -1 && selected[0] < products.size()) {
-              chargeDonation(products.get(selected[0]));
-            }
-          }
-        })
-        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-          @Override
-          public void onClick(DialogInterface dialog, int which) {
-            dialog.dismiss();
-          }
-        });
-    builder.show();
-  }
-
-  private void chargeDonation(JSONObject product) {
-    try {
-      String productId = (BuildConfig.DEBUG ? "android.test.purchased" : product.getString("productId"));
-      Bundle buyIntentBundle = activity.getBillingService()
-          .getBuyIntent(3, getActivity().getPackageName(), productId, "inapp", null);
-      int response = buyIntentBundle.getInt("RESPONSE_CODE");
-      if (response == 0) {
-        PendingIntent pendingIntent = buyIntentBundle.getParcelable("BUY_INTENT");
-        startIntentSenderForResult(pendingIntent.getIntentSender(),
-            1001, new Intent(), Integer.valueOf(0), Integer.valueOf(0),
-            Integer.valueOf(0), null);
-      }
-    } catch (RemoteException | JSONException | IntentSender.SendIntentException e) {
-      Log.e(TAG, e.getLocalizedMessage());
-    }
-  }
-
-  @Override
-  public void onActivityResult(int requestCode, int resultCode, Intent data) {
-    if (requestCode == 1001) {
-      if (resultCode == RESULT_OK) {
-        preferences.edit().putLong(MainActivity.LAST_DONATION_KEY, new Date().getTime()).apply();
-        try {
-          JSONObject purchaseData = new JSONObject(data.getStringExtra("INAPP_PURCHASE_DATA"));
-          new DonationConsumeAsyncTask(activity.getBillingService(), getActivity().getPackageName(),
-              purchaseData.getString("purchaseToken")).execute();
-          View view = getView();
-          if (view != null) {
-            Snackbar.make(view, R.string.donation_thanks, Snackbar.LENGTH_LONG)
-                .show();
-          }
-        } catch (JSONException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }
-  }
-
-// This will be handled with a callback from the donation service above
-//  @Override
-//  public void onSuccess(List<String> strings) {
-//    Log.d(TAG, "Result " + strings.toString());
-//    try {
-//      List<JSONObject> products = new ArrayList<>();
-//      for (String str : strings) {
-//        products.add(new JSONObject(str));
-//      }
-//      showDonationDialog(products);
-//    } catch (JSONException e) {
-//      onException(e);
-//    }
-//  }
-//
-//  @Override
-//  public void onException(Exception e) {
-//    Log.e(TAG, e.getLocalizedMessage());
-//    View view = getView();
-//    if (view != null) {
-//      Snackbar.make(view, R.string.get_donations_error, Snackbar.LENGTH_LONG)
-//          .show();
-//    }
-//  }
 
   /**
    * Used to communicate with the main activity from a fragment.
@@ -309,13 +179,6 @@ public class NavigationDrawerFragment extends RoboFragment implements
      * Show all bus stops.
      */
     void showAllStops();
-
-    /**
-     * Retrieves the {@link IInAppBillingService} object.
-     *
-     * @return the InAppBillingService
-     */
-    IInAppBillingService getBillingService();
   }
 
 }

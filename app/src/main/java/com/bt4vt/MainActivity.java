@@ -18,11 +18,7 @@ package com.bt4vt;
 
 import android.Manifest;
 import android.annotation.TargetApi;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ShortcutInfo;
@@ -32,17 +28,14 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 
-import com.android.vending.billing.IInAppBillingService;
 import com.bt4vt.external.bt4u.Bus;
 import com.bt4vt.external.bt4u.BusService;
 import com.bt4vt.external.bt4u.Response;
@@ -56,12 +49,14 @@ import com.bt4vt.fragment.ScheduledDeparturesDialogFragment;
 import com.bt4vt.geofence.BusStopGeofenceService;
 import com.bt4vt.model.FavoriteStop;
 import com.bt4vt.service.FavoriteStopService;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.inject.Inject;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 import java.util.Timer;
@@ -80,7 +75,7 @@ import uk.co.deanwild.materialshowcaseview.MaterialShowcaseView;
 @ContentView(R.layout.activity_main)
 public class MainActivity extends RoboFragmentActivity implements
     RetainedMapFragment.TalkToActivity, NavigationDrawerFragment.TalkToActivity,
-    View.OnClickListener, ServiceConnection {
+    View.OnClickListener {
 
   private static final String TAG = "MainActivity";
 
@@ -88,9 +83,6 @@ public class MainActivity extends RoboFragmentActivity implements
 
   public static final String EXTRA_STOP_CODE = "com.bt4vt.extra.stop";
   private static final String FIRST_TIME_OPEN_KEY = "first_time_open_app";
-  private static final String TIMES_OPENED_KEY = "number_times_opened_app";
-  private static final String LAST_PROMPT_KEY = "last_prompt_date_millis";
-  public static final String LAST_DONATION_KEY = "last_donation_date_millis";
   private static final String SHOWCASE_ID = "com.bt4vt.nav_showcase";
 
   @Inject
@@ -125,11 +117,12 @@ public class MainActivity extends RoboFragmentActivity implements
   @InjectView(R.id.main_loading_view)
   private View mainLoadingView;
 
+  @InjectView(R.id.banner_ad)
+  private AdView bannerAd;
+
   private RetainedMapFragment mapFragment;
 
   private NavigationDrawerFragment navFragment;
-
-  private IInAppBillingService inAppBillingService;
 
   private Route currentRoute;
 
@@ -153,20 +146,11 @@ public class MainActivity extends RoboFragmentActivity implements
 
     initData();
 
-    Intent serviceIntent =
-        new Intent("com.android.vending.billing.InAppBillingService.BIND");
-    serviceIntent.setPackage("com.android.vending");
-    bindService(serviceIntent, this, Context.BIND_AUTO_CREATE);
-
     busStopGeofenceService = new BusStopGeofenceService(this);
-  }
 
-  @Override
-  protected void onStop() {
-    super.onStop();
-    if (inAppBillingService != null) {
-      unbindService(this);
-    }
+    MobileAds.initialize(getApplicationContext(), getString(R.string.admob_app_id));
+    AdRequest adRequest = new AdRequest.Builder().build();
+    bannerAd.loadAd(adRequest);
   }
 
   @Override
@@ -263,11 +247,6 @@ public class MainActivity extends RoboFragmentActivity implements
       }
     }, new ExceptionHandler(getString(R.string.stops_error), mapFragment.getView(),
         Snackbar.LENGTH_LONG));
-  }
-
-  @Override
-  public IInAppBillingService getBillingService() {
-    return inAppBillingService;
   }
 
   @Override
@@ -438,55 +417,6 @@ public class MainActivity extends RoboFragmentActivity implements
   private boolean isNetworkAvailable() {
     NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
     return activeNetworkInfo != null && activeNetworkInfo.isConnected();
-  }
-
-  @Override
-  public void onServiceConnected(ComponentName name, IBinder service) {
-    inAppBillingService = IInAppBillingService.Stub.asInterface(service);
-
-    int timesOpened = preferences.getInt(TIMES_OPENED_KEY, 0) + 1;
-    preferences.edit()
-        .putInt(TIMES_OPENED_KEY, timesOpened)
-        .apply();
-    Calendar now = Calendar.getInstance();
-    Calendar threshold = Calendar.getInstance();
-    Calendar lastPrompt = Calendar.getInstance();
-    Calendar lastDonation = Calendar.getInstance();
-    threshold.add(Calendar.DAY_OF_YEAR, -60);
-    lastPrompt.setTimeInMillis(preferences.getLong(LAST_PROMPT_KEY, 0));
-    lastDonation.setTimeInMillis(preferences.getLong(LAST_DONATION_KEY, 0));
-    boolean sameDay = now.get(Calendar.YEAR) == lastPrompt.get(Calendar.YEAR) &&
-        now.get(Calendar.DAY_OF_YEAR) == lastPrompt.get(Calendar.DAY_OF_YEAR);
-    Log.d(TAG, String.format("Opened %d times", timesOpened));
-    Log.d(TAG, String.format("Last prompted %s", lastPrompt.getTime().toString()));
-    Log.d(TAG, String.format("Last donation %s", lastDonation.getTime().toString()));
-    if ((timesOpened % 12 == 0) && !sameDay && lastDonation.before(threshold)) {
-      preferences.edit()
-          .putLong(LAST_PROMPT_KEY, now.getTimeInMillis())
-          .apply();
-      new AlertDialog.Builder(this)
-          .setMessage(R.string.donation_prompt_message)
-          .setPositiveButton(R.string.donation_prompt_yes, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-              dialog.dismiss();
-              // TODO: handle with donation service
-//              new DonationOptionAsyncTask(inAppBillingService, getPackageName(), navFragment).execute();
-            }
-          })
-          .setNegativeButton(R.string.donation_prompt_no, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-              dialog.dismiss();
-            }
-          })
-          .show();
-    }
-  }
-
-  @Override
-  public void onServiceDisconnected(ComponentName name) {
-    inAppBillingService = null;
   }
 
   private class ExceptionHandler implements Response.ExceptionListener {
