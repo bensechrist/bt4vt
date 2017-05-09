@@ -49,4 +49,12 @@ public class FavoriteStop extends Model {
   public void setFavorited(boolean favorited) {
     isFavorited = favorited;
   }
+
+  @Override
+  public String toString() {
+    return "FavoriteStop{" +
+        "code='" + code + '\'' +
+        ", isFavorited=" + isFavorited +
+        '}';
+  }
 }

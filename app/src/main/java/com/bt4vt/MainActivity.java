@@ -56,6 +56,7 @@ import com.bt4vt.fragment.RetainedMapFragment;
 import com.bt4vt.fragment.ScheduledDeparturesDialogFragment;
 import com.bt4vt.geofence.BusStopGeofenceService;
 import com.bt4vt.model.FavoriteStop;
+import com.bt4vt.service.FavoriteStopService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.inject.Inject;
@@ -105,6 +106,9 @@ public class MainActivity extends RoboFragmentActivity implements
 
   @Inject
   private StopService stopService;
+
+  @Inject
+  private FavoriteStopService favoriteStopService;
 
   private BusStopGeofenceService busStopGeofenceService;
 
@@ -295,10 +299,7 @@ public class MainActivity extends RoboFragmentActivity implements
         @TargetApi(Build.VERSION_CODES.N_MR1)
         @Override
         public void onResult(List<Stop> result) {
-          List<FavoriteStop> favoriteStops = new Select()
-              .from(FavoriteStop.class)
-              .where("isFavorited = ?", true)
-              .execute();
+          List<FavoriteStop> favoriteStops = favoriteStopService.getFavoriteStops();
           ShortcutManager shortcutManager = getSystemService(ShortcutManager.class);
 
           int maxShortcutCountPerActivity = shortcutManager.getMaxShortcutCountPerActivity();
@@ -352,6 +353,7 @@ public class MainActivity extends RoboFragmentActivity implements
         stopService.get(stopCode, new Response.Listener<Stop>() {
           @Override
           public void onResult(Stop result) {
+            Log.d(TAG, result.toString());
             mapFragment.showStops(Collections.singletonList(result));
           }
         }, new ExceptionHandler(getString(R.string.stop_error), mapFragment.getView(),

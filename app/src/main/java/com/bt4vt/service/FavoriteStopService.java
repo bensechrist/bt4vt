@@ -21,6 +21,8 @@ import com.bt4vt.external.bt4u.Stop;
 import com.bt4vt.model.FavoriteStop;
 import com.google.inject.Singleton;
 
+import java.util.List;
+
 /**
  * Service to handle favoriting {@link Stop} objects.
  *
@@ -42,5 +44,12 @@ public class FavoriteStopService {
       existing.setFavorited(stop.isFavorited());
       existing.save();
     }
+  }
+
+  public List<FavoriteStop> getFavoriteStops() {
+    return new Select()
+        .from(FavoriteStop.class)
+        .where("isFavorited = ?", true)
+        .execute();
   }
 }
