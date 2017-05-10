@@ -25,7 +25,7 @@ import com.activeandroid.annotation.Table;
  *
  * @author Ben Sechrist
  */
-@Table(name = "StopFavorites")
+@Table(name = "FavoriteStops")
 public class FavoriteStop extends Model {
 
   @Column(notNull = true, unique = true)
