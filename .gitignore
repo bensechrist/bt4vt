@@ -9,3 +9,5 @@ gradle
 gradlew
 
 *.bat
+
+*.apk
