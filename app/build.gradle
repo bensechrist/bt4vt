@@ -17,6 +17,14 @@
 apply plugin: 'com.android.application'
 
 android {
+  signingConfigs {
+    release {
+      keyAlias System.getenv('KEYSTORE.RELEASE.KEY_ALIAS')
+      keyPassword System.getenv('KEYSTORE.RELEASE.KEY_PASSWORD')
+      storeFile file(System.getenv('KEYSTORE.RELEASE.STORE_FILE'))
+      storePassword System.getenv('KEYSTORE.RELEASE.STORE_PASSWORD')
+    }
+  }
   compileSdkVersion 25
   buildToolsVersion "25.0.2"
   defaultConfig {
@@ -35,6 +43,7 @@ android {
     release {
       minifyEnabled true
       proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+      signingConfig signingConfigs.release
     }
   }
 }
