@@ -91,7 +91,7 @@ public class RouteServiceTest {
     doReturn(jsonObjectRequest).when(requestFactory).route(eq(shortCode), any(Response.Listener.class),
         any(Response.ErrorListener.class));
 
-    routeService.get(shortCode, listener, exceptionListener);
+    routeService.get(shortCode, true, listener, exceptionListener);
 
     verify(requestFactory, times(1)).route(eq(shortCode), any(Response.Listener.class),
         any(Response.ErrorListener.class));
