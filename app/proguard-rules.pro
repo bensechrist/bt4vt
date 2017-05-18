@@ -16,13 +16,15 @@
 #   public *;
 #}
 
+-keepattributes **
+
 -target 1.6
 -dontobfuscate
 -dontoptimize
 -dontusemixedcaseclassnames
 -dontskipnonpubliclibraryclasses
 -dontpreverify
--dontwarn roboguice.**, com.fasterxml.**, org.roboguice.**, org.simpleframework.**
+-dontwarn roboguice.**,  org.roboguice.**
 -verbose
 
 # The -optimizations option disables some arithmetic simplifications that Dalvik 1.0 and 1.5 can't handle.
@@ -36,11 +38,8 @@
 -keep class com.google.inject.Binder
 -keep public class * extends com.google.inject.AnnotationDatabase
 -keep public class com.bt4vt.**
--keep class org.apache.** { *; }
--keepnames class com.fasterxml.jackson.** { *; }
 -keepnames class javax.servlet.** { *; }
 -keepnames class org.ietf.jgss.** { *; }
--dontwarn org.w3c.dom.**
 -dontwarn org.joda.time.**
 -dontwarn org.shaded.apache.**
 -dontwarn org.ietf.jgss.**
@@ -67,9 +66,6 @@
 -optimizations !code/simplification/arithmetic,!field/*,!class/merging/*
 -ignorewarnings
 -renamesourcefileattribute SourceFile
--keepattributes SourceFile,LineNumberTable,*Annotation*,Signature
-
--keepattributes *Annotation*,Signature
 
 -keep public class com.google.inject.Inject
 
@@ -80,17 +76,4 @@
     @com.google.inject.Inject <init>(...);
     @com.google.inject.InjectResource <init>(...);
     @com.google.inject.InjectView <fields>;
-}
-
-
-# Simple XML
--keep public class org.simpleframework.** { *; }
--keep class org.simpleframework.xml.** { *; }
--keep class org.simpleframework.xml.core.** { *; }
--keep class org.simpleframework.xml.util.** { *; }
-
--keepattributes ElementList, Root, Element
-
--keepclassmembers class * {
-    @org.simpleframework.xml.* *;
 }
