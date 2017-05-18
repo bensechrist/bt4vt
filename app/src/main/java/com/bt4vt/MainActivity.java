@@ -18,7 +18,13 @@ package com.bt4vt;
 
 import android.Manifest;
 import android.annotation.TargetApi;
+import android.app.PendingIntent;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentSender;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ShortcutInfo;
@@ -28,14 +34,19 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.os.RemoteException;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.Toast;
 
+import com.android.vending.billing.IInAppBillingService;
 import com.bt4vt.external.bt4u.Bus;
 import com.bt4vt.external.bt4u.BusService;
 import com.bt4vt.external.bt4u.Response;
@@ -84,6 +95,7 @@ public class MainActivity extends RoboFragmentActivity implements
   public static final String EXTRA_STOP_CODE = "com.bt4vt.extra.stop";
   private static final String FIRST_TIME_OPEN_KEY = "first_time_open_app";
   private static final String SHOWCASE_ID = "com.bt4vt.nav_showcase";
+  private static final int PURCHASE_REQUEST_CODE = 1001;
 
   @Inject
   private SharedPreferences preferences;
@@ -128,6 +140,10 @@ public class MainActivity extends RoboFragmentActivity implements
 
   private Timer busRefreshTimer;
 
+  private IInAppBillingService billingService;
+
+  private ServiceConnection billingServiceConnection;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -148,9 +164,15 @@ public class MainActivity extends RoboFragmentActivity implements
 
     busStopGeofenceService = new BusStopGeofenceService(this);
 
-    MobileAds.initialize(getApplicationContext(), getString(R.string.admob_app_id));
-    AdRequest adRequest = new AdRequest.Builder().build();
-    bannerAd.loadAd(adRequest);
+    checkForPurchase();
+  }
+
+  @Override
+  protected void onDestroy() {
+    super.onDestroy();
+    if (billingService != null) {
+      unbindService(billingServiceConnection);
+    }
   }
 
   @Override
@@ -270,6 +292,106 @@ public class MainActivity extends RoboFragmentActivity implements
     }
   }
 
+  @Override
+  public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    if (requestCode == PURCHASE_REQUEST_CODE) {
+      if (resultCode == RESULT_OK) {
+        checkForPurchase();
+        View view = mapFragment.getView();
+        if (view != null) {
+          Snackbar.make(view, R.string.purchase_dialog_thank_you, Snackbar.LENGTH_LONG)
+              .show();
+        }
+      }
+    }
+  }
+
+  @Override
+  public void promptPurchase() {
+    if (billingService == null) {
+      if (GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(this) != ConnectionResult.SUCCESS) {
+        Log.d(TAG, "Google Play Services is not available");
+        return;
+      }
+      Log.d(TAG, "Connecting to billing service...");
+      Intent serviceIntent =
+          new Intent("com.android.vending.billing.InAppBillingService.BIND");
+      serviceIntent.setPackage("com.android.vending");
+      billingServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+          Log.d(TAG, "Connected to billing service");
+          billingService = IInAppBillingService.Stub.asInterface(service);
+          promptPurchase();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+          billingService = null;
+        }
+      };
+      bindService(serviceIntent, billingServiceConnection, Context.BIND_AUTO_CREATE);
+    } else {
+      Log.d(TAG, "Checking for past purchases");
+      try {
+        Bundle purchases = billingService.getPurchases(3, getPackageName(), "inapp", null);
+        if (purchases.getInt("RESPONSE_CODE") == 0) {
+          List<String> purchaseList = purchases.getStringArrayList("INAPP_PURCHASE_ITEM_LIST");
+          if (purchaseList != null) {
+            if (purchaseList.size() > 0) {
+              Log.d(TAG, "User already purchased");
+              View view = mapFragment.getView();
+              if (view != null) {
+                Snackbar.make(view, R.string.purchase_dialog_already_purchased, Toast.LENGTH_LONG)
+                    .show();
+              }
+            } else {
+              new AlertDialog.Builder(this)
+                  .setTitle(R.string.purchase_dialog_title)
+                  .setMessage(R.string.purchase_dialog_message)
+                  .setPositiveButton(R.string.purchase_dialog_positive, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                      try {
+                        String productId = (BuildConfig.DEBUG ? "android.test.purchased" : getString(R.string.purchase_dialog_product_id));
+                        Bundle buyIntentBundle = billingService.getBuyIntent(3, getPackageName(),
+                            productId, "inapp", null);
+                        int response = buyIntentBundle.getInt("RESPONSE_CODE");
+                        if (response == 0) {
+                          PendingIntent pendingIntent = buyIntentBundle.getParcelable("BUY_INTENT");
+                          startIntentSenderForResult(pendingIntent.getIntentSender(),
+                              PURCHASE_REQUEST_CODE, new Intent(), 0, 0, 0, null);
+                        }
+                      } catch (RemoteException | IntentSender.SendIntentException e) {
+                        Log.e(TAG, e.getLocalizedMessage());
+                        View view = mapFragment.getView();
+                        if (view != null) {
+                          Snackbar.make(view, R.string.purchase_dialog_purchase_error, Snackbar.LENGTH_LONG)
+                              .show();
+                        }
+                      }
+                    }
+                  })
+                  .setNegativeButton(R.string.purchase_dialog_negative, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                      View view = mapFragment.getView();
+                      if (view != null) {
+                        Snackbar.make(view, R.string.purchase_dialog_negative_response, Toast.LENGTH_SHORT)
+                            .show();
+                      }
+                    }
+                  })
+                  .show();
+            }
+          }
+        }
+      } catch (RemoteException e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
   private void checkNetwork() {
     if (!isNetworkAvailable()) {
       View view = mapFragment.getView();
@@ -279,6 +401,62 @@ public class MainActivity extends RoboFragmentActivity implements
             .show();
       }
     }
+  }
+
+  private void checkForPurchase() {
+    if (billingService == null) {
+      if (GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(this) != ConnectionResult.SUCCESS) {
+        Log.d(TAG, "Google Play Services is not available");
+        showBannerAd();
+        return;
+      }
+      Log.d(TAG, "Connecting to billing service...");
+      Intent serviceIntent =
+          new Intent("com.android.vending.billing.InAppBillingService.BIND");
+      serviceIntent.setPackage("com.android.vending");
+      billingServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+          Log.d(TAG, "Connected to billing service");
+          billingService = IInAppBillingService.Stub.asInterface(service);
+          checkForPurchase();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+          billingService = null;
+        }
+      };
+      bindService(serviceIntent, billingServiceConnection, Context.BIND_AUTO_CREATE);
+    } else {
+      Log.d(TAG, "Checking for past purchases");
+      try {
+        Bundle purchases = billingService.getPurchases(3, getPackageName(), "inapp", null);
+        if (purchases.getInt("RESPONSE_CODE") == 0) {
+          List<String> purchaseList = purchases.getStringArrayList("INAPP_PURCHASE_ITEM_LIST");
+          if (purchaseList != null) {
+            if (purchaseList.size() == 0) {
+              Log.d(TAG, "No past purchases");
+              showBannerAd();
+              navFragment.showRemoveAdsMenuItem();
+            } else {
+              Log.d(TAG, "Past purchases");
+              Log.d(TAG, purchaseList.toString());
+              bannerAd.destroy();
+            }
+          }
+        }
+      } catch (RemoteException e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
+  private void showBannerAd() {
+    Log.d(TAG, "Loading banner ad...");
+    MobileAds.initialize(getApplicationContext(), getString(R.string.admob_app_id));
+    AdRequest adRequest = new AdRequest.Builder().build();
+    bannerAd.loadAd(adRequest);
   }
 
   private void startBusRefreshTask(final Route route) {

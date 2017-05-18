@@ -34,8 +34,13 @@
   <group
     android:id="@+id/nav_other_group">
     <item
-      android:id="@+id/nav_feedback"
+      android:id="@+id/remove_ads"
       android:orderInCategory="100"
+      android:title="@string/remove_ads"
+      android:visible="false"/>
+    <item
+      android:id="@+id/nav_feedback"
+      android:orderInCategory="101"
       android:title="@string/nav_feedback"/>
   </group>
 </menu>

@@ -99,6 +99,12 @@ public class NavigationDrawerFragment extends RoboFragment implements
     }
   }
 
+  public void showRemoveAdsMenuItem() {
+    Menu menu = navView.getMenu();
+    MenuItem item = menu.findItem(R.id.remove_ads);
+    item.setVisible(true);
+  }
+
   @Override
   public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
     if (activity.isLoadingContent()) {
@@ -134,6 +140,9 @@ public class NavigationDrawerFragment extends RoboFragment implements
       if (menuItemId == R.id.nav_feedback) {
         activity.closeDrawer();
         showFeedbackDialog();
+      } else if (menuItemId == R.id.remove_ads) {
+        activity.closeDrawer();
+        activity.promptPurchase();
       }
     }
     return true;
@@ -179,6 +188,11 @@ public class NavigationDrawerFragment extends RoboFragment implements
      * Show all bus stops.
      */
     void showAllStops();
+
+    /**
+     * Prompt user for inapp purchase to remove ads.
+     */
+    void promptPurchase();
   }
 
 }
