@@ -17,6 +17,7 @@
 package com.bt4vt.external.bt4u;
 
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -68,10 +69,10 @@ public class RouteService {
     }
   }
 
-  public void get(String shortName, final Response.Listener<Route> listener,
+  public void get(String shortName, boolean ignoreCache, final Response.Listener<Route> listener,
                   final Response.ExceptionListener exceptionListener) {
     try {
-      requestService.addToRequestQueue(requestFactory.route(shortName,
+      JsonObjectRequest request = requestFactory.route(shortName,
           new com.android.volley.Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
@@ -86,7 +87,9 @@ public class RouteService {
             public void onErrorResponse(VolleyError error) {
               exceptionListener.onException(error);
             }
-          }));
+          });
+      request.setShouldCache(!ignoreCache);
+      requestService.addToRequestQueue(request);
     } catch (URISyntaxException e) {
       exceptionListener.onException(e);
     }

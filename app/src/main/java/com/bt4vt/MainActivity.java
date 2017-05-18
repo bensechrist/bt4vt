@@ -233,11 +233,15 @@ public class MainActivity extends RoboFragmentActivity implements
 
   @Override
   public void onRouteSelected(final Route route) {
+    onRouteSelected(route, false);
+  }
+
+  private void onRouteSelected(final Route route, boolean ignoreCache) {
     mainLoadingView.setVisibility(View.VISIBLE);
     refreshRouteButton.setVisibility(View.VISIBLE);
     currentRoute = route;
     mapFragment.clearMap();
-    routeService.get(route.getShortName(), new Response.Listener<Route>() {
+    routeService.get(route.getShortName(), ignoreCache, new Response.Listener<Route>() {
       @Override
       public void onResult(Route route) {
         List<Stop> stops = route.getStops();
@@ -285,7 +289,7 @@ public class MainActivity extends RoboFragmentActivity implements
         }
       }
     } else if (v.getId() == refreshRouteButton.getId()) {
-      onRouteSelected(currentRoute);
+      onRouteSelected(currentRoute, true);
     } else {
       initData();
       checkNetwork();
