@@ -72,5 +72,3 @@ dependencies {
 project.tasks.withType(JavaCompile) { task ->
   options.compilerArgs << "-AguiceAnnotationDatabasePackageName=com.bt4vt"
 }
-
-apply plugin: 'com.google.gms.google-services'
