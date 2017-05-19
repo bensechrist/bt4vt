@@ -45,7 +45,7 @@
   <string name="no_stops">No stops available</string>
   <string name="stop_dialog_error">Error getting stop information</string>
   <string name="nav_feedback">Feedback</string>
-  <string name="nav_button_showcase_text">Open the navigation drawer to view routes. You can favorite stops to have BT4VT send you a notification about when the next bus will arrive when you arrive at a favorited stop.</string>
+  <string name="nav_button_showcase_text">Open the navigation drawer to view routes. You can favorite stops to have BT4VT notify you about upcoming departures when you are close to a favorited stop.</string>
   <string name="app_feedback">BT4VT Feedback</string>
   <string name="app_feedback_email" translatable="false">bt4vtapp@gmail.com</string>
   <string name="showcase_confirm">Got It</string>
