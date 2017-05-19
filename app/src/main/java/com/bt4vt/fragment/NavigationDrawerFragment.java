@@ -117,6 +117,12 @@ public class NavigationDrawerFragment extends RoboFragment implements
     item.setVisible(true);
   }
 
+  public void hideRemoveAdsMenuItem() {
+    Menu menu = navView.getMenu();
+    MenuItem item = menu.findItem(R.id.remove_ads);
+    item.setVisible(false);
+  }
+
   public void showRoutesLoading() {
     refreshRoutesButton.setEnabled(false);
     Menu menu = navView.getMenu();
@@ -161,6 +167,9 @@ public class NavigationDrawerFragment extends RoboFragment implements
       } else if (menuItemId == R.id.remove_ads) {
         activity.closeDrawer();
         activity.promptPurchase();
+      } else if (menuItemId == R.id.donate) {
+        activity.closeDrawer();
+        activity.promptDonation();
       }
     }
     return true;
@@ -224,6 +233,11 @@ public class NavigationDrawerFragment extends RoboFragment implements
      * Prompt user for inapp purchase to remove ads.
      */
     void promptPurchase();
+
+    /**
+     * Prompt user for inapp purchase to donate.
+     */
+    void promptDonation();
   }
 
 }

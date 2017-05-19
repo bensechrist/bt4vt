@@ -17,19 +17,13 @@
   -->
 
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+  <item
+    android:id="@+id/nav_loading"
+    android:orderInCategory="0"
+    android:title="@string/routes_loading_title"
+    android:visible="true"/>
   <group
     android:id="@+id/nav_routes_group">
-    <item
-      android:id="@+id/nav_loading"
-      android:orderInCategory="0"
-      android:title="@string/routes_loading_title"
-      android:visible="true"/>
-    <item
-      android:id="@+id/nav_view_all_stops"
-      android:checkable="true"
-      android:orderInCategory="2"
-      android:title="@string/nav_item_view_all_stops"
-      android:visible="false"/>
   </group>
   <group
     android:id="@+id/nav_other_group">
@@ -39,8 +33,12 @@
       android:title="@string/remove_ads"
       android:visible="false"/>
     <item
-      android:id="@+id/nav_feedback"
+      android:id="@+id/donate"
       android:orderInCategory="101"
+      android:title="@string/donate"/>
+    <item
+      android:id="@+id/nav_feedback"
+      android:orderInCategory="102"
       android:title="@string/nav_feedback"/>
   </group>
 </menu>

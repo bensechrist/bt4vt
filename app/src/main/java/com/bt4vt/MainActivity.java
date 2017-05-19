@@ -67,6 +67,9 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.inject.Inject;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -96,6 +99,7 @@ public class MainActivity extends RoboFragmentActivity implements
   private static final String FIRST_TIME_OPEN_KEY = "first_time_open_app";
   private static final String SHOWCASE_ID = "com.bt4vt.nav_showcase";
   private static final int PURCHASE_REQUEST_CODE = 1001;
+  private static final int DONATION_REQUEST_CODE = 1002;
 
   @Inject
   private SharedPreferences preferences;
@@ -311,12 +315,33 @@ public class MainActivity extends RoboFragmentActivity implements
 
   @Override
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
-    if (requestCode == PURCHASE_REQUEST_CODE) {
-      if (resultCode == RESULT_OK) {
-        checkForPurchase();
-        View view = mapFragment.getView();
+    if (resultCode == RESULT_OK) {
+      View view = mapFragment.getView();
+      switch (requestCode) {
+        case PURCHASE_REQUEST_CODE:
+          checkForPurchase();
+          if (view != null) {
+            Snackbar.make(view, R.string.purchase_dialog_thank_you, Snackbar.LENGTH_LONG)
+                .show();
+          }
+          break;
+
+        case DONATION_REQUEST_CODE:
+          if (view != null) {
+            Snackbar.make(view, R.string.donation_dialog_thank_you, Snackbar.LENGTH_LONG)
+                .show();
+          }
+          break;
+      }
+      String purchaseData = data.getStringExtra("INAPP_PURCHASE_DATA");
+      try {
+        JSONObject jo = new JSONObject(purchaseData);
+        String purchaseToken = jo.getString("purchaseToken");
+        billingService.consumePurchase(3, getPackageName(), purchaseToken);
+      } catch (JSONException | RemoteException e) {
+        e.printStackTrace();
         if (view != null) {
-          Snackbar.make(view, R.string.purchase_dialog_thank_you, Snackbar.LENGTH_LONG)
+          Snackbar.make(view, R.string.purchase_dialog_purchase_error, Snackbar.LENGTH_LONG)
               .show();
         }
       }
@@ -359,7 +384,7 @@ public class MainActivity extends RoboFragmentActivity implements
               Log.d(TAG, "User already purchased");
               View view = mapFragment.getView();
               if (view != null) {
-                Snackbar.make(view, R.string.purchase_dialog_already_purchased, Toast.LENGTH_LONG)
+                Snackbar.make(view, R.string.purchase_dialog_already_purchased, Snackbar.LENGTH_LONG)
                     .show();
               }
             } else {
@@ -406,6 +431,94 @@ public class MainActivity extends RoboFragmentActivity implements
       } catch (RemoteException e) {
         e.printStackTrace();
       }
+    }
+  }
+
+  @Override
+  public void promptDonation() {
+    if (billingService == null) {
+      if (GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(this) != ConnectionResult.SUCCESS) {
+        Log.d(TAG, "Google Play Services is not available");
+        return;
+      }
+      Log.d(TAG, "Connecting to billing service...");
+      Intent serviceIntent =
+          new Intent("com.android.vending.billing.InAppBillingService.BIND");
+      serviceIntent.setPackage("com.android.vending");
+      billingServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+          Log.d(TAG, "Connected to billing service");
+          billingService = IInAppBillingService.Stub.asInterface(service);
+          promptDonation();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+          billingService = null;
+        }
+      };
+      bindService(serviceIntent, billingServiceConnection, Context.BIND_AUTO_CREATE);
+    } else {
+      final String[] options = getResources().getStringArray(R.array.donation_dialog_options);
+      final String[] productIds = new String[options.length];
+      final String[] displayNames = new String[options.length];
+      for (int i = 0; i < options.length; i++) {
+        String[] split = options[i].split(":");
+        productIds[i] = split[0];
+        displayNames[i] = split[1];
+      }
+      final int[] selectedIndex = {options.length - 1};
+      new AlertDialog.Builder(this)
+          .setTitle(R.string.donation_dialog_title)
+          .setSingleChoiceItems(displayNames, options.length - 1, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+              selectedIndex[0] = which;
+            }
+          })
+          .setPositiveButton(R.string.purchase_dialog_positive, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+              try {
+                Log.d(TAG, String.format("Selected donation %s", displayNames[selectedIndex[0]]));
+                String productId = (BuildConfig.DEBUG ? "android.test.purchased" : productIds[selectedIndex[0]]);
+                Bundle buyIntentBundle = billingService.getBuyIntent(3, getPackageName(),
+                    productId, "inapp", null);
+                int response = buyIntentBundle.getInt("RESPONSE_CODE");
+                if (response == 0) {
+                  PendingIntent pendingIntent = buyIntentBundle.getParcelable("BUY_INTENT");
+                  startIntentSenderForResult(pendingIntent.getIntentSender(),
+                      DONATION_REQUEST_CODE, new Intent(), 0, 0, 0, null);
+                } else {
+                  Log.e(TAG, String.format("Error getting buy intent for %s - %d", productId, response));
+                  View view = mapFragment.getView();
+                  if (view != null) {
+                    Snackbar.make(view, R.string.donation_dialog_purchase_error, Snackbar.LENGTH_LONG)
+                        .show();
+                  }
+                }
+              } catch (RemoteException | IntentSender.SendIntentException e) {
+                Log.e(TAG, e.getLocalizedMessage());
+                View view = mapFragment.getView();
+                if (view != null) {
+                  Snackbar.make(view, R.string.donation_dialog_purchase_error, Snackbar.LENGTH_LONG)
+                      .show();
+                }
+              }
+            }
+          })
+          .setNegativeButton(R.string.purchase_dialog_negative, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+              View view = mapFragment.getView();
+              if (view != null) {
+                Snackbar.make(view, R.string.donation_dialog_negative_response, Toast.LENGTH_SHORT)
+                    .show();
+              }
+            }
+          })
+          .show();
     }
   }
 
@@ -460,6 +573,7 @@ public class MainActivity extends RoboFragmentActivity implements
               Log.d(TAG, "Past purchases");
               Log.d(TAG, purchaseList.toString());
               bannerAd.destroy();
+              navFragment.hideRemoveAdsMenuItem();
             }
           }
         }

@@ -20,9 +20,19 @@
   <string name="purchase_dialog_message">Remove ads forever with one-time purchase?</string>
   <string name="purchase_dialog_positive">Yes</string>
   <string name="purchase_dialog_negative">Nah</string>
-  <string name="purchase_dialog_negative_response">¯\\_(ツ)_/¯</string>
+  <string name="purchase_dialog_negative_response" translatable="false">¯\\_(ツ)_/¯</string>
   <string name="purchase_dialog_already_purchased">You have already removed ads. If you are still seeing ads, select \'Feedback\' from the menu and let me know.</string>
-  <string name="purchase_dialog_product_id">donation.1</string>
+  <string name="purchase_dialog_product_id">remove.ads</string>
   <string name="purchase_dialog_purchase_error">An error occurred</string>
   <string name="purchase_dialog_thank_you">Thank you for your purchase! Enjoy ad free commuting!</string>
+  <string name="donation_dialog_title">Donate</string>
+  <string-array name="donation_dialog_options">
+    <item>donation.1:$0.99</item>
+    <item>donation.2:$1.99</item>
+    <item>donation.5:$4.99</item>
+    <item>donation.10:$9.99</item>
+  </string-array>
+  <string name="donation_dialog_thank_you">Thank you for your donation!</string>
+  <string name="donation_dialog_purchase_error">An error occurred</string>
+  <string name="donation_dialog_negative_response" translatable="false">¯\\_(ツ)_/¯</string>
 </resources>
