@@ -317,6 +317,14 @@ public class MainActivity extends RoboFragmentActivity implements
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
     if (resultCode == RESULT_OK) {
       View view = mapFragment.getView();
+      int responseCode = data.getIntExtra("RESPONSE_CODE", 0);
+      if (responseCode != 0) {
+        if (view != null) {
+          Snackbar.make(view, R.string.purchase_dialog_purchase_error, Snackbar.LENGTH_LONG)
+              .show();
+        }
+        return;
+      }
       switch (requestCode) {
         case PURCHASE_REQUEST_CODE:
           checkForPurchase();
@@ -331,19 +339,19 @@ public class MainActivity extends RoboFragmentActivity implements
             Snackbar.make(view, R.string.donation_dialog_thank_you, Snackbar.LENGTH_LONG)
                 .show();
           }
+          String purchaseData = data.getStringExtra("INAPP_PURCHASE_DATA");
+          try {
+            JSONObject json = new JSONObject(purchaseData);
+            String purchaseToken = json.getString("purchaseToken");
+            billingService.consumePurchase(3, getPackageName(), purchaseToken);
+          } catch (JSONException | RemoteException e) {
+            e.printStackTrace();
+            if (view != null) {
+              Snackbar.make(view, R.string.purchase_dialog_purchase_error, Snackbar.LENGTH_LONG)
+                  .show();
+            }
+          }
           break;
-      }
-      String purchaseData = data.getStringExtra("INAPP_PURCHASE_DATA");
-      try {
-        JSONObject jo = new JSONObject(purchaseData);
-        String purchaseToken = jo.getString("purchaseToken");
-        billingService.consumePurchase(3, getPackageName(), purchaseToken);
-      } catch (JSONException | RemoteException e) {
-        e.printStackTrace();
-        if (view != null) {
-          Snackbar.make(view, R.string.purchase_dialog_purchase_error, Snackbar.LENGTH_LONG)
-              .show();
-        }
       }
     }
   }
@@ -395,7 +403,7 @@ public class MainActivity extends RoboFragmentActivity implements
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                       try {
-                        String productId = (BuildConfig.DEBUG ? "android.test.purchased" : getString(R.string.purchase_dialog_product_id));
+                        String productId = (BuildConfig.DEBUG ? "android.test.canceled" : getString(R.string.purchase_dialog_product_id));
                         Bundle buyIntentBundle = billingService.getBuyIntent(3, getPackageName(),
                             productId, "inapp", null);
                         int response = buyIntentBundle.getInt("RESPONSE_CODE");
