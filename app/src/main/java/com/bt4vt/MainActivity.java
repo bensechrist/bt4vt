@@ -276,6 +276,19 @@ public class MainActivity extends RoboFragmentActivity implements
   }
 
   @Override
+  public void fetchRoutes(boolean ignoreCache) {
+    navFragment.showRoutesLoading();
+    routeService.getAll(ignoreCache, new Response.Listener<List<Route>>() {
+      @Override
+      public void onResult(List<Route> result) {
+        Collections.sort(result);
+        navFragment.setRouteNames(result);
+      }
+    }, new ExceptionHandler(getString(R.string.routes_error), mapFragment.getView(),
+        Snackbar.LENGTH_INDEFINITE));
+  }
+
+  @Override
   public void onClick(View v) {
     if (v.getId() == navButton.getId()) {
       if (navFragment != null) {
@@ -549,14 +562,7 @@ public class MainActivity extends RoboFragmentActivity implements
         }, new ExceptionHandler(getString(R.string.stop_error), mapFragment.getView(),
             Snackbar.LENGTH_LONG));
       }
-      routeService.getAll(new Response.Listener<List<Route>>() {
-        @Override
-        public void onResult(List<Route> result) {
-          Collections.sort(result);
-          navFragment.setRouteNames(result);
-        }
-      }, new ExceptionHandler(getString(R.string.routes_error), mapFragment.getView(),
-          Snackbar.LENGTH_INDEFINITE));
+      fetchRoutes(false);
     }
   }
 

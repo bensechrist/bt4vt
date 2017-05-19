@@ -57,4 +57,5 @@
   <string name="no_play_services">Google Play Services is not installed</string>
   <string name="bus_error">Error getting buses</string>
   <string name="remove_ads">Remove Ads</string>
+  <string name="routes_title">Routes</string>
 </resources>

@@ -29,9 +29,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 
 import com.bt4vt.R;
 import com.bt4vt.external.bt4u.Route;
+import com.bt4vt.util.ViewUtils;
 import com.google.inject.Inject;
 
 import java.util.List;
@@ -45,9 +47,11 @@ import roboguice.inject.InjectView;
  * @author Ben Sechrist
  */
 public class NavigationDrawerFragment extends RoboFragment implements
-    NavigationView.OnNavigationItemSelectedListener {
+    NavigationView.OnNavigationItemSelectedListener, View.OnClickListener {
 
   private static final String TAG = "NavigationDrawer";
+
+  private static final int MENU_ITEM_ALL_STOPS = ViewUtils.generateViewId();
 
   @Inject
   private SharedPreferences preferences;
@@ -58,6 +62,8 @@ public class NavigationDrawerFragment extends RoboFragment implements
   private TalkToActivity activity;
 
   private MenuItem lastMenuItem;
+
+  private ImageButton refreshRoutesButton;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -86,23 +92,35 @@ public class NavigationDrawerFragment extends RoboFragment implements
   public void onViewCreated(View view, Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
     navView.setNavigationItemSelectedListener(this);
+    refreshRoutesButton = (ImageButton) navView.getHeaderView(0).findViewById(R.id.refresh_routes_button);
+    refreshRoutesButton.setOnClickListener(this);
+    refreshRoutesButton.setVisibility(View.VISIBLE);
   }
 
   public void setRouteNames(List<Route> routes) {
+    refreshRoutesButton.setEnabled(true);
     Menu menu = navView.getMenu();
     menu.findItem(R.id.nav_loading).setVisible(false);
-    menu.findItem(R.id.nav_view_all_stops).setVisible(true);
     for (Route route : routes) {
       MenuItem item = menu.add(R.id.nav_routes_group, Menu.NONE, 1, route.getFullName());
       item.setTitleCondensed(route.getShortName());
       item.setCheckable(true);
     }
+    MenuItem item = menu.add(R.id.nav_routes_group, MENU_ITEM_ALL_STOPS, 2,
+        getString(R.string.nav_item_view_all_stops));
+    item.setCheckable(true);
   }
 
   public void showRemoveAdsMenuItem() {
     Menu menu = navView.getMenu();
     MenuItem item = menu.findItem(R.id.remove_ads);
     item.setVisible(true);
+  }
+
+  public void showRoutesLoading() {
+    refreshRoutesButton.setEnabled(false);
+    Menu menu = navView.getMenu();
+    menu.findItem(R.id.nav_loading).setVisible(true);
   }
 
   @Override
@@ -127,7 +145,7 @@ public class NavigationDrawerFragment extends RoboFragment implements
       }
       lastMenuItem = menuItem;
       menuItem.setChecked(true);
-      if (menuItemId == R.id.nav_view_all_stops) {
+      if (menuItemId == MENU_ITEM_ALL_STOPS) {
         activity.showAllStops();
       } else {
         Route route = new Route(menuItem.getTitleCondensed().toString());
@@ -146,6 +164,12 @@ public class NavigationDrawerFragment extends RoboFragment implements
       }
     }
     return true;
+  }
+
+  @Override
+  public void onClick(View v) {
+    navView.getMenu().removeGroup(R.id.nav_routes_group);
+    activity.fetchRoutes(true);
   }
 
   private void showFeedbackDialog() {
@@ -188,6 +212,13 @@ public class NavigationDrawerFragment extends RoboFragment implements
      * Show all bus stops.
      */
     void showAllStops();
+
+    /**
+     * Fetch all routes.
+     *
+     * @param ignoreCache whether cache should be ignored
+     */
+    void fetchRoutes(boolean ignoreCache);
 
     /**
      * Prompt user for inapp purchase to remove ads.
