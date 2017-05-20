@@ -143,7 +143,12 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
         @Override
         public void onMapReady(GoogleMap googleMap) {
           that.onMapReady(googleMap);
-          showStops(stops);
+          mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
+            @Override
+            public void onMapLoaded() {
+              showStops(stops);
+            }
+          });
         }
       });
       return;
