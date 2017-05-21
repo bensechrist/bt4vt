@@ -134,7 +134,9 @@ public class NavigationDrawerFragment extends RoboFragment implements
     if (activity.isLoadingContent()) {
       Snackbar.make(navView, R.string.content_loading, Snackbar.LENGTH_LONG)
           .show();
-      lastMenuItem.setChecked(true);
+      if (lastMenuItem != null) {
+        lastMenuItem.setChecked(true);
+      }
       return true;
     }
     if (menuItem.equals(lastMenuItem)) {
