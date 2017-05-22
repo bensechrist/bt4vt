@@ -154,6 +154,18 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
       return;
     }
 
+    if (stops.isEmpty()) {
+      if (isAdded()) {
+        activity.hideLoadingIcon();
+      }
+      View view = getView();
+      if (view != null) {
+        Snackbar.make(view, R.string.no_stops, Snackbar.LENGTH_LONG)
+            .show();
+      }
+      return;
+    }
+
     LatLngBounds.Builder builder = new LatLngBounds.Builder();
     for (Stop stop : stops) {
       Marker marker = mMap.addMarker(getStopMarker(stop));
