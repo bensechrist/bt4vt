@@ -21,7 +21,9 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -96,12 +98,25 @@ public class BusStopGeofenceService implements ResultCallback<Status>,
     Log.d(TAG, "Registering geofence");
     if (!googleApiClient.isConnected()) {
       Log.d(TAG, "Google API not connected");
-      if (googleApiClient.isConnecting()) {
-        waitForApiConnection();
-      } else {
-        Log.d(TAG, "Google API blocking connect");
-        googleApiClient.blockingConnect();
+      googleApiClient.registerConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
+        @Override
+        public void onConnected(@Nullable Bundle bundle) {
+          registerGeofences(stops);
+          if (googleApiClient.isConnectionCallbacksRegistered(this)) {
+            googleApiClient.unregisterConnectionCallbacks(this);
+          }
+        }
+
+        @Override
+        public void onConnectionSuspended(int i) {
+          // Do nothing
+        }
+      });
+      if (!googleApiClient.isConnecting()) {
+        googleApiClient.connect();
+        Log.d(TAG, "Connecting to Google API");
       }
+      return;
     }
     if (ContextCompat.checkSelfPermission(context,
         Manifest.permission.ACCESS_FINE_LOCATION)
@@ -119,11 +134,25 @@ public class BusStopGeofenceService implements ResultCallback<Status>,
 
   public void unregisterGeofence(final Stop stop) {
     if (!googleApiClient.isConnected()) {
-      if (googleApiClient.isConnecting()) {
-        waitForApiConnection();
-      } else {
-        googleApiClient.blockingConnect();
+      googleApiClient.registerConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
+        @Override
+        public void onConnected(@Nullable Bundle bundle) {
+          unregisterGeofence(stop);
+          if (googleApiClient.isConnectionCallbacksRegistered(this)) {
+            googleApiClient.unregisterConnectionCallbacks(this);
+          }
+        }
+
+        @Override
+        public void onConnectionSuspended(int i) {
+          // Do nothing
+        }
+      });
+      if (!googleApiClient.isConnecting()) {
+        googleApiClient.connect();
+        Log.d(TAG, "Connecting to Google API");
       }
+      return;
     }
     LocationServices.GeofencingApi.removeGeofences(googleApiClient,
         Collections.singletonList(stop.getCode()));
@@ -143,8 +172,8 @@ public class BusStopGeofenceService implements ResultCallback<Status>,
 
   @Override
   public void onResult(@NonNull Status status) {
-    Log.i(TAG, "Register geofence result: " + status.toString());
-    Log.i(TAG, status.isSuccess() ? "Geofence added" : "Geofence failed to add");
+    Log.d(TAG, "Register geofence result: " + status.toString());
+    Log.d(TAG, status.isSuccess() ? "Geofence added" : "Geofence failed to add");
     int statusCode = status.getStatusCode();
     if (statusCode == GeofenceStatusCodes.GEOFENCE_TOO_MANY_GEOFENCES) {
       throw new IllegalStateException(GeofenceStatusCodes.getStatusCodeString(statusCode));
@@ -185,22 +214,5 @@ public class BusStopGeofenceService implements ResultCallback<Status>,
     geofencePendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.
         FLAG_UPDATE_CURRENT);
     return geofencePendingIntent;
-  }
-
-  private void waitForApiConnection() {
-    try {
-      int waitTime = 0;
-      int maxWaitTime = 5000;
-      while (googleApiClient.isConnecting()) {
-        Log.d(TAG, "Waiting for Google API to connect");
-        Thread.sleep(100);
-        waitTime += 100;
-        if (waitTime >= maxWaitTime) {
-          break;
-        }
-      }
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
   }
 }
