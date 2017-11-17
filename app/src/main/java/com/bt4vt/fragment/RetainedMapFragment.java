@@ -137,6 +137,9 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
    * @param stops the stops
    */
   public void showStops(final List<Stop> stops) {
+    if (!isAdded()) {
+      return;
+    }
     if (mMap == null) {
       final RetainedMapFragment that = this;
       getMapAsync(new OnMapReadyCallback() {
