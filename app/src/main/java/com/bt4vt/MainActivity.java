@@ -306,7 +306,9 @@ public class MainActivity extends RoboFragmentActivity implements
         }
       }
     } else if (v.getId() == refreshRouteButton.getId()) {
-      onRouteSelected(currentRoute, true);
+      if (currentRoute != null) {
+        onRouteSelected(currentRoute, true);
+      }
     } else {
       initData();
       checkNetwork();
