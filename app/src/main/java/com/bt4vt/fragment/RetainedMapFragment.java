@@ -212,12 +212,17 @@ public class RetainedMapFragment extends SupportMapFragment implements OnMapRead
     } else {
       for (Bus bus : buses) {
         Marker marker = currentBusMarkers.get(bus);
-        marker.setPosition(bus.getLatLng());
-        marker.setTitle(getString(R.string.bus_marker_title_format, bus.getRoute().getFullName(),
-            bus.getId()));
-        marker.setSnippet(getString(R.string.bus_marker_snippet_format, bus.getPassengers(),
-            SimpleDateFormat.getTimeInstance().format(bus.getTimestamp())));
-        marker.setRotation(bus.getDirection());
+        if (marker == null) {
+          marker = mMap.addMarker(getBusMarker(bus));
+          currentBusMarkers.put(bus, marker);
+        } else {
+          marker.setPosition(bus.getLatLng());
+          marker.setTitle(getString(R.string.bus_marker_title_format, bus.getRoute().getFullName(),
+              bus.getId()));
+          marker.setSnippet(getString(R.string.bus_marker_snippet_format, bus.getPassengers(),
+              SimpleDateFormat.getTimeInstance().format(bus.getTimestamp())));
+          marker.setRotation(bus.getDirection());
+        }
       }
     }
   }
